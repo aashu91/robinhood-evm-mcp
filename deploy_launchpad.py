@@ -11,12 +11,22 @@ from web3_helper import load_env, Web3Helper
 load_env()
 
 async def deploy():
+    import sys
+    network_name = "robinhood-mainnet"
+    if len(sys.argv) > 1:
+        network_name = sys.argv[1]
+
     print("==================================================")
-    print("🚀 Deploying MemeFactory to Robinhood Chain...")
+    print(f"🚀 Deploying MemeFactory to {network_name}...")
     print("==================================================")
 
     # 1. Initialize Web3
     helper = Web3Helper()
+    try:
+        helper.switch_network(network_name)
+    except Exception as e:
+        print(f"⚠️ Switching network to '{network_name}' failed: {e}. Using default.")
+        
     w3 = helper.w3
     if not w3.is_connected():
         print("❌ Failed to connect to the Robinhood Chain RPC.")
@@ -34,8 +44,7 @@ async def deploy():
         bal_eth = w3.from_wei(bal, 'ether')
         print(f"Deployer Wallet Balance: {bal_eth} ETH")
         if bal == 0:
-            print("❌ Deployer wallet has 0 ETH. Please fund the wallet to cover gas fees.")
-            return
+            print("⚠️ Warning: Deployer wallet balance shows 0 ETH. Proceeding anyway in case of RPC sync lag...")
     except Exception as e:
         print(f"❌ Error loading deployer wallet private key: {str(e)}")
         return
@@ -70,17 +79,17 @@ async def deploy():
         'from': account.address,
         'nonce': nonce,
         'gasPrice': gas_price,
+        'gas': 3000000, # Use default gas limit to avoid auto-estimate crash
         'chainId': helper.network_config["chain_id"]
     })
 
-    # Estimate Gas
+    # Try to refine Gas Estimate if RPC allows
     try:
         gas_estimate = w3.eth.estimate_gas(construct_tx)
         construct_tx['gas'] = int(gas_estimate * 1.2)
-        print(f"Estimated Gas: {construct_tx['gas']}")
+        print(f"Refined Estimated Gas: {construct_tx['gas']}")
     except Exception as est_err:
-        print(f"⚠️ Gas estimation failed: {str(est_err)}. Using default 3,000,000 gas limit.")
-        construct_tx['gas'] = 3000000
+        print(f"⚠️ Refining gas estimate failed: {str(est_err)}. Proceeding with default 3,000,000 gas limit.")
 
     # 6. Sign and Send
     print("Signing transaction...")
