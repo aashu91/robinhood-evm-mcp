@@ -470,6 +470,86 @@ class Web3Helper:
             "is_scanned": 0
         }
 
+    async def execute_cross_chain_bridge(self, src_chain_id, src_token, dest_chain_id, dest_token, amount_raw, recipient):
+        """Fetches DLN bridging calldata and signs/broadcasts the bridging transaction on the source EVM chain."""
+        # 1. Fetch DLN quote and calldata
+        quote = await self.get_cross_chain_quote(src_chain_id, src_token, dest_chain_id, dest_token, amount_raw, recipient)
+        
+        tx_data = quote.get("tx")
+        if not tx_data:
+            raise ValueError(f"deBridge DLN API did not return transaction calldata: {quote}")
+            
+        bridge_to = Web3.to_checksum_address(tx_data["to"])
+        bridge_calldata = tx_data["data"]
+        bridge_value = int(tx_data["value"])
+        
+        # 2. Connect to source chain RPC
+        chain_rpcs = {
+            8453: "https://mainnet.base.org",
+            42161: "https://arb1.arbitrum.io/rpc",
+            10: "https://mainnet.optimism.io",
+            1: "https://cloudflare-eth.com"
+        }
+        
+        rpc_url = chain_rpcs.get(int(src_chain_id))
+        if not rpc_url:
+            raise ValueError(f"Source chain ID {src_chain_id} is not supported or needs a configured RPC.")
+            
+        src_w3 = Web3(Web3.HTTPProvider(rpc_url))
+        if not src_w3.is_connected():
+            raise ValueError(f"Failed to connect to source chain RPC: {rpc_url}")
+            
+        # 3. Load account
+        account = self.get_account()
+        
+        # 4. Check approvals if source token is ERC-20
+        is_native = (src_token == "0x0000000000000000000000000000000000000000" or src_token.upper() == "ETH")
+        if not is_native:
+            src_token_checksum = src_w3.to_checksum_address(src_token)
+            abi = PREPACKAGED_ABIS["ERC20"]
+            token_contract = src_w3.eth.contract(address=src_token_checksum, abi=abi)
+            
+            # Check allowance
+            allowance = token_contract.functions.allowance(account.address, bridge_to).call()
+            amount_to_spend = int(amount_raw)
+            if allowance < amount_to_spend:
+                # Approve router
+                approve_tx = token_contract.functions.approve(bridge_to, amount_to_spend).build_transaction({
+                    'from': account.address,
+                    'nonce': src_w3.eth.get_transaction_count(account.address),
+                    'gasPrice': int(src_w3.eth.gas_price * 1.1),
+                    'chainId': int(src_chain_id)
+                })
+                signed_approve = src_w3.eth.account.sign_transaction(approve_tx, private_key=account.key)
+                app_hash = src_w3.eth.send_raw_transaction(signed_approve.rawTransaction)
+                # Wait briefly
+                await asyncio.sleep(5)
+                
+        # 5. Build, sign and broadcast the bridge transaction
+        bridge_tx = {
+            'from': account.address,
+            'to': bridge_to,
+            'data': bridge_calldata,
+            'value': bridge_value,
+            'nonce': src_w3.eth.get_transaction_count(account.address),
+            'gasPrice': int(src_w3.eth.gas_price * 1.1),
+            'chainId': int(src_chain_id)
+        }
+        
+        gas_estimate = src_w3.eth.estimate_gas(bridge_tx)
+        bridge_tx['gas'] = int(gas_estimate * 1.2)
+        
+        signed_bridge = src_w3.eth.account.sign_transaction(bridge_tx, private_key=account.key)
+        tx_hash = src_w3.eth.send_raw_transaction(signed_bridge.rawTransaction)
+        
+        return {
+            "source_chain_id": src_chain_id,
+            "bridge_tx_hash": src_w3.to_hex(tx_hash),
+            "router_address": bridge_to,
+            "value_sent": bridge_value
+        }
+
+
 
 
 

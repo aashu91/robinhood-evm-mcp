@@ -201,6 +201,22 @@ TOOLS = [
             },
             "required": ["ticker", "address"]
         }
+    },
+    {
+        "name": "execute_cross_chain_bridge",
+        "description": "Fetches cross-chain swap routing and transaction details, then builds, signs, and executes the bridging transaction directly on the source EVM chain.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "src_chain_id": {"type": "integer", "description": "Source chain ID (e.g. 8453 for Base, 42161 for Arbitrum)."},
+                "src_token": {"type": "string", "description": "Source token contract address (or symbol)."},
+                "dest_chain_id": {"type": "integer", "description": "Destination chain ID (e.g. 4663 for Robinhood Chain)."},
+                "dest_token": {"type": "string", "description": "Destination token contract address (or symbol)."},
+                "amount_raw": {"type": "string", "description": "Raw input amount (string to prevent float/int overflow)."},
+                "recipient": {"type": "string", "description": "Wallet address that will receive the tokens on the destination chain."}
+            },
+            "required": ["src_chain_id", "src_token", "dest_chain_id", "dest_token", "amount_raw", "recipient"]
+        }
     }
 ]
 
@@ -335,6 +351,16 @@ async def dispatch_tool(name, arguments):
         dec = arguments.get("decimals", 18)
         res = await helper.import_custom_token(ticker, addr, t_name, dec)
         return f"Successfully imported custom token!\n{json.dumps(res, indent=2)}"
+
+    elif name == "execute_cross_chain_bridge":
+        src_id = arguments["src_chain_id"]
+        src_tok = arguments["src_token"]
+        dest_id = arguments["dest_chain_id"]
+        dest_tok = arguments["dest_token"]
+        amt = arguments["amount_raw"]
+        recip = arguments["recipient"]
+        res = await helper.execute_cross_chain_bridge(src_id, src_tok, dest_id, dest_tok, amt, recip)
+        return f"Cross-chain bridge executed successfully!\n{json.dumps(res, indent=2)}"
 
     else:
         raise ValueError(f"Unknown tool: {name}")

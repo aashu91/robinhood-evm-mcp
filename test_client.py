@@ -179,6 +179,26 @@ async def run_mcp_test():
     send_request(estimate_request)
     await asyncio.sleep(0.5)
 
+    # Step 10: Execute cross-chain bridge (quote & pre-flight approval test)
+    bridge_request = {
+        "jsonrpc": "2.0",
+        "id": 10,
+        "method": "tools/call",
+        "params": {
+            "name": "execute_cross_chain_bridge",
+            "arguments": {
+                "src_chain_id": 8453, # Base
+                "src_token": "0x0000000000000000000000000000000000000000", # ETH
+                "dest_chain_id": 42161, # Arbitrum
+                "dest_token": "0x0000000000000000000000000000000000000000", # ETH
+                "amount_raw": "1000000000000000", # 0.001 ETH
+                "recipient": "0x742d35Cc6634C0532925a3b844Bc454e4438f44e"
+            }
+        }
+    }
+    send_request(bridge_request)
+    await asyncio.sleep(0.5)
+
     # Clean up subprocess
     process.terminate()
     process.wait()

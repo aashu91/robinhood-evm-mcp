@@ -40,9 +40,14 @@ By implementing the Model Context Protocol (MCP), it allows AI agents to dynamic
 - **Deliverable:** Pre-flight trade estimation using virtual bonding curve equations and dynamic slippage protection bounds.
 - **Verification:** Successfully executed automated checks querying reserves and estimating trade outputs.
 
-### Milestone 5: Dynamic Multi-Chain Swapping (Proposed - 4 weeks)
-- **Deliverable:** Implementing automated EVM-to-EVM bridge executions directly inside the server using private keys.
-- **Funding Requested:** $8,000 USD (or equivalent in ARB).
-- **Target Allocation:** Code audits, extending test coverage, and building out a developer frontend dashboard showing transaction history.
+### Milestone 5: Cross-Chain DLN Bridging & Execution (Completed)
+- **Deliverable:** Integrated deBridge DLN API to fetch cross-chain swap routing details and execute bridging transactions on the source EVM chain.
+- **Verification:** Successfully executed test integrations simulating bridge routing and pre-flight confirmations.
+
+### Milestone 6: Gasless/Meta-transaction tools (Proposed - 4 weeks)
+- **Deliverable:** Gasless permit execution and meta-transaction relayer support for Robinhood Chain EVM.
+- **Funding Requested:** $6,000 USD (or equivalent in ARB).
+- **Target Allocation:** Developer grant integration templates and smart contract gasless relayer audits.
+
 
 

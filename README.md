@@ -83,5 +83,7 @@ Add this to your `claude_desktop_config.json` (usually at `~/.config/Claude/clau
 10. **`estimate_meme_trade_output(token_address, trade_type, amount)`**: Simulates a bonding curve trade and computes expected output amount and price impact.
 11. **`buy_meme_coin(token_address, eth_amount, max_slippage, min_output_amount)`**: Performs a buy transaction with on-chain bonding curve parameters verified pre-flight for slippage safety.
 12. **`sell_meme_coin(token_address, token_amount, max_slippage, min_output_amount)`**: Performs a sell transaction with on-chain bonding curve parameters verified pre-flight for slippage safety.
+13. **`execute_cross_chain_bridge(src_chain_id, src_token, dest_chain_id, dest_token, amount_raw, recipient)`**: Fetches cross-chain swap routing and transaction details, then builds, signs, and executes the bridging transaction directly on the source EVM chain.
+
 
 
