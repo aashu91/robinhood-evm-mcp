@@ -139,26 +139,43 @@ TOOLS = [
     },
     {
         "name": "buy_meme_coin",
-        "description": "Buys a meme coin launched on our MemeFactory platform by sending a specified amount of ETH.",
+        "description": "Buys a meme coin launched on our MemeFactory platform by sending a specified amount of ETH with pre-flight slippage checks.",
         "inputSchema": {
             "type": "object",
             "properties": {
                 "token_address": {"type": "string", "description": "The contract address of the target meme token (0x...)."},
-                "eth_amount": {"type": "number", "description": "The amount of ETH to spend on the swap (e.g. 0.05)."}
+                "eth_amount": {"type": "number", "description": "The amount of ETH to spend on the swap (e.g. 0.05)."},
+                "max_slippage": {"type": "number", "description": "Optional: Slippage tolerance percent e.g. 0.01 for 1% (default: 0.01).", "default": 0.01},
+                "min_output_amount": {"type": "string", "description": "Optional: Enforce a minimum tokens to receive (string to avoid float errors)."}
             },
             "required": ["token_address", "eth_amount"]
         }
     },
     {
         "name": "sell_meme_coin",
-        "description": "Sells a specified amount of meme coin tokens back to the MemeFactory virtual bonding curve.",
+        "description": "Sells a specified amount of meme coin tokens back to the MemeFactory virtual bonding curve with pre-flight slippage checks.",
         "inputSchema": {
             "type": "object",
             "properties": {
                 "token_address": {"type": "string", "description": "The contract address of the target meme token (0x...)."},
-                "token_amount": {"type": "string", "description": "The number of tokens to sell (string to prevent decimal errors, e.g. 500000)."}
+                "token_amount": {"type": "string", "description": "The number of tokens to sell (string to prevent decimal errors, e.g. 500000)."},
+                "max_slippage": {"type": "number", "description": "Optional: Slippage tolerance percent e.g. 0.01 for 1% (default: 0.01).", "default": 0.01},
+                "min_output_amount": {"type": "string", "description": "Optional: Enforce a minimum ETH to receive (string to avoid float errors)."}
             },
             "required": ["token_address", "token_amount"]
+        }
+    },
+    {
+        "name": "estimate_meme_trade_output",
+        "description": "Calculates the expected output of a trade using the MemeFactory virtual constant product bonding curve reserves.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "token_address": {"type": "string", "description": "The contract address of the target meme token (0x...)."},
+                "trade_type": {"type": "string", "description": "The type of trade: 'buy' (spend ETH to get token) or 'sell' (spend token to get ETH)."},
+                "amount": {"type": "number", "description": "The input amount (in ETH for buy, or tokens for sell)."}
+            },
+            "required": ["token_address", "trade_type", "amount"]
         }
     },
     {
@@ -286,14 +303,25 @@ async def dispatch_tool(name, arguments):
     elif name == "buy_meme_coin":
         t_addr = arguments["token_address"]
         eth_amt = arguments["eth_amount"]
-        receipt = await helper.buy_meme_token(t_addr, eth_amt)
+        max_slip = arguments.get("max_slippage", 0.01)
+        min_out = arguments.get("min_output_amount")
+        receipt = await helper.buy_meme_token(t_addr, eth_amt, max_slip, min_out)
         return f"Meme coin purchased successfully!\nReceipt:\n{json.dumps(receipt, indent=2)}"
 
     elif name == "sell_meme_coin":
         t_addr = arguments["token_address"]
         t_amt = arguments["token_amount"]
-        receipt = await helper.sell_meme_token(t_addr, t_amt)
+        max_slip = arguments.get("max_slippage", 0.01)
+        min_out = arguments.get("min_output_amount")
+        receipt = await helper.sell_meme_token(t_addr, t_amt, max_slip, min_out)
         return f"Meme coin sold successfully!\nReceipt:\n{json.dumps(receipt, indent=2)}"
+
+    elif name == "estimate_meme_trade_output":
+        t_addr = arguments["token_address"]
+        t_type = arguments["trade_type"]
+        amt = arguments["amount"]
+        res = await helper.estimate_meme_trade_output(t_addr, t_type, amt)
+        return json.dumps(res, indent=2)
 
     elif name == "scan_launched_tokens":
         force_refresh = arguments.get("force_refresh", False)

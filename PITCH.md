@@ -36,8 +36,13 @@ By implementing the Model Context Protocol (MCP), it allows AI agents to dynamic
 - **Deliverable:** Integrated on-chain scanner querying MemeFactory contracts and dynamic custom address imports cached in SQLite database.
 - **Verification:** Successfully verified dynamic import tools and ticker resolution logic in test suites.
 
-### Milestone 4: Dynamic Multi-Chain Swapping (Proposed - 4 weeks)
+### Milestone 4: Autonomous AI-Agent Trading Protocol (Completed)
+- **Deliverable:** Pre-flight trade estimation using virtual bonding curve equations and dynamic slippage protection bounds.
+- **Verification:** Successfully executed automated checks querying reserves and estimating trade outputs.
+
+### Milestone 5: Dynamic Multi-Chain Swapping (Proposed - 4 weeks)
 - **Deliverable:** Implementing automated EVM-to-EVM bridge executions directly inside the server using private keys.
 - **Funding Requested:** $8,000 USD (or equivalent in ARB).
 - **Target Allocation:** Code audits, extending test coverage, and building out a developer frontend dashboard showing transaction history.
+
 

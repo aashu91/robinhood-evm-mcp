@@ -80,4 +80,8 @@ Add this to your `claude_desktop_config.json` (usually at `~/.config/Claude/clau
 7. **`register_custom_abi(contract_address, abi_json)`**: Saves custom smart contract ABIs to the local SQLite database mapping.
 8. **`scan_launched_tokens(force_refresh)`**: Queries the MemeFactory smart contract on-chain to scan and index all deployed meme tokens.
 9. **`import_custom_token(ticker, address, name, decimals)`**: Dynamically imports custom addresses as tickers, saving them to local SQLite cache.
+10. **`estimate_meme_trade_output(token_address, trade_type, amount)`**: Simulates a bonding curve trade and computes expected output amount and price impact.
+11. **`buy_meme_coin(token_address, eth_amount, max_slippage, min_output_amount)`**: Performs a buy transaction with on-chain bonding curve parameters verified pre-flight for slippage safety.
+12. **`sell_meme_coin(token_address, token_amount, max_slippage, min_output_amount)`**: Performs a sell transaction with on-chain bonding curve parameters verified pre-flight for slippage safety.
+
 

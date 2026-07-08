@@ -275,14 +275,82 @@ class Web3Helper:
         receipt = await self.wait_for_confirmation(tx_hash)
         return receipt
 
-    async def buy_meme_token(self, token_address, eth_amount):
-        """Buys meme tokens by sending ETH to the buyMemeToken method on the factory."""
+    async def get_meme_pool_reserves(self, token_address):
+        """Queries the pools mapping in MemeFactory for a given meme token reserves."""
+        factory_address = os.getenv("MEME_FACTORY_ADDRESS")
+        if not factory_address:
+            raise ValueError("MEME_FACTORY_ADDRESS is not set in your .env configuration.")
+        
+        token_address = Web3.to_checksum_address(token_address)
+        # Query pools(tokenAddress)
+        # Returns: (address tokenAddress, uint256 tokenReserves, uint256 ethReserves, bool tradingActive)
+        res = await self.query_contract(factory_address, "pools", [token_address], "MemeFactory")
+        return {
+            "token_address": res[0],
+            "token_reserves": res[1],
+            "eth_reserves": res[2],
+            "trading_active": res[3]
+        }
+
+    async def estimate_meme_trade_output(self, token_address, trade_type, amount):
+        """Estimates output amount (in tokens or ETH) based on virtual bonding curve."""
+        reserves = await self.get_meme_pool_reserves(token_address)
+        token_reserves = reserves["token_reserves"]
+        eth_reserves = reserves["eth_reserves"]
+        
+        if not reserves["trading_active"]:
+            raise ValueError("Trading is not active for this meme token.")
+            
+        trade_type = trade_type.lower()
+        if trade_type == "buy":
+            # amount is in ETH
+            eth_input_wei = Web3.to_wei(amount, 'ether')
+            k = token_reserves * eth_reserves
+            new_eth_reserves = eth_reserves + eth_input_wei
+            new_token_reserves = k // new_eth_reserves
+            tokens_out_raw = token_reserves - new_token_reserves
+            
+            return {
+                "input_amount": float(amount),
+                "input_symbol": "ETH",
+                "estimated_output": tokens_out_raw / (10**18),
+                "estimated_output_raw": tokens_out_raw,
+                "output_symbol": "TOKEN",
+                "price_impact_percent": ((eth_input_wei / eth_reserves) * 100)
+            }
+        elif trade_type == "sell":
+            # amount is in tokens
+            token_input_raw = int(float(amount) * (10**18))
+            k = token_reserves * eth_reserves
+            new_token_reserves = token_reserves + token_input_raw
+            new_eth_reserves = k // new_token_reserves
+            eth_out_wei = eth_reserves - new_eth_reserves
+            
+            return {
+                "input_amount": float(amount),
+                "input_symbol": "TOKEN",
+                "estimated_output": float(Web3.from_wei(eth_out_wei, 'ether')),
+                "estimated_output_raw": eth_out_wei,
+                "output_symbol": "ETH",
+                "price_impact_percent": ((token_input_raw / token_reserves) * 100)
+            }
+        else:
+            raise ValueError(f"Invalid trade_type '{trade_type}'. Must be 'buy' or 'sell'.")
+
+    async def buy_meme_token(self, token_address, eth_amount, max_slippage=0.01, min_output_amount=None):
+        """Buys meme tokens by sending ETH to the buyMemeToken method on the factory with slippage protection."""
         factory_address = os.getenv("MEME_FACTORY_ADDRESS")
         if not factory_address:
             raise ValueError("MEME_FACTORY_ADDRESS is not set in your .env configuration.")
             
         token_address = Web3.to_checksum_address(token_address)
         value_wei = Web3.to_wei(eth_amount, 'ether')
+        
+        # Pre-flight slippage check
+        estimate = await self.estimate_meme_trade_output(token_address, "buy", eth_amount)
+        if min_output_amount is not None:
+            if estimate["estimated_output"] < float(min_output_amount):
+                raise ValueError(f"Slippage limit exceeded: estimated {estimate['estimated_output']} < minimum {min_output_amount}")
         
         args = [token_address]
         tx = await self.estimate_and_build_tx(
@@ -297,13 +365,19 @@ class Web3Helper:
         receipt = await self.wait_for_confirmation(tx_hash)
         return receipt
 
-    async def sell_meme_token(self, token_address, token_amount):
-        """Sells meme tokens by calling the sellMemeToken method on the factory."""
+    async def sell_meme_token(self, token_address, token_amount, max_slippage=0.01, min_output_amount=None):
+        """Sells meme tokens by calling the sellMemeToken method on the factory with slippage protection."""
         factory_address = os.getenv("MEME_FACTORY_ADDRESS")
         if not factory_address:
             raise ValueError("MEME_FACTORY_ADDRESS is not set in your .env configuration.")
             
         token_address = Web3.to_checksum_address(token_address)
+        
+        # Pre-flight slippage check
+        estimate = await self.estimate_meme_trade_output(token_address, "sell", token_amount)
+        if min_output_amount is not None:
+            if estimate["estimated_output"] < float(min_output_amount):
+                raise ValueError(f"Slippage limit exceeded: estimated {estimate['estimated_output']} < minimum {min_output_amount}")
         
         # Format token input with 18 decimals
         token_amount_raw = int(float(token_amount) * (10**18))

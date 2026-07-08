@@ -162,6 +162,23 @@ async def run_mcp_test():
     send_request(scan_request)
     await asyncio.sleep(0.5)
 
+    # Step 9: Estimate trade output (pre-flight checks)
+    estimate_request = {
+        "jsonrpc": "2.0",
+        "id": 9,
+        "method": "tools/call",
+        "params": {
+            "name": "estimate_meme_trade_output",
+            "arguments": {
+                "token_address": "0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168",
+                "trade_type": "buy",
+                "amount": 0.05
+            }
+        }
+    }
+    send_request(estimate_request)
+    await asyncio.sleep(0.5)
+
     # Clean up subprocess
     process.terminate()
     process.wait()

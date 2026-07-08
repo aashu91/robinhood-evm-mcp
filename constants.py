@@ -134,6 +134,18 @@ PREPACKAGED_ABIS = {
             "type": "function"
         },
         {
+            "inputs": [{"name": "", "type": "address"}],
+            "name": "pools",
+            "outputs": [
+                {"name": "tokenAddress", "type": "address"},
+                {"name": "tokenReserves", "type": "uint256"},
+                {"name": "ethReserves", "type": "uint256"},
+                {"name": "tradingActive", "type": "bool"}
+            ],
+            "stateMutability": "view",
+            "type": "function"
+        },
+        {
             "inputs": [
                 {"name": "tokenAddress", "type": "address"},
                 {"name": "tokenAmount", "type": "uint256"}
