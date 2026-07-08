@@ -93,7 +93,7 @@ async def run_mcp_test():
     send_request(balance_request)
     await asyncio.sleep(0.5)
 
-    # Step 5: Call get_cross_chain_swap_quote for 0.1 SOL (100000000 raw) from Solana to Arbitrum
+    # Step 5: Call get_cross_chain_swap_quote for 0.01 ETH from Base to Arbitrum
     cross_chain_request = {
         "jsonrpc": "2.0",
         "id": 5,
@@ -101,12 +101,12 @@ async def run_mcp_test():
         "params": {
             "name": "get_cross_chain_swap_quote",
             "arguments": {
-                "src_chain_id": 7565164,
-                "src_token": "SOL",
-                "dest_chain_id": 42161,
+                "src_chain_id": 8453, # Base
+                "src_token": "ETH",
+                "dest_chain_id": 42161, # Arbitrum
                 "dest_token": "ETH",
-                "amount_raw": "100000000",
-                "recipient": "0x0000000000000000000000000000000000000000"
+                "amount_raw": "10000000000000000", # 0.01 ETH
+                "recipient": "0x742d35Cc6634C0532925a3b844Bc454e4438f44e"
             }
         }
     }
