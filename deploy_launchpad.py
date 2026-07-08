@@ -96,7 +96,7 @@ async def deploy():
     signed_tx = w3.eth.account.sign_transaction(construct_tx, private_key=account.key)
     
     print("Broadcasting transaction...")
-    tx_hash = w3.eth.send_raw_transaction(signed_tx.rawTransaction)
+    tx_hash = w3.eth.send_raw_transaction(signed_tx.raw_transaction)
     tx_hex = w3.to_hex(tx_hash)
     print(f"Transaction hash: {tx_hex}")
 
