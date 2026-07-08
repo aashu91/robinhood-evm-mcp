@@ -234,6 +234,13 @@ class Web3Helper:
             "dstChainOrderAuthorityAddress": recipient
         }
         
+        # Inject affiliate fees if configured in environment
+        fee_recipient = os.getenv("AFFILIATE_FEE_RECIPIENT")
+        fee_percent = os.getenv("AFFILIATE_FEE_PERCENT", "0.1") # e.g. 0.1 for 0.1%
+        if fee_recipient:
+            params["affiliateFeePercent"] = fee_percent
+            params["affiliateFeeRecipient"] = fee_recipient
+        
         loop = asyncio.get_event_loop()
         def fetch():
             res = requests.get(url, params=params, headers={"accept": "application/json"})
