@@ -71,10 +71,13 @@ Add this to your `claude_desktop_config.json` (usually at `~/.config/Claude/clau
 
 ## 🛠️ Exposed MCP Tools
 
-1. **`get_evm_balance(address, token_address)`**: Fetches native ETH or ERC-20 token balance. Supports ticker overrides (`USDG`, `AAPL`, `TSLA`).
+1. **`get_evm_balance(address, token_address)`**: Fetches native ETH or ERC-20 token balance. Supports ticker overrides (`USDG`, `AAPL`, `TSLA` or dynamically registered tickers).
 2. **`query_smart_contract(contract_address, function_name, args, abi_type)`**: Executes a read-only query (call) on a smart contract.
 3. **`simulate_evm_transaction(contract_address, function_name, args, value_wei)`**: Dry-runs a state-changing transaction and returns estimated gas details.
 4. **`send_evm_transaction(contract_address, function_name, args, value_wei, wait_confirm)`**: Builds, signs, and broadcasts a transaction.
 5. **`get_robinhood_ticker(ticker)`**: Retrieves the verified contract address of a tokenized stock or USDG.
 6. **`switch_rpc_network(network_name)`**: Changes the active network configuration dynamically (options: `robinhood-mainnet`, `robinhood-testnet`, `localhost`).
 7. **`register_custom_abi(contract_address, abi_json)`**: Saves custom smart contract ABIs to the local SQLite database mapping.
+8. **`scan_launched_tokens(force_refresh)`**: Queries the MemeFactory smart contract on-chain to scan and index all deployed meme tokens.
+9. **`import_custom_token(ticker, address, name, decimals)`**: Dynamically imports custom addresses as tickers, saving them to local SQLite cache.
+

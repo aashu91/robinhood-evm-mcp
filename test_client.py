@@ -113,6 +113,55 @@ async def run_mcp_test():
     send_request(cross_chain_request)
     await asyncio.sleep(0.5)
 
+    # Step 6: Import custom token
+    import_request = {
+        "jsonrpc": "2.0",
+        "id": 6,
+        "method": "tools/call",
+        "params": {
+            "name": "import_custom_token",
+            "arguments": {
+                "ticker": "TESTMEME",
+                "address": "0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168",
+                "name": "Test Meme Token",
+                "decimals": 18
+            }
+        }
+    }
+    send_request(import_request)
+    await asyncio.sleep(0.5)
+
+    # Step 7: Query balance of imported TESTMEME to verify resolution
+    resolve_request = {
+        "jsonrpc": "2.0",
+        "id": 7,
+        "method": "tools/call",
+        "params": {
+            "name": "get_evm_balance",
+            "arguments": {
+                "address": "0x0000000000000000000000000000000000000000",
+                "token_address": "TESTMEME"
+            }
+        }
+    }
+    send_request(resolve_request)
+    await asyncio.sleep(0.5)
+
+    # Step 8: Scan launched tokens
+    scan_request = {
+        "jsonrpc": "2.0",
+        "id": 8,
+        "method": "tools/call",
+        "params": {
+            "name": "scan_launched_tokens",
+            "arguments": {
+                "force_refresh": False
+            }
+        }
+    }
+    send_request(scan_request)
+    await asyncio.sleep(0.5)
+
     # Clean up subprocess
     process.terminate()
     process.wait()

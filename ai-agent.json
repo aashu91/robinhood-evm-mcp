@@ -1,0 +1,133 @@
+{
+  "name": "Robinhood Chain Meme Launchpad & DEX Agent Interface",
+  "description": "Integration schema and ABIs for autonomous AI agents to execute trades, deploy tokens, and scan assets on Robinhood Chain L2.",
+  "rpc_endpoints": {
+    "robinhood-mainnet": {
+      "rpc_url": "https://rpc.mainnet.chain.robinhood.com",
+      "chain_id": 4663,
+      "explorer": "https://robinhoodchain.blockscout.com"
+    },
+    "robinhood-testnet": {
+      "rpc_url": "https://rpc.testnet.chain.robinhood.com",
+      "chain_id": 46630,
+      "explorer": "https://explorer.testnet.chain.robinhood.com"
+    }
+  },
+  "contracts": {
+    "MemeFactory": {
+      "address": "0x322f214995d4808660557F5744Ae8792AE1129cA",
+      "abi": [
+        {
+          "inputs": [
+            {"name": "name", "type": "string"},
+            {"name": "symbol", "type": "string"},
+            {"name": "supply", "type": "uint256"}
+          ],
+          "name": "deployMemeToken",
+          "outputs": [{"name": "", "type": "address"}],
+          "stateMutability": "payable",
+          "type": "function"
+        },
+        {
+          "inputs": [],
+          "name": "getMemeCount",
+          "outputs": [{"name": "", "type": "uint256"}],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [{"name": "", "type": "uint256"}],
+          "name": "allMemeTokens",
+          "outputs": [{"name": "", "type": "address"}],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [{"name": "tokenAddress", "type": "address"}],
+          "name": "buyMemeToken",
+          "outputs": [],
+          "stateMutability": "payable",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {"name": "tokenAddress", "type": "address"},
+            {"name": "tokenAmount", "type": "uint256"}
+          ],
+          "name": "sellMemeToken",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        }
+      ]
+    },
+    "MemeToken": {
+      "abi": [
+        {
+          "constant": true,
+          "inputs": [{"name": "_owner", "type": "address"}],
+          "name": "balanceOf",
+          "outputs": [{"name": "balance", "type": "uint256"}],
+          "type": "function"
+        },
+        {
+          "constant": false,
+          "inputs": [{"name": "_to", "type": "address"}, {"name": "_value", "type": "uint256"}],
+          "name": "transfer",
+          "outputs": [{"name": "success", "type": "bool"}],
+          "type": "function"
+        },
+        {
+          "constant": false,
+          "inputs": [{"name": "_spender", "type": "address"}, {"name": "_value", "type": "uint256"}],
+          "name": "approve",
+          "outputs": [{"name": "success", "type": "bool"}],
+          "type": "function"
+        },
+        {
+          "constant": true,
+          "inputs": [],
+          "name": "decimals",
+          "outputs": [{"name": "", "type": "uint8"}],
+          "type": "function"
+        },
+        {
+          "constant": true,
+          "inputs": [],
+          "name": "symbol",
+          "outputs": [{"name": "", "type": "string"}],
+          "type": "function"
+        }
+      ]
+    }
+  },
+  "snippets": {
+    "python_trade_example": [
+      "from web3 import Web3",
+      "",
+      "# Connect to Robinhood Chain L2",
+      "w3 = Web3(Web3.HTTPProvider('https://rpc.mainnet.chain.robinhood.com'))",
+      "",
+      "# Setup contract and private key",
+      "private_key = '0x...'",
+      "account = w3.eth.account.from_key(private_key)",
+      "factory_address = '0x322f214995d4808660557F5744Ae8792AE1129cA'",
+      "token_address = '0x...'",
+      "",
+      "# Buy Meme Coin via virtual bonding curve",
+      "factory_abi = [...]  # Loaded from MemeFactory ABI above",
+      "contract = w3.eth.contract(address=factory_address, abi=factory_abi)",
+      "",
+      "tx = contract.functions.buyMemeToken(token_address).build_transaction({",
+      "    'from': account.address,",
+      "    'nonce': w3.eth.get_transaction_count(account.address),",
+      "    'value': w3.to_wei(0.01, 'ether'),",
+      "    'gasPrice': int(w3.eth.gas_price * 1.1),",
+      "    'chainId': 4663",
+      "})",
+      "signed_tx = w3.eth.account.sign_transaction(tx, private_key=account.key)",
+      "tx_hash = w3.eth.send_raw_transaction(signed_tx.rawTransaction)",
+      "print(f'Transaction broadcasted: {w3.to_hex(tx_hash)}')"
+    ]
+  }
+}

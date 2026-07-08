@@ -7,7 +7,7 @@ import traceback
 import asyncio
 from web3 import Web3
 from constants import TICKER_MAPPINGS, NETWORKS
-from abi_manager import save_abi, get_abi
+from abi_manager import save_abi, get_abi, resolve_ticker_to_address
 from web3_helper import Web3Helper
 
 # Initialize Web3Helper instance
@@ -160,6 +160,30 @@ TOOLS = [
             },
             "required": ["token_address", "token_amount"]
         }
+    },
+    {
+        "name": "scan_launched_tokens",
+        "description": "Queries the MemeFactory contract to discover all launched tokens, fetches their metadata on-chain, and caches/registers them.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "force_refresh": {"type": "boolean", "description": "Optional: Force a full on-chain refresh instead of returning cached SQLite lists.", "default": False}
+            }
+        }
+    },
+    {
+        "name": "import_custom_token",
+        "description": "Manually imports a custom token by symbol and contract address, caching it dynamically for resolution by ticker.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "ticker": {"type": "string", "description": "The symbol/ticker of the token (e.g. DAPP)."},
+                "address": {"type": "string", "description": "The contract address of the token (0x...)."},
+                "name": {"type": "string", "description": "Optional: The human-readable name of the token."},
+                "decimals": {"type": "integer", "description": "Optional: Number of decimals (default: 18).", "default": 18}
+            },
+            "required": ["ticker", "address"]
+        }
     }
 ]
 
@@ -167,8 +191,10 @@ TOOLS = [
 async def dispatch_tool(name, arguments):
     # Resolve ticker shortcuts in addresses
     for key in ["contract_address", "token_address"]:
-        if key in arguments and arguments[key] in TICKER_MAPPINGS:
-            arguments[key] = TICKER_MAPPINGS[arguments[key]]
+        if key in arguments:
+            resolved = await resolve_ticker_to_address(arguments[key])
+            if resolved:
+                arguments[key] = resolved
 
     if name == "get_evm_balance":
         address = arguments["address"]
@@ -268,6 +294,19 @@ async def dispatch_tool(name, arguments):
         t_amt = arguments["token_amount"]
         receipt = await helper.sell_meme_token(t_addr, t_amt)
         return f"Meme coin sold successfully!\nReceipt:\n{json.dumps(receipt, indent=2)}"
+
+    elif name == "scan_launched_tokens":
+        force_refresh = arguments.get("force_refresh", False)
+        tokens = await helper.scan_factory_tokens(force_refresh)
+        return json.dumps(tokens, indent=2)
+
+    elif name == "import_custom_token":
+        ticker = arguments["ticker"]
+        addr = arguments["address"]
+        t_name = arguments.get("name")
+        dec = arguments.get("decimals", 18)
+        res = await helper.import_custom_token(ticker, addr, t_name, dec)
+        return f"Successfully imported custom token!\n{json.dumps(res, indent=2)}"
 
     else:
         raise ValueError(f"Unknown tool: {name}")

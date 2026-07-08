@@ -321,5 +321,81 @@ class Web3Helper:
         receipt = await self.wait_for_confirmation(tx_hash)
         return receipt
 
+    async def scan_factory_tokens(self, force_refresh=False):
+        """Queries the MemeFactory contract to discover all launched tokens and registers them."""
+        factory_address = os.getenv("MEME_FACTORY_ADDRESS")
+        if not factory_address:
+            raise ValueError("MEME_FACTORY_ADDRESS is not set in your .env configuration.")
+        
+        factory_address = Web3.to_checksum_address(factory_address)
+        
+        # Check if we already have tokens registered and not force_refresh
+        from abi_manager import get_registered_tokens, register_token
+        if not force_refresh:
+            existing = await get_registered_tokens()
+            # If we have scanned tokens, return them
+            scanned = [t for t in existing if t["is_scanned"] == 1]
+            if scanned:
+                return scanned
+
+        # Call getMemeCount on the factory
+        try:
+            count = await self.query_contract(factory_address, "getMemeCount", [], "MemeFactory")
+        except Exception:
+            count = 0
+            
+        scanned_tokens = []
+        for i in range(count):
+            try:
+                token_addr = await self.query_contract(factory_address, "allMemeTokens", [i], "MemeFactory")
+                token_addr = Web3.to_checksum_address(token_addr)
+                
+                # Fetch token symbol and name
+                symbol = await self.query_contract(token_addr, "symbol", [], "ERC20")
+                name = await self.query_contract(token_addr, "name", [], "ERC20")
+                decimals = await self.query_contract(token_addr, "decimals", [], "ERC20")
+                
+                # Register in SQLite database
+                await register_token(symbol, token_addr, name, decimals, is_scanned=1)
+                scanned_tokens.append({
+                    "ticker": symbol,
+                    "address": token_addr,
+                    "name": name,
+                    "decimals": decimals,
+                    "is_scanned": 1
+                })
+            except Exception:
+                pass
+                
+        return scanned_tokens
+
+    async def import_custom_token(self, ticker, address, name=None, decimals=18):
+        """Manually registers a custom token mapping in the local database."""
+        from abi_manager import register_token
+        address = Web3.to_checksum_address(address)
+        ticker = ticker.upper()
+        
+        # Try to verify decimals and name on-chain if not provided
+        if not name:
+            try:
+                name = await self.query_contract(address, "name", [], "ERC20")
+            except Exception:
+                name = ticker
+        if decimals == 18:
+            try:
+                decimals = await self.query_contract(address, "decimals", [], "ERC20")
+            except Exception:
+                decimals = 18
+                
+        await register_token(ticker, address, name, decimals, is_scanned=0)
+        return {
+            "ticker": ticker,
+            "address": address,
+            "name": name,
+            "decimals": decimals,
+            "is_scanned": 0
+        }
+
+
 
 

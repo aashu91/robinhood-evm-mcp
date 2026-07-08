@@ -32,7 +32,12 @@ By implementing the Model Context Protocol (MCP), it allows AI agents to dynamic
 - **Deliverable:** Integrated REST-based cross-chain swap estimation tool supporting Solana, Base, and Arbitrum source inputs.
 - **Verification:** Local test client successfully executed JSON-RPC quote requests fetching live bridge rates.
 
-### Milestone 3: Dynamic Multi-Chain Swapping (Proposed - 4 weeks)
+### Milestone 3: Dynamic Token Import & Scanner (Completed)
+- **Deliverable:** Integrated on-chain scanner querying MemeFactory contracts and dynamic custom address imports cached in SQLite database.
+- **Verification:** Successfully verified dynamic import tools and ticker resolution logic in test suites.
+
+### Milestone 4: Dynamic Multi-Chain Swapping (Proposed - 4 weeks)
 - **Deliverable:** Implementing automated EVM-to-EVM bridge executions directly inside the server using private keys.
 - **Funding Requested:** $8,000 USD (or equivalent in ARB).
 - **Target Allocation:** Code audits, extending test coverage, and building out a developer frontend dashboard showing transaction history.
+
