@@ -250,3 +250,29 @@ class Web3Helper:
         result = await loop.run_in_executor(None, fetch)
         return result
 
+    async def deploy_meme_token(self, name, symbol, supply, value_wei=None):
+        """Builds, signs, and executes the transaction to deploy a new meme token through the factory."""
+        factory_address = os.getenv("MEME_FACTORY_ADDRESS")
+        if not factory_address:
+            raise ValueError("MEME_FACTORY_ADDRESS is not set in your .env configuration.")
+            
+        if value_wei is None:
+            value_wei = Web3.to_wei(0.005, 'ether')
+                
+        # Supply formatting: raw decimals (18)
+        supply_raw = int(supply) * (10**18)
+        
+        args = [name, symbol, supply_raw]
+        tx = await self.estimate_and_build_tx(
+            contract_address=factory_address,
+            function_name="deployMemeToken",
+            args=args,
+            abi_type="MemeFactory",
+            value_wei=value_wei
+        )
+        
+        tx_hash = await self.sign_and_send_transaction(tx)
+        receipt = await self.wait_for_confirmation(tx_hash)
+        return receipt
+
+

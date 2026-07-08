@@ -99,5 +99,32 @@ PREPACKAGED_ABIS = {
             "stateMutability": "nonpayable",
             "type": "function"
         }
+    ],
+    "MemeFactory": [
+        {
+            "inputs": [
+                {"name": "name", "type": "string"},
+                {"name": "symbol", "type": "string"},
+                {"name": "supply", "type": "uint256"}
+            ],
+            "name": "deployMemeToken",
+            "outputs": [{"name": "", "type": "address"}],
+            "stateMutability": "payable",
+            "type": "function"
+        },
+        {
+            "inputs": [],
+            "name": "getMemeCount",
+            "outputs": [{"name": "", "type": "uint256"}],
+            "stateMutability": "view",
+            "type": "function"
+        },
+        {
+            "inputs": [{"name": "", "type": "uint256"}],
+            "name": "allMemeTokens",
+            "outputs": [{"name": "", "type": "address"}],
+            "stateMutability": "view",
+            "type": "function"
+        }
     ]
 }

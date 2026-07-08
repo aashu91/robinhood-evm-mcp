@@ -122,6 +122,20 @@ TOOLS = [
             },
             "required": ["src_chain_id", "src_token", "dest_chain_id", "dest_token", "amount_raw", "recipient"]
         }
+    },
+    {
+        "name": "deploy_meme_coin",
+        "description": "Deploys a standard ERC-20 meme coin on Robinhood Chain L2 via our custom MemeFactory launchpad (charges 0.005 ETH fee).",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "name": {"type": "string", "description": "The name of the meme token (e.g. Robinhood Doge)."},
+                "symbol": {"type": "string", "description": "The ticker symbol of the token (e.g. RHDOGE)."},
+                "supply": {"type": "integer", "description": "Total initial supply of the token (e.g. 1000000000 for 1 Billion).", "default": 1000000000},
+                "value_wei": {"type": "integer", "description": "Optional: Deployment fee in Wei (defaults to 0.005 ETH contract fee)."}
+            },
+            "required": ["name", "symbol"]
+        }
     }
 ]
 
@@ -210,6 +224,14 @@ async def dispatch_tool(name, arguments):
         snd = arguments.get("sender")
         res = await helper.get_cross_chain_quote(src_id, src_tok, dest_id, dest_tok, amt, recip, snd)
         return json.dumps(res, indent=2)
+
+    elif name == "deploy_meme_coin":
+        m_name = arguments["name"]
+        m_symbol = arguments["symbol"]
+        m_supply = arguments.get("supply", 1000000000)
+        m_val = arguments.get("value_wei")
+        receipt = await helper.deploy_meme_token(m_name, m_symbol, m_supply, m_val)
+        return f"Meme coin deployed successfully!\nReceipt:\n{json.dumps(receipt, indent=2)}"
 
     else:
         raise ValueError(f"Unknown tool: {name}")
