@@ -125,6 +125,23 @@ PREPACKAGED_ABIS = {
             "outputs": [{"name": "", "type": "address"}],
             "stateMutability": "view",
             "type": "function"
+        },
+        {
+            "inputs": [{"name": "tokenAddress", "type": "address"}],
+            "name": "buyMemeToken",
+            "outputs": [],
+            "stateMutability": "payable",
+            "type": "function"
+        },
+        {
+            "inputs": [
+                {"name": "tokenAddress", "type": "address"},
+                {"name": "tokenAmount", "type": "uint256"}
+            ],
+            "name": "sellMemeToken",
+            "outputs": [],
+            "stateMutability": "nonpayable",
+            "type": "function"
         }
     ]
 }

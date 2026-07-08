@@ -275,4 +275,51 @@ class Web3Helper:
         receipt = await self.wait_for_confirmation(tx_hash)
         return receipt
 
+    async def buy_meme_token(self, token_address, eth_amount):
+        """Buys meme tokens by sending ETH to the buyMemeToken method on the factory."""
+        factory_address = os.getenv("MEME_FACTORY_ADDRESS")
+        if not factory_address:
+            raise ValueError("MEME_FACTORY_ADDRESS is not set in your .env configuration.")
+            
+        token_address = Web3.to_checksum_address(token_address)
+        value_wei = Web3.to_wei(eth_amount, 'ether')
+        
+        args = [token_address]
+        tx = await self.estimate_and_build_tx(
+            contract_address=factory_address,
+            function_name="buyMemeToken",
+            args=args,
+            abi_type="MemeFactory",
+            value_wei=value_wei
+        )
+        
+        tx_hash = await self.sign_and_send_transaction(tx)
+        receipt = await self.wait_for_confirmation(tx_hash)
+        return receipt
+
+    async def sell_meme_token(self, token_address, token_amount):
+        """Sells meme tokens by calling the sellMemeToken method on the factory."""
+        factory_address = os.getenv("MEME_FACTORY_ADDRESS")
+        if not factory_address:
+            raise ValueError("MEME_FACTORY_ADDRESS is not set in your .env configuration.")
+            
+        token_address = Web3.to_checksum_address(token_address)
+        
+        # Format token input with 18 decimals
+        token_amount_raw = int(float(token_amount) * (10**18))
+        
+        args = [token_address, token_amount_raw]
+        tx = await self.estimate_and_build_tx(
+            contract_address=factory_address,
+            function_name="sellMemeToken",
+            args=args,
+            abi_type="MemeFactory",
+            value_wei=0
+        )
+        
+        tx_hash = await self.sign_and_send_transaction(tx)
+        receipt = await self.wait_for_confirmation(tx_hash)
+        return receipt
+
+
 

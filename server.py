@@ -136,6 +136,30 @@ TOOLS = [
             },
             "required": ["name", "symbol"]
         }
+    },
+    {
+        "name": "buy_meme_coin",
+        "description": "Buys a meme coin launched on our MemeFactory platform by sending a specified amount of ETH.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "token_address": {"type": "string", "description": "The contract address of the target meme token (0x...)."},
+                "eth_amount": {"type": "number", "description": "The amount of ETH to spend on the swap (e.g. 0.05)."}
+            },
+            "required": ["token_address", "eth_amount"]
+        }
+    },
+    {
+        "name": "sell_meme_coin",
+        "description": "Sells a specified amount of meme coin tokens back to the MemeFactory virtual bonding curve.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "token_address": {"type": "string", "description": "The contract address of the target meme token (0x...)."},
+                "token_amount": {"type": "string", "description": "The number of tokens to sell (string to prevent decimal errors, e.g. 500000)."}
+            },
+            "required": ["token_address", "token_amount"]
+        }
     }
 ]
 
@@ -232,6 +256,18 @@ async def dispatch_tool(name, arguments):
         m_val = arguments.get("value_wei")
         receipt = await helper.deploy_meme_token(m_name, m_symbol, m_supply, m_val)
         return f"Meme coin deployed successfully!\nReceipt:\n{json.dumps(receipt, indent=2)}"
+
+    elif name == "buy_meme_coin":
+        t_addr = arguments["token_address"]
+        eth_amt = arguments["eth_amount"]
+        receipt = await helper.buy_meme_token(t_addr, eth_amt)
+        return f"Meme coin purchased successfully!\nReceipt:\n{json.dumps(receipt, indent=2)}"
+
+    elif name == "sell_meme_coin":
+        t_addr = arguments["token_address"]
+        t_amt = arguments["token_amount"]
+        receipt = await helper.sell_meme_token(t_addr, t_amt)
+        return f"Meme coin sold successfully!\nReceipt:\n{json.dumps(receipt, indent=2)}"
 
     else:
         raise ValueError(f"Unknown tool: {name}")
