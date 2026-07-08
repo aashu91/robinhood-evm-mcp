@@ -238,6 +238,42 @@
         }
     }
 
+    async function switchNetwork() {
+        const targetChainId = "0x1237"; // Hex for 4663
+        try {
+            await window.ethereum.request({
+                method: "wallet_switchEthereumChain",
+                params: [{ chainId: targetChainId }],
+            });
+            return true;
+        } catch (switchError) {
+            if (switchError.code === 4902 || switchError.message.includes("4902")) {
+                try {
+                    await window.ethereum.request({
+                        method: "wallet_addEthereumChain",
+                        params: [{
+                            chainId: targetChainId,
+                            chainName: "Robinhood Chain Mainnet",
+                            nativeCurrency: {
+                                name: "Ethereum",
+                                symbol: "ETH",
+                                decimals: 18
+                            },
+                            rpcUrls: ["https://rpc.mainnet.chain.robinhood.com"],
+                            blockExplorerUrls: ["https://robinhoodchain.blockscout.com"]
+                        }],
+                    });
+                    return true;
+                } catch (addError) {
+                    showStatus("Error", "Failed to add Robinhood Chain to wallet: " + addError.message, "error");
+                    return false;
+                }
+            }
+            showStatus("Error", "Failed to switch to Robinhood Chain: " + switchError.message, "error");
+            return false;
+        }
+    }
+
     async function connectWallet() {
         if (typeof window.ethereum === "undefined") {
             showStatus("Error", "No Ethereum wallet detected. Open this page inside Rabby mobile browser.", "error");
@@ -251,14 +287,30 @@
             signer = provider.getSigner();
             const address = await signer.getAddress();
             
-            // Check network
-            const network = await provider.getNetwork();
+            // Switch network automatically if not already on Robinhood Chain Mainnet
+            let network = await provider.getNetwork();
+            if (network.chainId !== 4663) {
+                showStatus("Switching Network", "Switching wallet network to Robinhood Chain Mainnet...");
+                const success = await switchNetwork();
+                if (!success) return;
+                // Re-initialize provider
+                await new Promise(r => setTimeout(r, 1000));
+                provider = new ethers.providers.Web3Provider(window.ethereum);
+                signer = provider.getSigner();
+                network = await provider.getNetwork();
+            }
+
+            if (network.chainId !== 4663) {
+                showStatus("Wrong Network", "Please switch your wallet network to Robinhood Chain Mainnet to deploy.", "error");
+                return;
+            }
+            
             connectBtn.innerText = `Connected: ${address.substring(0, 6)}...${address.substring(38)}`;
             connectBtn.style.background = "linear-gradient(135deg, #10b981, #059669)";
             connectBtn.style.color = "#fff";
             
             deployBtn.disabled = false;
-            showStatus("Connected", `Ready to deploy. Network: ${network.name} (Chain ID: ${network.chainId})`);
+            showStatus("Connected", `Ready to deploy. Network: Robinhood Chain Mainnet (Chain ID: 4663)`);
         } catch (err) {
             showStatus("Connection Failed", err.message, "error");
         }
