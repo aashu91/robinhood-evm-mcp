@@ -1,0 +1,104 @@
+# test_client.py
+# A command-line verification harness to test the MCP server over stdio without a desktop
+
+import sys
+import json
+import asyncio
+import subprocess
+
+async def run_mcp_test():
+    print("==================================================")
+    print("🚀 Starting Robinhood EVM MCP Server Local Test...")
+    print("==================================================")
+    
+    # Launch server.py as a subprocess
+    process = subprocess.Popen(
+        [sys.executable, "server.py"],
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+    
+    def send_request(req):
+        payload = json.dumps(req) + "\n"
+        process.stdin.write(payload)
+        process.stdin.flush()
+        print(f"\n📥 CLIENT SENT: {json.dumps(req, indent=2)}")
+        
+        # Read response line
+        res_line = process.stdout.readline().strip()
+        if res_line:
+            response = json.loads(res_line)
+            print(f"📤 SERVER RESPONDED: {json.dumps(response, indent=2)}")
+            return response
+        else:
+            print("❌ No response from server.")
+            return None
+
+    # Step 1: Handshake (initialize)
+    init_request = {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "initialize",
+        "params": {
+            "protocolVersion": "2024-11-05",
+            "capabilities": {},
+            "clientInfo": {
+                "name": "mcp-cli-tester",
+                "version": "1.0"
+            }
+        }
+    }
+    send_request(init_request)
+    await asyncio.sleep(0.5)
+
+    # Step 2: Query Tools List
+    list_request = {
+        "jsonrpc": "2.0",
+        "id": 2,
+        "method": "tools/list",
+        "params": {}
+    }
+    send_request(list_request)
+    await asyncio.sleep(0.5)
+
+    # Step 3: Call get_robinhood_ticker tool for USDG
+    ticker_request = {
+        "jsonrpc": "2.0",
+        "id": 3,
+        "method": "tools/call",
+        "params": {
+            "name": "get_robinhood_ticker",
+            "arguments": {
+                "ticker": "USDG"
+            }
+        }
+    }
+    send_request(ticker_request)
+    await asyncio.sleep(0.5)
+
+    # Step 4: Call get_evm_balance for a zero address (read-only blockchain call)
+    balance_request = {
+        "jsonrpc": "2.0",
+        "id": 4,
+        "method": "tools/call",
+        "params": {
+            "name": "get_evm_balance",
+            "arguments": {
+                "address": "0x0000000000000000000000000000000000000000"
+            }
+        }
+    }
+    send_request(balance_request)
+    await asyncio.sleep(0.5)
+
+    # Clean up subprocess
+    process.terminate()
+    process.wait()
+    print("\n==================================================")
+    print("✅ MCP Local Verification Finished Successfully.")
+    print("==================================================")
+
+if __name__ == "__main__":
+    asyncio.run(run_mcp_test())

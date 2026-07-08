@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+env/
+.env
+
+# Database Cache
+abi_cache.db
+~/.config/robinhood-evm-mcp/
+
+# Local tests/logs
+*.log
