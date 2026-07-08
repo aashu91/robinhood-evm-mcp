@@ -6,7 +6,7 @@ This server acts as a Web3/EVM bridge, allowing local AI agents (e.g., Claude, C
 
 ---
 
-## Why This Matters (Inversion Thinking & Shovel Selling)
+## Why This Matters 
 Traditional developers entering a newly launched blockchain (like Robinhood Chain, launched July 2026) face significant friction:
 1. **Context Window Bloat:** Passing complex, multi-thousand-line JSON ABIs to an LLM wastes tokens and causes memory degradation.
 2. **AI-to-Web3 Gap:** AI models cannot natively compute gas, sign transactions, or verify contract logic without extensive boilerplate code.
