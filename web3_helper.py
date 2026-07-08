@@ -205,3 +205,41 @@ class Web3Helper:
             "status": "TIMEOUT",
             "message": f"Transaction not mined within {timeout} seconds."
         }
+
+    async def get_cross_chain_quote(self, src_chain_id, src_token, dest_chain_id, dest_token, amount_raw, recipient, sender=None):
+        """Fetches cross-chain swap routing and transaction details using deBridge DLN API."""
+        import requests
+        
+        # Resolve native tickers
+        if src_token.upper() == "SOL":
+            src_token = "11111111111111111111111111111111"
+        elif src_token.upper() == "ETH":
+            src_token = "0x0000000000000000000000000000000000000000"
+            
+        if dest_token.upper() == "ETH":
+            dest_token = "0x0000000000000000000000000000000000000000"
+            
+        sender = sender or recipient
+        
+        url = "https://dln.debridge.finance/v1.0/dln/order/create-tx"
+        params = {
+            "srcChainId": int(src_chain_id),
+            "srcChainTokenIn": src_token,
+            "srcChainTokenInAmount": str(amount_raw),
+            "dstChainId": int(dest_chain_id),
+            "dstChainTokenOut": dest_token,
+            "dstChainTokenOutAmount": "auto",
+            "dstChainTokenOutRecipient": recipient,
+            "srcChainOrderAuthorityAddress": sender,
+            "dstChainOrderAuthorityAddress": recipient
+        }
+        
+        loop = asyncio.get_event_loop()
+        def fetch():
+            res = requests.get(url, params=params, headers={"accept": "application/json"})
+            res.raise_for_status()
+            return res.json()
+            
+        result = await loop.run_in_executor(None, fetch)
+        return result
+

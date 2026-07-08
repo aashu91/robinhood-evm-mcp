@@ -105,6 +105,23 @@ TOOLS = [
             },
             "required": ["contract_address", "abi_json"]
         }
+    },
+    {
+        "name": "get_cross_chain_swap_quote",
+        "description": "Estimates and returns transaction details for cross-chain swaps (e.g. Solana to Robinhood Chain) using the deBridge DLN API.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "src_chain_id": {"type": "integer", "description": "Source chain ID (e.g., 7565164 for Solana, 8453 for Base, 42161 for Arbitrum)."},
+                "src_token": {"type": "string", "description": "Address or ticker (SOL/ETH) of token on the source chain."},
+                "dest_chain_id": {"type": "integer", "description": "Destination chain ID (e.g., 42161 for Arbitrum, 4663 for Robinhood Chain)."},
+                "dest_token": {"type": "string", "description": "Address or ticker of token on the destination chain."},
+                "amount_raw": {"type": "string", "description": "Raw input amount including token decimals (string to prevent int overflow)."},
+                "recipient": {"type": "string", "description": "Wallet address that will receive the tokens on the destination chain."},
+                "sender": {"type": "string", "description": "Optional: Wallet address managing the swap on the source chain."}
+            },
+            "required": ["src_chain_id", "src_token", "dest_chain_id", "dest_token", "amount_raw", "recipient"]
+        }
     }
 ]
 
@@ -182,6 +199,17 @@ async def dispatch_tool(name, arguments):
         abi_json = arguments["abi_json"]
         signatures = await save_abi(contract_addr, abi_json)
         return f"Successfully cached ABI for {contract_addr}.\nExposed function signatures:\n{signatures}"
+
+    elif name == "get_cross_chain_swap_quote":
+        src_id = arguments["src_chain_id"]
+        src_tok = arguments["src_token"]
+        dest_id = arguments["dest_chain_id"]
+        dest_tok = arguments["dest_token"]
+        amt = arguments["amount_raw"]
+        recip = arguments["recipient"]
+        snd = arguments.get("sender")
+        res = await helper.get_cross_chain_quote(src_id, src_tok, dest_id, dest_tok, amt, recip, snd)
+        return json.dumps(res, indent=2)
 
     else:
         raise ValueError(f"Unknown tool: {name}")
