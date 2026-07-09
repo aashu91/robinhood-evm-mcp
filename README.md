@@ -52,7 +52,7 @@ ROBINHOOD_CHAIN_PRIVATE_KEY="0x..."
 Go to **Settings > Models > MCP** and add a new server:
 - **Name:** `Robinhood-EVM-MCP`
 - **Type:** `command`
-- **Command:** `python /data/data/com.termux/files/home/robinhood-evm-mcp/server.py`
+- **Command:** `python /data/data/com.termux/files/home/robinhood-evm-mcp/mcp_server.py`
 
 ### 2. Claude Desktop
 Add this to your `claude_desktop_config.json` (usually at `~/.config/Claude/claude_desktop_config.json`):
@@ -61,7 +61,7 @@ Add this to your `claude_desktop_config.json` (usually at `~/.config/Claude/clau
   "mcpServers": {
     "robinhood-evm-mcp": {
       "command": "python",
-      "args": ["/data/data/com.termux/files/home/robinhood-evm-mcp/server.py"]
+      "args": ["/data/data/com.termux/files/home/robinhood-evm-mcp/mcp_server.py"]
     }
   }
 }

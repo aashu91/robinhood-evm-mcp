@@ -10,7 +10,7 @@ test_client.py
 web3_helper.py
 abi_manager.py
 constants.py
-server.py
+mcp_server.py
 deploy_launchpad.py
 generate_index_html.py
 generate_deploy_html.py

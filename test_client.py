@@ -11,9 +11,9 @@ async def run_mcp_test():
     print("🚀 Starting Robinhood EVM MCP Server Local Test...")
     print("==================================================")
     
-    # Launch server.py as a subprocess
+    # Launch mcp_server.py as a subprocess
     process = subprocess.Popen(
-        [sys.executable, "server.py"],
+        [sys.executable, "mcp_server.py"],
         stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
