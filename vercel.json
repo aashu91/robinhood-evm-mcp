@@ -1,0 +1,8 @@
+{
+  "cleanUrls": true,
+  "routes": [
+    { "src": "/deploy", "dest": "/deploy_app.html" },
+    { "src": "/ethers.umd.min.js", "dest": "/ethers.umd.min.js" },
+    { "src": "/(.*)", "dest": "/index.html" }
+  ]
+}

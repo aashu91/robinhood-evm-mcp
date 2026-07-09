@@ -1,0 +1,20 @@
+# Ignore Python backend files for static Vercel deployment
+*.py
+requirements.txt
+MemeFactory.json
+MemeFactoryV2.json
+MemeToken.json
+contracts/
+__pycache__/
+test_client.py
+web3_helper.py
+abi_manager.py
+constants.py
+server.py
+deploy_launchpad.py
+generate_index_html.py
+generate_deploy_html.py
+compile.cjs
+compileV2.cjs
+node_modules/
+.git/
