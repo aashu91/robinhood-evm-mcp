@@ -299,7 +299,13 @@ class Web3Helper:
         eth_reserves = reserves["eth_reserves"]
         
         if not reserves["trading_active"]:
-            raise ValueError("Trading is not active for this meme token.")
+            return {
+                "error": "Trading is not active for this meme token.",
+                "trading_active": False,
+                "input_amount": float(amount),
+                "estimated_output": 0.0,
+                "price_impact_percent": 0.0
+            }
             
         trade_type = trade_type.lower()
         if trade_type == "buy":
@@ -536,8 +542,23 @@ class Web3Helper:
             'chainId': int(src_chain_id)
         }
         
-        gas_estimate = src_w3.eth.estimate_gas(bridge_tx)
-        bridge_tx['gas'] = int(gas_estimate * 1.2)
+        try:
+            gas_estimate = src_w3.eth.estimate_gas(bridge_tx)
+            bridge_tx['gas'] = int(gas_estimate * 1.2)
+        except Exception as e:
+            return {
+                "error": f"Gas estimation or pre-flight check failed: {str(e)}",
+                "message": "Verify that your account has enough funds (gas + transfer amount) on the source chain.",
+                "source_chain_id": src_chain_id,
+                "router_address": bridge_to,
+                "value_sent": bridge_value,
+                "tx_preview": {
+                    "from": account.address,
+                    "to": bridge_to,
+                    "value": bridge_value,
+                    "data_preview": bridge_calldata[:66] + "..."
+                }
+            }
         
         signed_bridge = src_w3.eth.account.sign_transaction(bridge_tx, private_key=account.key)
         tx_hash = src_w3.eth.send_raw_transaction(signed_bridge.rawTransaction)
@@ -548,6 +569,108 @@ class Web3Helper:
             "router_address": bridge_to,
             "value_sent": bridge_value
         }
+
+    async def get_meme_price_history(self, token_address, block_range=10000):
+        """Queries historical events for a meme token and returns a price history chart dataset."""
+        factory_address = os.getenv("MEME_FACTORY_ADDRESS")
+        if not factory_address:
+            raise ValueError("MEME_FACTORY_ADDRESS is not set in your .env configuration.")
+            
+        factory_address = Web3.to_checksum_address(factory_address)
+        token_address = Web3.to_checksum_address(token_address)
+        
+        if not self.w3.is_connected():
+            self.connect()
+            
+        token_bought_signature = self.w3.keccak(text="TokenBought(address,address,uint256,uint256)").hex()
+        token_sold_signature = self.w3.keccak(text="TokenSold(address,address,uint256,uint256)").hex()
+        
+        token_topic = "0x" + token_address[2:].lower().zfill(64)
+        latest_block = self.w3.eth.block_number
+        from_block = max(0, latest_block - block_range)
+        
+        price_points = []
+        
+        # TokenBought Logs
+        try:
+            bought_logs = self.w3.eth.get_logs({
+                "fromBlock": from_block,
+                "toBlock": "latest",
+                "address": factory_address,
+                "topics": [token_bought_signature, token_topic]
+            })
+            for log in bought_logs:
+                data = log["data"].hex() if isinstance(log["data"], bytes) else log["data"]
+                if data.startswith("0x"):
+                    data = data[2:]
+                eth_amount = int(data[0:64], 16)
+                token_amount = int(data[64:128], 16)
+                
+                eth_val = float(Web3.from_wei(eth_amount, 'ether'))
+                token_val = token_amount / 10**18
+                price = eth_val / token_val if token_val > 0 else 0
+                
+                price_points.append({
+                    "block": log["blockNumber"],
+                    "type": "buy",
+                    "price": price,
+                    "eth_volume": eth_val,
+                    "token_volume": token_val,
+                    "transaction_hash": log["transactionHash"].hex() if isinstance(log["transactionHash"], bytes) else log["transactionHash"]
+                })
+        except Exception:
+            pass
+            
+        # TokenSold Logs
+        try:
+            sold_logs = self.w3.eth.get_logs({
+                "fromBlock": from_block,
+                "toBlock": "latest",
+                "address": factory_address,
+                "topics": [token_sold_signature, token_topic]
+            })
+            for log in sold_logs:
+                data = log["data"].hex() if isinstance(log["data"], bytes) else log["data"]
+                if data.startswith("0x"):
+                    data = data[2:]
+                token_amount = int(data[0:64], 16)
+                eth_amount = int(data[64:128], 16)
+                
+                eth_val = float(Web3.from_wei(eth_amount, 'ether'))
+                token_val = token_amount / 10**18
+                price = eth_val / token_val if token_val > 0 else 0
+                
+                price_points.append({
+                    "block": log["blockNumber"],
+                    "type": "sell",
+                    "price": price,
+                    "eth_volume": eth_val,
+                    "token_volume": token_val,
+                    "transaction_hash": log["transactionHash"].hex() if isinstance(log["transactionHash"], bytes) else log["transactionHash"]
+                })
+        except Exception:
+            pass
+            
+        price_points.sort(key=lambda x: x["block"])
+        
+        # Current Reserves
+        try:
+            reserves = await self.get_meme_pool_reserves(token_address)
+            t_res = reserves["token_reserves"] / 10**18
+            e_res = float(Web3.from_wei(reserves["eth_reserves"], 'ether'))
+            current_price = e_res / t_res if t_res > 0 else 0
+            price_points.append({
+                "block": latest_block,
+                "type": "current_reserves",
+                "price": current_price,
+                "token_reserves": t_res,
+                "eth_reserves": e_res
+            })
+        except Exception:
+            pass
+            
+        return price_points
+
 
 
 

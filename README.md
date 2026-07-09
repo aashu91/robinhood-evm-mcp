@@ -84,6 +84,7 @@ Add this to your `claude_desktop_config.json` (usually at `~/.config/Claude/clau
 11. **`buy_meme_coin(token_address, eth_amount, max_slippage, min_output_amount)`**: Performs a buy transaction with on-chain bonding curve parameters verified pre-flight for slippage safety.
 12. **`sell_meme_coin(token_address, token_amount, max_slippage, min_output_amount)`**: Performs a sell transaction with on-chain bonding curve parameters verified pre-flight for slippage safety.
 13. **`execute_cross_chain_bridge(src_chain_id, src_token, dest_chain_id, dest_token, amount_raw, recipient)`**: Fetches cross-chain swap routing and transaction details, then builds, signs, and executes the bridging transaction directly on the source EVM chain.
+14. **`get_meme_price_chart(token_address, block_range)`**: Scans chronological buy/sell event logs on-chain and queries current pool reserves to reconstruct historical OHLC chart simulation data for any meme token.
 
 
 

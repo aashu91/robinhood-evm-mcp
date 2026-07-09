@@ -40,11 +40,11 @@ By implementing the Model Context Protocol (MCP), it allows AI agents to dynamic
 - **Deliverable:** Pre-flight trade estimation using virtual bonding curve equations and dynamic slippage protection bounds.
 - **Verification:** Successfully executed automated checks querying reserves and estimating trade outputs.
 
-### Milestone 5: Cross-Chain DLN Bridging & Execution (Completed)
-- **Deliverable:** Integrated deBridge DLN API to fetch cross-chain swap routing details and execute bridging transactions on the source EVM chain.
-- **Verification:** Successfully executed test integrations simulating bridge routing and pre-flight confirmations.
+### Milestone 6: On-Chain AMM Price Log Scanner & Simulation (Completed)
+- **Deliverable:** Integrated event log parsing filter for TokenBought/TokenSold logs to construct historical price line charts and virtual bonding reserves data.
+- **Verification:** Successfully verified historical logs and current reserves query flow via test verification client.
 
-### Milestone 6: Gasless/Meta-transaction tools (Proposed - 4 weeks)
+### Milestone 7: Gasless/Meta-transaction tools (Proposed - 4 weeks)
 - **Deliverable:** Gasless permit execution and meta-transaction relayer support for Robinhood Chain EVM.
 - **Funding Requested:** $6,000 USD (or equivalent in ARB).
 - **Target Allocation:** Developer grant integration templates and smart contract gasless relayer audits.

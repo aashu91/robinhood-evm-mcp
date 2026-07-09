@@ -199,6 +199,22 @@ async def run_mcp_test():
     send_request(bridge_request)
     await asyncio.sleep(0.5)
 
+    # Step 11: Query AMM price history/simulation chart data (dynamically resolved symbol)
+    chart_request = {
+        "jsonrpc": "2.0",
+        "id": 11,
+        "method": "tools/call",
+        "params": {
+            "name": "get_meme_price_chart",
+            "arguments": {
+                "token_address": "TESTMEME",
+                "block_range": 2000
+            }
+        }
+    }
+    send_request(chart_request)
+    await asyncio.sleep(0.5)
+
     # Clean up subprocess
     process.terminate()
     process.wait()

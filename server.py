@@ -217,6 +217,18 @@ TOOLS = [
             },
             "required": ["src_chain_id", "src_token", "dest_chain_id", "dest_token", "amount_raw", "recipient"]
         }
+    },
+    {
+        "name": "get_meme_price_chart",
+        "description": "Queries historical event logs (TokenBought, TokenSold) and current bonding reserves for a meme token to reconstruct chronological OHLC/line price points.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "token_address": {"type": "string", "description": "The contract address of the target meme token (0x...)."},
+                "block_range": {"type": "integer", "description": "Optional: How many blocks back to scan for logs (default: 10000).", "default": 10000}
+            },
+            "required": ["token_address"]
+        }
     }
 ]
 
@@ -361,6 +373,12 @@ async def dispatch_tool(name, arguments):
         recip = arguments["recipient"]
         res = await helper.execute_cross_chain_bridge(src_id, src_tok, dest_id, dest_tok, amt, recip)
         return f"Cross-chain bridge executed successfully!\n{json.dumps(res, indent=2)}"
+
+    elif name == "get_meme_price_chart":
+        t_addr = arguments["token_address"]
+        b_range = arguments.get("block_range", 10000)
+        res = await helper.get_meme_price_history(t_addr, b_range)
+        return json.dumps(res, indent=2)
 
     else:
         raise ValueError(f"Unknown tool: {name}")
