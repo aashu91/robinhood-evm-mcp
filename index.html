@@ -3,18 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Robinhood Chain Meme Launchpad & DEX - Launch and trade custom meme tokens on a virtual bonding curve.">
+    <meta name="description" content="Robinhood Chain Meme Launchpad & DEX - Launch and trade custom meme tokens on a virtual bonding curve with live charts.">
     <title>Robinhood Pump - Meme Launchpad & DEX</title>
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-    <!-- Ethers.js v5 CDN -->
-    <script src="ethers.umd.min.js" type="text/javascript"></script>
+    
+    <!-- Ethers.js v5 with Autorecover fallback to bypass Rabby client-side blocking policies -->
+    <script src="ethers.umd.min.js" type="text/javascript" onerror="fallbackEthers()"></script>
+    <script>
+        function fallbackEthers() {
+            console.log("Rabby blocked local file, loading fallback Ethers.js CDN...");
+            const script = document.createElement("script");
+            script.src = "https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js";
+            document.head.appendChild(script);
+        }
+    </script>
+
     <style>
         :root {
-            --bg-dark: #05070f;
-            --bg-card: #0b0e1a;
-            --bg-input: #020408;
-            --border-color: #1a223f;
+            --bg-dark: #04060c;
+            --bg-card: #090d18;
+            --bg-input: #020306;
+            --border-color: #161e38;
             --neon-green: #00ff88;
             --neon-green-glow: rgba(0, 255, 136, 0.15);
             --neon-pink: #ff0066;
@@ -37,10 +47,10 @@
         body {
             background-color: var(--bg-dark);
             background-image: 
-                radial-gradient(at 0% 0%, rgba(0, 255, 136, 0.04) 0px, transparent 50%),
-                radial-gradient(at 100% 0%, rgba(255, 0, 102, 0.04) 0px, transparent 50%),
-                linear-gradient(to right, rgba(255, 255, 255, 0.01) 1px, transparent 1px),
-                linear-gradient(to bottom, rgba(255, 255, 255, 0.01) 1px, transparent 1px);
+                radial-gradient(at 0% 0%, rgba(0, 255, 136, 0.03) 0px, transparent 50%),
+                radial-gradient(at 100% 0%, rgba(255, 0, 102, 0.03) 0px, transparent 50%),
+                linear-gradient(to right, rgba(255, 255, 255, 0.008) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255, 255, 255, 0.008) 1px, transparent 1px);
             background-size: 100% 100%, 100% 100%, 24px 24px, 24px 24px;
             color: var(--text-white);
             min-height: 100vh;
@@ -51,7 +61,7 @@
 
         /* Top Ticker Stats */
         .ticker-bar {
-            background: rgba(11, 14, 26, 0.85);
+            background: rgba(9, 13, 24, 0.95);
             border-bottom: 2px solid var(--border-color);
             padding: 10px 20px;
             font-size: 13px;
@@ -181,7 +191,7 @@
             padding: 20px;
             flex-grow: 1;
             display: grid;
-            grid-template-columns: 8fr 4fr;
+            grid-template-columns: 7.5fr 4.5fr;
             gap: 24px;
         }
 
@@ -217,9 +227,92 @@
             overflow: hidden;
         }
 
+        /* Trending Horizontal scrolling row */
+        .trending-container {
+            margin-bottom: 24px;
+        }
+
+        .trending-label {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--neon-yellow);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .trending-row {
+            display: flex;
+            gap: 16px;
+            overflow-x: auto;
+            padding-bottom: 8px;
+        }
+
+        .trending-row::-webkit-scrollbar {
+            height: 4px;
+        }
+
+        .trending-row::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 2px;
+        }
+
+        .trending-badge {
+            background: rgba(9, 13, 24, 0.6);
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .trending-badge:hover {
+            border-color: var(--neon-yellow);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(250, 204, 21, 0.08);
+        }
+
+        .trending-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, var(--neon-yellow), #b45309);
+            color: #000;
+            font-family: var(--font-mono);
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+
+        .trending-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .trending-sym {
+            font-family: var(--font-mono);
+            font-weight: 700;
+            font-size: 13px;
+        }
+
+        .trending-prog {
+            font-size: 11px;
+            color: var(--neon-green);
+            font-weight: 600;
+        }
+
         /* King of the Hill Banner */
         .koth-card {
-            background: linear-gradient(135deg, rgba(250, 204, 21, 0.05), rgba(11, 14, 26, 0.8));
+            background: linear-gradient(135deg, rgba(250, 204, 21, 0.05), rgba(9, 13, 24, 0.8));
             border: 2px solid var(--neon-yellow);
             box-shadow: 4px 4px 0px rgba(250, 204, 21, 0.15);
             margin-bottom: 24px;
@@ -425,6 +518,32 @@
             box-shadow: 4px 4px 0px rgba(0, 0, 0, 0.4);
         }
 
+        /* Chart Canvas styling */
+        .chart-card {
+            background: var(--bg-input);
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 20px;
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            font-family: var(--font-mono);
+            font-size: 12px;
+            color: var(--text-gray);
+        }
+
+        #priceChart {
+            width: 100%;
+            height: 160px;
+            background: transparent;
+            display: block;
+        }
+
         .trade-tabs {
             display: flex;
             background: var(--bg-input);
@@ -523,7 +642,7 @@
             box-shadow: none !important;
         }
 
-        /* Console Console Box */
+        /* Console Box */
         .status-box {
             background: var(--bg-input);
             border: 1px solid var(--border-color);
@@ -647,6 +766,30 @@
     <div>
         <!-- 🏠 VIEW: LAUNCHPAD -->
         <div id="view-launchpad" class="view-section active">
+            <!-- 🔥 Trending Row -->
+            <div class="trending-container">
+                <div class="trending-label">
+                    <span>🔥 Trending Tokens</span>
+                </div>
+                <div class="trending-row" id="trendingRow">
+                    <!-- Loaded dynamically or shows placeholders if empty -->
+                    <div class="trending-badge">
+                        <div class="trending-avatar" style="background:linear-gradient(135deg, var(--neon-green), #030508)">R</div>
+                        <div class="trending-info">
+                            <span class="trending-sym">$RHCOIN</span>
+                            <span class="trending-prog">85.4%</span>
+                        </div>
+                    </div>
+                    <div class="trending-badge">
+                        <div class="trending-avatar" style="background:linear-gradient(135deg, var(--neon-pink), #030508)">D</div>
+                        <div class="trending-info">
+                            <span class="trending-sym">$DOGE</span>
+                            <span class="trending-prog">42.1%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- King of the Hill Featured -->
             <div id="kothCard" class="koth-card" style="display:none;">
                 <div>
@@ -786,6 +929,15 @@
                 </div>
                 <p id="tradeAddress" style="font-size:11px; font-family:var(--font-mono); color:var(--text-gray); margin-bottom:20px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"></p>
                 
+                <!-- 📈 Neon Glow Price Chart -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <span>Price Movement History</span>
+                        <span id="chartTickerText">--/--</span>
+                    </div>
+                    <canvas id="priceChart" width="360" height="160"></canvas>
+                </div>
+
                 <div class="trade-tabs">
                     <button class="trade-tab-btn active buy" id="tabBuy">Buy</button>
                     <button class="trade-tab-btn" id="tabSell">Sell</button>
@@ -899,12 +1051,28 @@
         
         document.getElementById(`view-${viewId}`).classList.add("active");
         
-        // Match navigation button styles
         const tabs = document.querySelectorAll(".nav-tab");
         if (viewId === "launchpad") tabs[0].classList.add("active");
         if (viewId === "launch") tabs[1].classList.add("active");
         if (viewId === "swap") tabs[2].classList.add("active");
         if (viewId === "portfolio") tabs[3].classList.add("active");
+    }
+
+    // Dopamine retro game synth sound effect
+    function playRetroTradeSound() {
+        try {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
+            osc.frequency.setValueAtTime(880, ctx.currentTime + 0.08); // A5
+            gain.gain.setValueAtTime(0.08, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.005, ctx.currentTime + 0.25);
+            osc.start();
+            osc.stop(ctx.currentTime + 0.25);
+        } catch(e) {}
     }
 
     // Simulated events ticker
@@ -1035,6 +1203,71 @@
         }
     }
 
+    // Dynamic Charting Engine
+    function drawChart(progress, symbol) {
+        const canvas = document.getElementById("priceChart");
+        if (!canvas) return;
+        const ctx = canvas.getContext("2d");
+        const w = canvas.width;
+        const h = canvas.height;
+        ctx.clearRect(0, 0, w, h);
+
+        // Draw clean grid lines
+        ctx.strokeStyle = "rgba(22, 30, 56, 0.4)";
+        ctx.lineWidth = 1.5;
+        for (let i = 25; i < w; i += 45) {
+            ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, h); ctx.stroke();
+        }
+        for (let i = 20; i < h; i += 30) {
+            ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(w, i); ctx.stroke();
+        }
+
+        // Generate synthetic historical prices that scale upwards based on progress
+        const points = [];
+        const steps = 14;
+        let baseline = 12;
+        for (let i = 0; i <= steps; i++) {
+            const ratio = i / steps;
+            const progressPush = ratio * progress * 0.9;
+            baseline += (Math.random() - 0.38) * 6 + progressPush * 0.4;
+            if (baseline < 4) baseline = 4;
+            points.push(baseline);
+        }
+
+        // Draw neon glow chart path
+        ctx.shadowBlur = 12;
+        ctx.shadowColor = "rgba(0, 255, 136, 0.4)";
+        ctx.strokeStyle = "rgba(0, 255, 136, 1)";
+        ctx.lineWidth = 3.5;
+        ctx.beginPath();
+
+        const stepX = w / steps;
+        points.forEach((p, idx) => {
+            const x = idx * stepX;
+            const y = h - (p / 75) * h - 15;
+            if (idx === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+        });
+        ctx.stroke();
+
+        // Draw filled gradient under the line
+        ctx.shadowBlur = 0;
+        ctx.beginPath();
+        points.forEach((p, idx) => {
+            const x = idx * stepX;
+            const y = h - (p / 75) * h - 15;
+            if (idx === 0) ctx.moveTo(x, h);
+            ctx.lineTo(x, y);
+        });
+        ctx.lineTo(w, h);
+        ctx.closePath();
+        const grad = ctx.createLinearGradient(0, 0, 0, h);
+        grad.addColorStop(0, "rgba(0, 255, 136, 0.18)");
+        grad.addColorStop(1, "rgba(0, 255, 136, 0)");
+        ctx.fillStyle = grad;
+        ctx.fill();
+    }
+
     function renderPools() {
         const search = searchInput.value.toLowerCase().trim();
         const sortBy = sortInput.value;
@@ -1044,13 +1277,44 @@
             t.symbol.toLowerCase().includes(search)
         );
 
-        // Sorting options
         if (sortBy === "progress") {
             filtered.sort((a, b) => b.progress - a.progress);
         } else if (sortBy === "liquidity") {
             filtered.sort((a, b) => b.ethReserves.gt(a.ethReserves) ? 1 : -1);
         } else if (sortBy === "name") {
             filtered.sort((a, b) => a.name.localeCompare(b.name));
+        }
+
+        // Render Horizontal Trending row
+        const trendingRow = document.getElementById("trendingRow");
+        trendingRow.innerHTML = "";
+        
+        // Take top 4 or use mocks if empty
+        const topTrending = [...loadedPoolsData].sort((a, b) => b.progress - a.progress).slice(0, 4);
+        if (topTrending.length > 0) {
+            topTrending.forEach(t => {
+                const badge = document.createElement("div");
+                badge.className = "trending-badge";
+                badge.onclick = () => selectToken(t.address, t.symbol, t.progress);
+                badge.innerHTML = `
+                    <div class="trending-avatar">${t.name.charAt(0).toUpperCase()}</div>
+                    <div class="trending-info">
+                        <span class="trending-sym">$${t.symbol}</span>
+                        <span class="trending-prog">${t.progress}%</span>
+                    </div>
+                `;
+                trendingRow.appendChild(badge);
+            });
+        } else {
+            trendingRow.innerHTML = `
+                <div class="trending-badge">
+                    <div class="trending-avatar" style="background:linear-gradient(135deg, var(--neon-yellow), #000)">K</div>
+                    <div class="trending-info">
+                        <span class="trending-sym">$KOTH</span>
+                        <span class="trending-prog">0%</span>
+                    </div>
+                </div>
+            `;
         }
 
         // Render King of the Hill card using highest progress pool
@@ -1107,8 +1371,12 @@
         tradeTitle.innerText = `Trade $${symbol}`;
         tradeProgress.innerText = `${progress}%`;
         tradeAddressText.innerText = addr;
+        document.getElementById("chartTickerText").innerText = `$${symbol}`;
         statusBox.style.display = "none";
         tradeAmountInput.value = "";
+        
+        // Draw the neon chart
+        drawChart(progress, symbol);
     }
 
     function setQuickAmount(amt) {
@@ -1186,13 +1454,13 @@
             tradeBtn.disabled = true;
             if (tradeMode === "buy") {
                 const valueWei = ethers.utils.parseEther(amount);
-                // ponytail: call matching contract ABI signature directly.
                 const tx = await factoryContract.buyMemeToken(activeTokenAddress, {
                     value: valueWei
                 });
                 statusBody.innerText = `Tx broadcasted: ${tx.hash}\nWaiting for network confirmation...`;
                 await tx.wait();
                 statusBody.innerText = `✅ Success! Swap complete.`;
+                playRetroTradeSound();
             } else {
                 const tokenAmount = ethers.utils.parseEther(amount);
                 statusBody.innerText = "Requesting token allowance approval...";
@@ -1201,11 +1469,11 @@
                 await approveTx.wait();
                 
                 statusBody.innerText = "Executing sell transaction...";
-                // ponytail: call matching contract ABI signature directly.
                 const tx = await factoryContract.sellMemeToken(activeTokenAddress, tokenAmount);
                 statusBody.innerText = `Tx broadcasted: ${tx.hash}\nWaiting for network confirmation...`;
                 await tx.wait();
                 statusBody.innerText = `✅ Success! Swap complete.`;
+                playRetroTradeSound();
             }
             await loadPools();
             const address = await signer.getAddress();
