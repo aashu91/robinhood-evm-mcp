@@ -383,6 +383,21 @@ async def dispatch_tool(name, arguments):
     else:
         raise ValueError(f"Unknown tool: {name}")
 
+# ponytail: Centralized response writer with private key redaction to secure trust boundaries
+def write_response(response_dict):
+    res_str = json.dumps(response_dict)
+    try:
+        pk = helper.get_private_key()
+        if pk:
+            if pk in res_str:
+                res_str = res_str.replace(pk, "[REDACTED_PRIVATE_KEY]")
+            if f"0x{pk}" in res_str:
+                res_str = res_str.replace(f"0x{pk}", "[REDACTED_PRIVATE_KEY]")
+    except Exception:
+        pass
+    sys.stdout.write(res_str + "\n")
+    sys.stdout.flush()
+
 async def stdio_loop():
     """Asynchronous stdin/stdout communication loop implementing MCP over stdio."""
     # Setup async stdin reader
@@ -418,8 +433,7 @@ async def stdio_loop():
                         }
                     }
                 }
-                sys.stdout.write(json.dumps(response) + "\n")
-                sys.stdout.flush()
+                write_response(response)
 
             elif method == "tools/list":
                 response = {
@@ -429,8 +443,7 @@ async def stdio_loop():
                         "tools": TOOLS
                     }
                 }
-                sys.stdout.write(json.dumps(response) + "\n")
-                sys.stdout.flush()
+                write_response(response)
 
             elif method == "tools/call":
                 tool_name = params.get("name")
@@ -465,8 +478,7 @@ async def stdio_loop():
                             "isError": True
                         }
                     }
-                sys.stdout.write(json.dumps(response) + "\n")
-                sys.stdout.flush()
+                write_response(response)
                 
             else:
                 # Unsupported method
@@ -479,8 +491,7 @@ async def stdio_loop():
                             "message": f"Method not found: {method}"
                         }
                     }
-                    sys.stdout.write(json.dumps(response) + "\n")
-                    sys.stdout.flush()
+                    write_response(response)
 
         except Exception as e:
             # Global syntax or formatting error
@@ -491,8 +502,7 @@ async def stdio_loop():
                     "message": f"Invalid Request: {str(e)}"
                 }
             }
-            sys.stdout.write(json.dumps(err_response) + "\n")
-            sys.stdout.flush()
+            write_response(err_response)
 
 if __name__ == "__main__":
     try:
