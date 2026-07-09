@@ -1,5 +1,10 @@
 {
   "cleanUrls": true,
+  "builds": [
+    { "src": "index.html", "use": "@vercel/static" },
+    { "src": "deploy_app.html", "use": "@vercel/static" },
+    { "src": "ethers.umd.min.js", "use": "@vercel/static" }
+  ],
   "routes": [
     { "src": "/deploy", "dest": "/deploy_app.html" },
     { "src": "/ethers.umd.min.js", "dest": "/ethers.umd.min.js" },
