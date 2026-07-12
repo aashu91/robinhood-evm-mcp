@@ -217,12 +217,13 @@
 
         /* Brutalist Cards */
         .card {
-            background: var(--bg-card);
+            background: rgba(9, 13, 24, 0.75);
+            backdrop-filter: blur(12px);
             border: 2px solid var(--border-color);
             border-radius: 16px;
             padding: 24px;
             margin-bottom: 24px;
-            box-shadow: 4px 4px 0px rgba(0, 0, 0, 0.4);
+            box-shadow: 0 8px 32px 0 rgba(0, 255, 136, 0.04), 4px 4px 0px rgba(0, 0, 0, 0.4);
             position: relative;
             overflow: hidden;
         }
@@ -407,19 +408,20 @@
         }
 
         .token-card {
-            background: var(--bg-card);
-            border: 2px solid var(--border-color);
+            background: rgba(9, 13, 24, 0.55);
+            backdrop-filter: blur(8px);
+            border: 1px solid var(--border-color);
             border-radius: 16px;
             padding: 20px;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
         }
 
         .token-card:hover {
             border-color: var(--neon-green);
-            transform: translate(-3px, -3px);
-            box-shadow: 5px 5px 0px var(--neon-green-glow);
+            transform: translateY(-4px);
+            box-shadow: 0 10px 30px rgba(0, 255, 136, 0.18);
         }
 
         .token-card-header {
@@ -845,6 +847,7 @@
     
     <div class="nav-links">
         <button class="nav-tab active" onclick="switchView('launchpad')">Board</button>
+        <button class="nav-tab" onclick="switchView('charts')">Charts 📊</button>
         <button class="nav-tab" onclick="switchView('launch')">Launch</button>
         <button class="nav-tab" onclick="switchView('swap')">DEX Swap</button>
         <button class="nav-tab" onclick="switchView('portfolio')">Portfolio</button>
@@ -914,11 +917,67 @@
             </div>
         </div>
 
+        <!-- 📊 VIEW: CHARTS -->
+        <div id="view-charts" class="view-section">
+            <div class="card" style="max-width:900px; margin:0 auto;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:12px;">
+                    <div>
+                        <h2 style="font-size:24px; font-weight:800;">📊 Live Market Chart</h2>
+                        <p style="color:var(--text-gray); font-size:14px; margin-top:4px;">Technical analysis & price history on Robinhood L2 virtual bonding curve.</p>
+                    </div>
+                    <div>
+                        <select id="chartTokenSelector" class="select-input" style="min-width:180px; background:var(--bg-input); border:1px solid var(--border-color); color:var(--text-white); padding:8px; border-radius:8px;" onchange="onChartTokenChange()">
+                            <!-- Populated dynamically -->
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Large Chart Container -->
+                <div class="chart-card" style="padding:20px; background:rgba(2, 3, 6, 0.6); border:1px solid var(--border-color); border-radius:16px;">
+                    <div class="chart-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:8px;">
+                        <div>
+                            <span id="chartTokenName" style="font-weight:800; font-size:18px; color:var(--text-white);">Select a Token</span>
+                            <span id="chartTokenSymbol" style="font-family:var(--font-mono); font-size:12px; color:var(--text-gray); margin-left:8px;"></span>
+                        </div>
+                        <div class="chart-controls" style="display:flex; gap:4px;">
+                            <button id="btnLineChart" class="chart-ctrl-btn active" onclick="setChartType('line')">Line</button>
+                            <button id="btnCandleChart" class="chart-ctrl-btn" onclick="setChartType('candle')">Candle</button>
+                            <button id="btnSMAIndicator" class="chart-ctrl-btn" onclick="toggleIndicator('sma')">SMA</button>
+                            <button id="btnBBANDSIndicator" class="chart-ctrl-btn" onclick="toggleIndicator('bbands')">Bands</button>
+                        </div>
+                        <div>
+                            <span id="chartTickerText" style="font-family:var(--font-mono); font-weight:800; font-size:18px; color:var(--neon-green);">--/--</span>
+                        </div>
+                    </div>
+                    <!-- Large Canvas -->
+                    <div style="position:relative; width:100%; height:320px;">
+                        <canvas id="priceChart" width="700" height="300" style="width:100%; height:100%; display:block;"></canvas>
+                    </div>
+                </div>
+
+                <!-- Stats Grid for selected token -->
+                <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:16px; margin-top:20px;">
+                    <div style="background:var(--bg-input); border:1px solid var(--border-color); border-radius:12px; padding:12px; text-align:center;">
+                        <div style="font-size:11px; color:var(--text-gray);">Bonding Curve Progress</div>
+                        <div style="font-size:18px; font-weight:800; color:var(--neon-green); margin-top:4px;" id="chartProgressText">0%</div>
+                    </div>
+                    <div style="background:var(--bg-input); border:1px solid var(--border-color); border-radius:12px; padding:12px; text-align:center;">
+                        <div style="font-size:11px; color:var(--text-gray);">Liquidity Reserves</div>
+                        <div style="font-size:18px; font-weight:800; color:var(--neon-yellow); margin-top:4px;" id="chartLiquidityText">0.00 ETH</div>
+                    </div>
+                    <div style="background:var(--bg-input); border:1px solid var(--border-color); border-radius:12px; padding:12px; text-align:center;">
+                        <div style="font-size:11px; color:var(--text-gray);">Holders Count</div>
+                        <div style="font-size:18px; font-weight:800; color:var(--text-white); margin-top:4px;">124</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- 🚀 VIEW: CREATE -->
         <div id="view-launch" class="view-section">
             <div class="card" style="max-width:550px; margin:0 auto;">
                 <h2 style="font-size:24px; font-weight:800; margin-bottom:12px;">🚀 Launch a Meme Token</h2>
-                <p style="color:var(--text-gray); font-size:14px; margin-bottom:24px;">Deploy a custom ERC-20 token onto the Robinhood Chain virtual bonding curve. Deploy cost is set to just 0.0005 ETH.</p>
+                <p style="color:var(--text-gray); font-size:14px; margin-bottom:24px;">Deploy a custom ERC-20 token onto the Robinhood Chain virtual bonding curve. Deploy cost is set to just 0.0003 ETH.</p>
                 
                 <div style="margin-bottom:20px;">
                     <label style="display:block; font-size:12px; font-weight:700; color:var(--text-gray); margin-bottom:8px; text-transform:uppercase;">Token Name</label>
@@ -929,7 +988,7 @@
                     <input type="text" id="tokSymbol" class="form-input" placeholder="e.g. RHDOGE">
                 </div>
                 
-                <button class="action-btn buy" id="launchBtn">Deploy Meme Token (0.0005 ETH)</button>
+                <button class="action-btn buy" id="launchBtn">Deploy Meme Token (0.0003 ETH)</button>
             </div>
         </div>
 
@@ -1025,7 +1084,7 @@
                 <div style="background:var(--bg-input); border:1px solid var(--border-color); border-radius:12px; padding:16px; margin-bottom:24px;">
                     <h3 style="font-size:16px; font-weight:700; color:var(--neon-green); margin-bottom:12px;">💸 Monetization & Commission Rules</h3>
                     <ul style="list-style-type:none; padding-left:0; font-size:13px; color:var(--text-gray); display:flex; flex-direction:column; gap:8px;">
-                        <li>🚀 <strong style="color:var(--text-white);">Launch Commissions:</strong> Earn 20% of the 0.0005 ETH launch fee for every coin deployed using your link.</li>
+                        <li>🚀 <strong style="color:var(--text-white);">Launch Commissions:</strong> Earn 20% of the 0.0003 ETH launch fee for every coin deployed using your link.</li>
                         <li>🔄 <strong style="color:var(--text-white);">Swap Fees:</strong> Earn 20% of the protocol's 1% transaction fee on all trades made through your referral.</li>
                         <li>🔥 <strong style="color:var(--text-white);">Featured Spots:</strong> Recommend creators to feature their coin on the landing page for 0.05 ETH, earning a 10% match!</li>
                     </ul>
@@ -1072,19 +1131,11 @@
                 </div>
                 <p id="tradeAddress" style="font-size:11px; font-family:var(--font-mono); color:var(--text-gray); margin-bottom:20px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"></p>
                 
-                <!-- 📈 Neon Glow Price Chart -->
-                <div class="chart-card">
-                    <div class="chart-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
-                        <span>Price Movement History</span>
-                        <div class="chart-controls" style="display:flex; gap:4px;">
-                            <button id="btnLineChart" class="chart-ctrl-btn active" onclick="setChartType('line')">Line</button>
-                            <button id="btnCandleChart" class="chart-ctrl-btn" onclick="setChartType('candle')">Candle</button>
-                            <button id="btnSMAIndicator" class="chart-ctrl-btn" onclick="toggleIndicator('sma')">SMA</button>
-                            <button id="btnBBANDSIndicator" class="chart-ctrl-btn" onclick="toggleIndicator('bbands')">Bands</button>
-                        </div>
-                        <span id="chartTickerText">--/--</span>
-                    </div>
-                    <canvas id="priceChart" width="360" height="160"></canvas>
+                <!-- 📈 Live Chart Redirect Button -->
+                <div style="margin-bottom:20px;">
+                    <button class="chart-ctrl-btn active" style="width:100%; padding:10px 0; text-align:center; display:flex; justify-content:center; align-items:center; gap:8px;" onclick="goToChart()">
+                        📊 View Full-Page Live Chart &rarr;
+                    </button>
                 </div>
 
                 <!-- Mode Selector (Spot vs Options) -->
@@ -1318,10 +1369,11 @@
         
         const tabs = document.querySelectorAll(".nav-tab");
         if (viewId === "launchpad") tabs[0].classList.add("active");
-        if (viewId === "launch") tabs[1].classList.add("active");
-        if (viewId === "swap") tabs[2].classList.add("active");
-        if (viewId === "portfolio") tabs[3].classList.add("active");
-        if (viewId === "affiliate") tabs[4].classList.add("active");
+        if (viewId === "charts") tabs[1].classList.add("active");
+        if (viewId === "launch") tabs[2].classList.add("active");
+        if (viewId === "swap") tabs[3].classList.add("active");
+        if (viewId === "portfolio") tabs[4].classList.add("active");
+        if (viewId === "affiliate") tabs[5].classList.add("active");
 
         // Load active referrer numbers if view is affiliate
         if (viewId === "affiliate") {
@@ -1334,6 +1386,12 @@
                 document.getElementById("refLinkText").innerText = `${window.location.origin}/?ref=${myWallet}`;
                 document.getElementById("refLinkContainer").style.display = "block";
             }
+        }
+
+        // Trigger chart selector updates when opening charts view
+        if (viewId === "charts") {
+            populateChartSelector();
+            onChartTokenChange();
         }
     }
 
@@ -1581,6 +1639,71 @@
         localStorage.setItem("activeReferrer", ref);
         console.log("Referrer registered:", ref);
     }
+
+    // ponytail: full-page chart view sync handlers
+    window.goToChart = function() {
+        switchView("charts");
+        if (activeTokenAddress) {
+            setTimeout(() => {
+                const selector = document.getElementById("chartTokenSelector");
+                if (selector) {
+                    selector.value = activeTokenAddress;
+                    onChartTokenChange();
+                }
+            }, 50);
+        }
+    };
+
+    window.populateChartSelector = function() {
+        const selector = document.getElementById("chartTokenSelector");
+        if (!selector) return;
+        selector.innerHTML = "";
+        loadedPoolsData.forEach(t => {
+            const opt = document.createElement("option");
+            opt.value = t.address;
+            opt.innerText = `${t.name} (${t.symbol})`;
+            selector.appendChild(opt);
+        });
+        if (activeTokenAddress) {
+            selector.value = activeTokenAddress;
+        }
+    };
+
+    window.onChartTokenChange = function() {
+        const selector = document.getElementById("chartTokenSelector");
+        if (!selector) return;
+        const addr = selector.value;
+        const token = loadedPoolsData.find(t => t.address === addr);
+        if (token) {
+            activeTokenAddress = addr;
+            
+            // Sync with trade panel title
+            tradeCardContent.style.display = "none";
+            tradeControls.style.display = "block";
+            tradeTitle.innerText = `Trade $${token.symbol}`;
+            tradeProgress.innerText = `${token.progress}%`;
+            tradeAddressText.innerText = addr;
+
+            document.getElementById("chartTokenName").innerText = token.name;
+            document.getElementById("chartTokenSymbol").innerText = `$${token.symbol}`;
+            document.getElementById("chartProgressText").innerText = `${token.progress}%`;
+            
+            let ethVal = 0.0;
+            if (token.ethReserves) {
+                try {
+                    ethVal = parseFloat(ethers.utils.formatEther(token.ethReserves));
+                } catch(e) {
+                    ethVal = parseFloat(token.ethReserves) || 0.0;
+                }
+            }
+            document.getElementById("chartLiquidityText").innerText = `${ethVal.toFixed(4)} ETH`;
+            
+            if (!priceHistories[addr]) {
+                initPriceHistory(token);
+            }
+            drawChart(token.progress, token.symbol, priceHistories[addr]);
+        }
+    };
 
     function drawChart(progress, symbol, history) {
         const canvas = document.getElementById("priceChart");
@@ -2312,7 +2435,7 @@
             // Real Web3 Mode
             try {
                 const tx = await factoryContract.deployMemeToken(name, symbol, 1000000000, {
-                    value: ethers.utils.parseEther("0.0005")
+                    value: ethers.utils.parseEther("0.0003")
                 });
                 await tx.wait();
                 showToast("Token Deployed 🚀", `Created $${symbol.toUpperCase()} successfully on-chain!`, "success");
@@ -2323,20 +2446,20 @@
             } catch (err) {
                 alert("Deployment failed: " + err.message);
             } finally {
-                launchBtn.innerText = "Deploy Meme Token (0.0005 ETH)";
+                launchBtn.innerText = "Deploy Meme Token (0.0003 ETH)";
                 launchBtn.disabled = false;
             }
         } else {
             // Simulated Mode
             setTimeout(() => {
-                if (paperBalance < 0.0005) {
-                    alert("Insufficient paper ETH for deployment (0.0005 ETH needed).");
-                    launchBtn.innerText = "Deploy Meme Token (0.0005 ETH)";
+                if (paperBalance < 0.0003) {
+                    alert("Insufficient paper ETH for deployment (0.0003 ETH needed).");
+                    launchBtn.innerText = "Deploy Meme Token (0.0003 ETH)";
                     launchBtn.disabled = false;
                     return;
                 }
                 
-                paperBalance -= 0.0005;
+                paperBalance -= 0.0003;
                 localStorage.setItem("paperBalance", paperBalance);
                 
                 const newAddress = "0xMockToken" + Math.random().toString(16).substr(2, 32);
@@ -2344,7 +2467,7 @@
                     address: newAddress,
                     name: name,
                     symbol: symbol.toUpperCase(),
-                    ethReserves: ethers.utils.parseEther("0.0005"),
+                    ethReserves: ethers.utils.parseEther("0.0003"),
                     progress: 0,
                     isMock: true
                 };
@@ -2359,14 +2482,14 @@
                 const referrer = localStorage.getItem("activeReferrer");
                 if (referrer) {
                     let earned = parseFloat(localStorage.getItem(`refEarned_${referrer}`) || "0.0");
-                    earned += 0.0001; // 20% of 0.0005 ETH launch fee
+                    earned += 0.00006; // 20% of 0.0003 ETH launch fee
                     localStorage.setItem(`refEarned_${referrer}`, earned.toString());
 
                     let count = parseInt(localStorage.getItem(`refCount_${referrer}`) || "0");
                     count += 1;
                     localStorage.setItem(`refCount_${referrer}`, count.toString());
 
-                    showToast("Referral Earned! 💸", `0.0001 ETH sent to referrer: ${referrer.slice(0,6)}...${referrer.slice(-4)}`, "success");
+                    showToast("Referral Earned! 💸", `0.00006 ETH sent to referrer: ${referrer.slice(0,6)}...${referrer.slice(-4)}`, "success");
                 }
                 
                 showToast("Token Deployed 🚀", `Successfully created $${symbol.toUpperCase()} on Robinhood L2!`, "success");
@@ -2376,7 +2499,7 @@
                 renderPools();
                 selectToken(newPool.address, newPool.symbol, 0);
                 switchView("launchpad");
-                launchBtn.innerText = "Deploy Meme Token (0.0005 ETH)";
+                launchBtn.innerText = "Deploy Meme Token (0.0003 ETH)";
                 launchBtn.disabled = false;
             }, 1500);
         }
@@ -2394,7 +2517,7 @@
         statusBox.style.display = "block";
         statusBox.classList.remove("error-state");
         
-        if (connectBtn.innerText.includes("...")) {
+        if (connectBtn.innerText.includes("...") && !activeTokenAddress.startsWith("0xMock")) {
             // Real Web3 Mode
             statusBody.innerText = "Waiting for wallet transaction signatures...";
             try {
