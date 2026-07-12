@@ -734,6 +734,99 @@
             color: var(--neon-pink);
             font-weight: 700;
         }
+
+        /* Custom Toast Notifications */
+        .toast-container {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            z-index: 10000;
+        }
+        .toast {
+            background: rgba(9, 13, 24, 0.95);
+            border: 2px solid var(--border-color);
+            border-left: 5px solid var(--neon-green);
+            border-radius: 12px;
+            padding: 16px 20px;
+            color: var(--text-white);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            font-family: var(--font-sans);
+            font-size: 14px;
+            min-width: 300px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            backdrop-filter: blur(10px);
+            animation: toastSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        @keyframes toastSlideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        .toast.success { border-left-color: var(--neon-green); }
+        .toast.error { border-left-color: var(--neon-pink); }
+        .toast.info { border-left-color: var(--neon-yellow); }
+
+        /* Options Tabs Buttons */
+        .option-btn {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid var(--border-color);
+            background: var(--bg-input);
+            color: var(--text-gray);
+            font-size: 14px;
+            font-weight: 700;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .option-btn.active.call {
+            background: rgba(0, 255, 136, 0.15);
+            color: var(--neon-green);
+            border-color: var(--neon-green);
+            text-shadow: 0 0 8px var(--neon-green-glow);
+        }
+        .option-btn.active.put {
+            background: rgba(255, 0, 102, 0.15);
+            color: var(--neon-pink);
+            border-color: var(--neon-pink);
+            text-shadow: 0 0 8px var(--neon-pink-glow);
+        }
+
+        /* Scratch Card overlay */
+        .scratch-modal {
+            animation: fadeIn 0.3s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* Chart control button styling */
+        .chart-ctrl-btn {
+            background: rgba(22, 30, 56, 0.5);
+            border: 1px solid var(--border-color);
+            color: var(--text-gray);
+            border-radius: 4px;
+            padding: 2px 8px;
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .chart-ctrl-btn:hover {
+            color: var(--text-white);
+            border-color: var(--neon-green);
+        }
+        .chart-ctrl-btn.active {
+            background: var(--neon-green);
+            color: var(--bg-dark);
+            border-color: var(--neon-green);
+            box-shadow: 0 0 8px var(--neon-green-glow);
+        }
     </style>
 </head>
 <body>
@@ -755,6 +848,7 @@
         <button class="nav-tab" onclick="switchView('launch')">Launch</button>
         <button class="nav-tab" onclick="switchView('swap')">DEX Swap</button>
         <button class="nav-tab" onclick="switchView('portfolio')">Portfolio</button>
+        <button class="nav-tab" onclick="switchView('affiliate')">Earn 🔗</button>
     </div>
 
     <button id="connectBtn" class="connect-btn">Connect Wallet</button>
@@ -911,6 +1005,55 @@
                     </tbody>
                 </table>
             </div>
+
+            <!-- Mystery Share Referral Promo Widget -->
+            <div class="card" style="background: linear-gradient(135deg, rgba(0, 255, 136, 0.05), rgba(9, 13, 24, 0.8)); border-color: var(--neon-green); box-shadow: 4px 4px 0px rgba(0, 255, 136, 0.1); margin-top: 24px; display: flex; justify-content: space-between; align-items: center; gap: 16px;">
+                <div>
+                    <h3 style="font-weight:800; font-size:18px; color: var(--neon-green);">🎁 Robinhood Free Share Program</h3>
+                    <p style="color:var(--text-gray); font-size:13px; margin-top:4px;">Scratch your daily mystery card to claim free fractionals of AAPL, TSLA or popular meme tokens!</p>
+                </div>
+                <button id="scratchBtn" class="connect-btn" style="background:var(--neon-green); color:var(--bg-dark); border-color:var(--neon-green); white-space:nowrap;" onclick="openScratchcard()">Scratch Card</button>
+            </div>
+        </div>
+
+        <!-- 🔗 VIEW: AFFILIATE & MARKETING -->
+        <div id="view-affiliate" class="view-section">
+            <div class="card">
+                <h2 style="font-size:24px; font-weight:800; margin-bottom:12px;">🔗 Affiliate & Marketing Portal</h2>
+                <p style="color:var(--text-gray); font-size:14px; margin-bottom:24px;">Generate your referral links, track earnings, and start marketing to earn commissions from swaps and token launches!</p>
+                
+                <div style="background:var(--bg-input); border:1px solid var(--border-color); border-radius:12px; padding:16px; margin-bottom:24px;">
+                    <h3 style="font-size:16px; font-weight:700; color:var(--neon-green); margin-bottom:12px;">💸 Monetization & Commission Rules</h3>
+                    <ul style="list-style-type:none; padding-left:0; font-size:13px; color:var(--text-gray); display:flex; flex-direction:column; gap:8px;">
+                        <li>🚀 <strong style="color:var(--text-white);">Launch Commissions:</strong> Earn 20% of the 0.0005 ETH launch fee for every coin deployed using your link.</li>
+                        <li>🔄 <strong style="color:var(--text-white);">Swap Fees:</strong> Earn 20% of the protocol's 1% transaction fee on all trades made through your referral.</li>
+                        <li>🔥 <strong style="color:var(--text-white);">Featured Spots:</strong> Recommend creators to feature their coin on the landing page for 0.05 ETH, earning a 10% match!</li>
+                    </ul>
+                </div>
+
+                <div style="margin-bottom:20px;">
+                    <label style="display:block; font-size:12px; font-weight:700; color:var(--text-gray); margin-bottom:8px;">YOUR REFERRAL LINK GENERATOR</label>
+                    <div style="display:flex; gap:12px; margin-bottom:12px;">
+                        <input type="text" id="refWalletInput" class="form-input" style="flex:2;" placeholder="Enter your Wallet Address (0x...)">
+                        <button class="action-btn buy" style="flex:1; padding: 12px 0;" onclick="generateRefLink()">Generate</button>
+                    </div>
+                    <div id="refLinkContainer" style="display:none; background:var(--bg-input); border:1px dashed var(--border-color); border-radius:8px; padding:12px; font-family:var(--font-mono); font-size:12px; position:relative;">
+                        <span id="refLinkText" style="color:var(--neon-green); word-break:break-all;"></span>
+                        <button onclick="copyRefLink()" style="position:absolute; right:8px; top:8px; background:rgba(0,255,136,0.1); border:1px solid var(--neon-green); color:var(--neon-green); border-radius:4px; padding:2px 8px; font-size:10px; cursor:pointer;">Copy</button>
+                    </div>
+                </div>
+
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:24px;">
+                    <div style="background:var(--bg-input); border:1px solid var(--border-color); border-radius:12px; padding:16px; text-align:center;">
+                        <div style="font-size:11px; color:var(--text-gray);">Total Referrals</div>
+                        <div style="font-size:24px; font-weight:800; font-family:var(--font-mono); color:var(--neon-yellow); margin-top:4px;" id="refCount">0</div>
+                    </div>
+                    <div style="background:var(--bg-input); border:1px solid var(--border-color); border-radius:12px; padding:16px; text-align:center;">
+                        <div style="font-size:11px; color:var(--text-gray);">Total Earned</div>
+                        <div style="font-size:24px; font-weight:800; font-family:var(--font-mono); color:var(--neon-green); margin-top:4px;" id="refEarned">0.0000 ETH</div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -931,35 +1074,94 @@
                 
                 <!-- 📈 Neon Glow Price Chart -->
                 <div class="chart-card">
-                    <div class="chart-header">
+                    <div class="chart-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
                         <span>Price Movement History</span>
+                        <div class="chart-controls" style="display:flex; gap:4px;">
+                            <button id="btnLineChart" class="chart-ctrl-btn active" onclick="setChartType('line')">Line</button>
+                            <button id="btnCandleChart" class="chart-ctrl-btn" onclick="setChartType('candle')">Candle</button>
+                            <button id="btnSMAIndicator" class="chart-ctrl-btn" onclick="toggleIndicator('sma')">SMA</button>
+                            <button id="btnBBANDSIndicator" class="chart-ctrl-btn" onclick="toggleIndicator('bbands')">Bands</button>
+                        </div>
                         <span id="chartTickerText">--/--</span>
                     </div>
                     <canvas id="priceChart" width="360" height="160"></canvas>
                 </div>
 
-                <div class="trade-tabs">
-                    <button class="trade-tab-btn active buy" id="tabBuy">Buy</button>
-                    <button class="trade-tab-btn" id="tabSell">Sell</button>
+                <!-- Mode Selector (Spot vs Options) -->
+                <div style="display:flex; gap:8px; margin-bottom:16px; background:var(--bg-input); padding:4px; border-radius:10px; border:1px solid var(--border-color);">
+                    <button id="modeSpotBtn" class="trade-tab-btn active" style="flex:1; padding:8px 0; font-size:13px;" onclick="setTradeMode('spot')">Spot Trade</button>
+                    <button id="modeOptionsBtn" class="trade-tab-btn" style="flex:1; padding:8px 0; font-size:13px;" onclick="setTradeMode('options')">Options ⚡</button>
                 </div>
 
-                <div style="margin-bottom:16px;">
-                    <label id="inputLabel" style="display:block; font-size:12px; font-weight:700; color:var(--text-gray); margin-bottom:8px; text-transform:uppercase;">Amount of ETH to spend</label>
-                    <input type="number" id="tradeAmount" class="form-input" style="font-family:var(--font-mono);" placeholder="0.01" step="0.005">
+                <!-- Spot Trading Container -->
+                <div id="spotTradeContainer">
+                    <div class="trade-tabs">
+                        <button class="trade-tab-btn active buy" id="tabBuy">Buy</button>
+                        <button class="trade-tab-btn" id="tabSell">Sell</button>
+                    </div>
+
+                    <div style="margin-bottom:16px;">
+                        <label id="inputLabel" style="display:block; font-size:12px; font-weight:700; color:var(--text-gray); margin-bottom:8px; text-transform:uppercase;">Amount of ETH to spend</label>
+                        <input type="number" id="tradeAmount" class="form-input" style="font-family:var(--font-mono);" placeholder="0.01" step="0.005">
+                    </div>
+
+                    <div class="quick-amounts" id="quickAmountsContainer">
+                        <button class="quick-amt-btn" onclick="setQuickAmount(0.01)">0.01 ETH</button>
+                        <button class="quick-amt-btn" onclick="setQuickAmount(0.05)">0.05 ETH</button>
+                        <button class="quick-amt-btn" onclick="setQuickAmount(0.1)">0.1 ETH</button>
+                        <button class="quick-amt-btn" onclick="setQuickAmount(0.5)">0.5 ETH</button>
+                    </div>
+
+                    <button class="action-btn buy" id="tradeBtn">Swap</button>
                 </div>
 
-                <div class="quick-amounts" id="quickAmountsContainer">
-                    <button class="quick-amt-btn" onclick="setQuickAmount(0.01)">0.01 ETH</button>
-                    <button class="quick-amt-btn" onclick="setQuickAmount(0.05)">0.05 ETH</button>
-                    <button class="quick-amt-btn" onclick="setQuickAmount(0.1)">0.1 ETH</button>
-                    <button class="quick-amt-btn" onclick="setQuickAmount(0.5)">0.5 ETH</button>
-                </div>
+                <!-- Options Simulator Container -->
+                <div id="optionsTradeContainer" style="display:none;">
+                    <div style="display:flex; gap:8px; margin-bottom:16px;">
+                        <button id="optCallBtn" class="option-btn active call" onclick="setOptionType('call')">CALL 🟩</button>
+                        <button id="optPutBtn" class="option-btn put" onclick="setOptionType('put')">PUT 🟥</button>
+                    </div>
+                    
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px;">
+                        <div>
+                            <label style="display:block; font-size:11px; font-weight:700; color:var(--text-gray); margin-bottom:6px; text-transform:uppercase;">Leverage</label>
+                            <select id="optLeverage" class="select-input" style="width:100%; padding:10px;">
+                                <option value="10">10x (Safe)</option>
+                                <option value="25">25x (Medium)</option>
+                                <option value="50">50x (Degen)</option>
+                                <option value="100">100x (Sherwood 🔥)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="display:block; font-size:11px; font-weight:700; color:var(--text-gray); margin-bottom:6px; text-transform:uppercase;">Expiry</label>
+                            <select id="optExpiry" class="select-input" style="width:100%; padding:10px;">
+                                <option value="30">30 Seconds</option>
+                                <option value="60">1 Minute</option>
+                                <option value="120">2 Minutes</option>
+                                <option value="300">5 Minutes</option>
+                            </select>
+                        </div>
+                    </div>
 
-                <button class="action-btn buy" id="tradeBtn">Swap</button>
+                    <div style="margin-bottom:16px;">
+                        <label style="display:block; font-size:12px; font-weight:700; color:var(--text-gray); margin-bottom:8px; text-transform:uppercase;">ETH Margin to Spend</label>
+                        <input type="number" id="optPremium" class="form-input" style="font-family:var(--font-mono);" placeholder="0.01" step="0.005" value="0.01">
+                    </div>
+
+                    <button class="action-btn buy" id="optExecuteBtn" onclick="executeOptionPurchase()">Buy Option Contract</button>
+                </div>
                 
                 <div id="statusBox" class="status-box">
                     <div id="statusBody">Processing...</div>
                 </div>
+            </div>
+        </div>
+        
+        <!-- Active Options Contracts -->
+        <div class="active-options-card" id="activeOptionsCard" style="display:none; margin-top:20px; background:var(--bg-card); border:2px solid var(--border-color); border-radius:16px; padding:20px; box-shadow: 4px 4px 0px rgba(0, 0, 0, 0.4);">
+            <h4 style="font-size:14px; font-weight:800; margin-bottom:12px; color:var(--neon-yellow); display:flex; align-items:center; gap:6px;">Active Options Contracts ⚡</h4>
+            <div id="optionsList" style="display:flex; flex-direction:column; gap:10px;">
+                <!-- Rendered dynamically -->
             </div>
         </div>
     </div>
@@ -973,9 +1175,37 @@
             <span class="console-time">[18:20:00]</span>
             <span class="console-action-buy">[CONNECT]</span>
             <span style="color:#ffffff;">Listening to Robinhood Chain L2 mempool events...</span>
-        </div>
     </div>
 </div>
+
+<!-- Scratchcard Modal -->
+<div id="scratchModal" class="scratch-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(4,6,12,0.85); backdrop-filter:blur(15px); z-index:1000; justify-content:center; align-items:center;">
+    <div class="card" style="max-width:400px; width:90%; text-align:center; position:relative; background:var(--bg-card); border-color:var(--neon-green); box-shadow: 0 0 25px rgba(0,255,136,0.15);">
+        <button onclick="closeScratchcard()" style="position:absolute; top:15px; right:15px; background:none; border:none; color:var(--text-gray); font-size:20px; cursor:pointer;">&times;</button>
+        
+        <h3 style="font-weight:800; font-size:20px; color:var(--neon-green); margin-bottom:12px;">🎁 Claim Mystery Share</h3>
+        <p style="color:var(--text-gray); font-size:13px; margin-bottom:20px;">Scratch below to reveal your daily reward from Robinhood L2!</p>
+        
+        <!-- Scratch Box Container -->
+        <div style="position:relative; width:280px; height:180px; margin:0 auto 20px; border-radius:12px; overflow:hidden; border:2px solid var(--border-color); background:var(--bg-input);">
+            <!-- Revealed Prize Display -->
+            <div id="scratchPrize" style="position:absolute; width:100%; height:100%; display:flex; flex-direction:column; justify-content:center; align-items:center; z-index:1;">
+                <span style="font-size:36px; margin-bottom:10px;">🍏</span>
+                <span id="scratchPrizeName" style="font-weight:800; font-size:20px; color:var(--neon-green);">0.05 AAPL</span>
+                <span style="font-size:11px; color:var(--text-gray); margin-top:4px;">Added to your Robinhood Portfolio!</span>
+            </div>
+            
+            <!-- Scratch Canvas overlay -->
+            <canvas id="scratchCanvas" width="280" height="180" style="position:absolute; top:0; left:0; z-index:10; cursor:crosshair; width:100%; height:100%;"></canvas>
+        </div>
+        
+        <button id="scratchClaimBtn" class="action-btn buy" style="display:none;" onclick="closeScratchcard()">Collect Asset</button>
+        <div id="scratchHint" style="font-size:12px; color:var(--text-gray);">Use your mouse/finger to scratch the card!</div>
+    </div>
+</div>
+
+<!-- Floating Toast Container -->
+<div id="toastContainer" class="toast-container"></div>
 
 <script>
     // ponytail: Human-readable ABI reduces code lines by 90% and keeps codebase robust.
@@ -1009,6 +1239,41 @@
     let activeTokenAddress = null;
     let tradeMode = "buy";
     let loadedPoolsData = [];
+
+    // Simulated / Mock State variables
+    let paperBalance = 10.0;
+    let activeOptions = [];
+    let priceHistories = {};
+    let selectedOptionType = "call";
+    let currentMode = "spot";
+    let scratchCompleted = false;
+
+    // Advanced Chart and Indicator configurations
+    let chartType = "line"; 
+    let activeIndicators = {
+        sma: false,
+        bbands: false
+    };
+
+    // Pre-populated default mock tokens to make dApp look alive instantly
+    const defaultMockTokens = [
+        { address: "0xMockRHCOIN0000000000000000000000000001", name: "Robinhood Coin", symbol: "RHCOIN", ethReserves: ethers.utils.parseEther("1.85"), progress: 85, isMock: true },
+        { address: "0xMockDOGE0000000000000000000000000000002", name: "Robby Doge", symbol: "DOGE", ethReserves: ethers.utils.parseEther("0.92"), progress: 42, isMock: true },
+        { address: "0xMockAAPL00000000000000000000000000000003", name: "Apple Token", symbol: "AAPL", ethReserves: ethers.utils.parseEther("2.10"), progress: 95, isMock: true },
+        { address: "0xMockTSLA00000000000000000000000000000004", name: "Tesla Fractional", symbol: "TSLA", ethReserves: ethers.utils.parseEther("1.50"), progress: 68, isMock: true },
+        { address: "0xMockSHERIFF0000000000000000000000000005", name: "Sheriff Escape", symbol: "SHERIFF", ethReserves: ethers.utils.parseEther("0.24"), progress: 12, isMock: true },
+        { address: "0xMockMERRY0000000000000000000000000000006", name: "Merry Men", symbol: "MERRY", ethReserves: ethers.utils.parseEther("0.10"), progress: 5, isMock: true },
+        { address: "0xMockHOOD00000000000000000000000000000007", name: "Robinhood DAO", symbol: "HOOD", ethReserves: ethers.utils.parseEther("1.10"), progress: 52, isMock: true },
+        { address: "0xMockSHERWOOD000000000000000000000008", name: "Sherwood Forest", symbol: "SHERWOOD", ethReserves: ethers.utils.parseEther("1.98"), progress: 98, isMock: true },
+        { address: "0xMockLITTLE000000000000000000000000000009", name: "Little John", symbol: "LITTLE", ethReserves: ethers.utils.parseEther("0.55"), progress: 28, isMock: true },
+        { address: "0xMockMARIAN000000000000000000000000000010", name: "Maid Marian", symbol: "MARIAN", ethReserves: ethers.utils.parseEther("0.76"), progress: 38, isMock: true },
+        { address: "0xMockARROW0000000000000000000000000000011", name: "Golden Arrow", symbol: "ARROW", ethReserves: ethers.utils.parseEther("1.42"), progress: 65, isMock: true },
+        { address: "0xMockRICH00000000000000000000000000000012", name: "Tax The Rich", symbol: "RICH", ethReserves: ethers.utils.parseEther("0.35"), progress: 18, isMock: true },
+        { address: "0xMockPEPE00000000000000000000000000000013", name: "Robby Pepe", symbol: "PEPE", ethReserves: ethers.utils.parseEther("1.62"), progress: 74, isMock: true },
+        { address: "0xMockWIF000000000000000000000000000000014", name: "Robby Wif Hat", symbol: "WIF", ethReserves: ethers.utils.parseEther("1.25"), progress: 58, isMock: true },
+        { address: "0xMockGME000000000000000000000000000000015", name: "GameStop Meme", symbol: "GME", ethReserves: ethers.utils.parseEther("2.02"), progress: 92, isMock: true },
+        { address: "0xMockAMC000000000000000000000000000000016", name: "AMC Fractional", symbol: "AMC", ethReserves: ethers.utils.parseEther("0.48"), progress: 22, isMock: true }
+    ];
 
     const connectBtn = document.getElementById("connectBtn");
     const launchBtn = document.getElementById("launchBtn");
@@ -1056,6 +1321,68 @@
         if (viewId === "launch") tabs[1].classList.add("active");
         if (viewId === "swap") tabs[2].classList.add("active");
         if (viewId === "portfolio") tabs[3].classList.add("active");
+        if (viewId === "affiliate") tabs[4].classList.add("active");
+
+        // Load active referrer numbers if view is affiliate
+        if (viewId === "affiliate") {
+            const myWallet = localStorage.getItem("myRefWallet") || "";
+            if (myWallet) {
+                document.getElementById("refWalletInput").value = myWallet;
+                document.getElementById("refCount").innerText = localStorage.getItem(`refCount_${myWallet}`) || "0";
+                const earned = parseFloat(localStorage.getItem(`refEarned_${myWallet}`) || "0.0");
+                document.getElementById("refEarned").innerText = `${earned.toFixed(4)} ETH`;
+                document.getElementById("refLinkText").innerText = `${window.location.origin}/?ref=${myWallet}`;
+                document.getElementById("refLinkContainer").style.display = "block";
+            }
+        }
+    }
+
+    // Custom Toast Notification popup with CRT console logging integration
+    function showToast(title, message, type = "info") {
+        const container = document.getElementById("toastContainer");
+        if (!container) return;
+        
+        const toast = document.createElement("div");
+        toast.className = `toast ${type}`;
+        toast.innerHTML = `
+            <strong style="font-weight:800;">${title}</strong>
+            <span>${message}</span>
+        `;
+        container.appendChild(toast);
+        
+        // Auto remove toast
+        setTimeout(() => {
+            toast.style.transition = "all 0.5s ease";
+            toast.style.opacity = 0;
+            toast.style.transform = "translateY(10px)";
+            setTimeout(() => toast.remove(), 500);
+        }, 4000);
+
+        // Log directly into the bottom console box
+        logToConsole(type.toUpperCase(), `${title}: ${message}`, type);
+    }
+
+    // CRT Console Event logger
+    function logToConsole(action, text, type = "info") {
+        if (!consoleBox) return;
+        const timeStr = new Date().toTimeString().split(' ')[0];
+        const line = document.createElement("div");
+        line.className = "console-line";
+        
+        let actionSpan = "";
+        if (type === "success" || action === "BUY" || action === "REBATE") {
+            actionSpan = `<span class="console-action-buy">[${action}]</span>`;
+        } else if (type === "error" || action === "SELL" || action === "LIQ") {
+            actionSpan = `<span class="console-action-sell">[${action}]</span>`;
+        } else {
+            actionSpan = `<span style="color:var(--neon-yellow); font-weight:700;">[${action}]</span>`;
+        }
+            
+        line.innerHTML = `<span class="console-time">[${timeStr}]</span> ${actionSpan} <span style="color:#ffffff;">${text}</span>`;
+        consoleBox.appendChild(line);
+        
+        if (consoleBox.children.length > 15) consoleBox.removeChild(consoleBox.firstChild);
+        consoleBox.scrollTop = consoleBox.scrollHeight;
     }
 
     // Dopamine retro game synth sound effect
@@ -1074,32 +1401,6 @@
             osc.stop(ctx.currentTime + 0.25);
         } catch(e) {}
     }
-
-    // Simulated events ticker
-    const aiAgents = ["satoshis_bot", "poly_agent", "kronos_whale", "rh_trading_bot", "pepe_snip_agent"];
-    setInterval(() => {
-        const agent = aiAgents[Math.floor(Math.random() * aiAgents.length)];
-        const isBuy = Math.random() > 0.45;
-        const ethVal = (Math.random() * 0.08 + 0.005).toFixed(4);
-        const tokAmt = Math.floor(Math.random() * 90000 + 1000).toLocaleString();
-        
-        const timeStr = new Date().toTimeString().split(' ')[0];
-        const line = document.createElement("div");
-        line.className = "console-line";
-        
-        const actionSpan = isBuy 
-            ? `<span class="console-action-buy">[BUY]</span>` 
-            : `<span class="console-action-sell">[SELL]</span>`;
-            
-        const text = isBuy
-            ? `Agent @${agent} sniped ${ethVal} ETH on custom bonding curve.`
-            : `Agent @${agent} dumped ${tokAmt} custom tokens to curve pool.`;
-            
-        line.innerHTML = `<span class="console-time">[${timeStr}]</span> ${actionSpan} <span style="color:#ffffff;">${text}</span>`;
-        consoleBox.appendChild(line);
-        if (consoleBox.children.length > 15) consoleBox.removeChild(consoleBox.firstChild);
-        consoleBox.scrollTop = consoleBox.scrollHeight;
-    }, 4500);
 
     async function switchNetwork() {
         const targetChainId = "0x1237";
@@ -1124,18 +1425,18 @@
                     });
                     return true;
                 } catch (addError) {
-                    alert("Failed to add Robinhood Chain to wallet.");
+                    showToast("Network Error", "Failed to add Robinhood Chain L2 to wallet.", "error");
                     return false;
                 }
             }
-            alert("Failed to switch network.");
+            showToast("Network Error", "Failed to switch L2 network.", "error");
             return false;
         }
     }
 
     async function connectWallet() {
         if (typeof window.ethereum === "undefined") {
-            alert("No Web3 wallet injected. Please use Rabby/Metamask browser.");
+            showToast("Wallet Missing", "No Web3 wallet injected. Please use Rabby or MetaMask.", "error");
             return;
         }
         try {
@@ -1160,20 +1461,29 @@
             connectBtn.style.background = "var(--neon-green)";
             connectBtn.style.borderColor = "var(--neon-green)";
             
+            showToast("Wallet Connected", "Successfully synced with Robinhood L2 Chain.", "success");
             await loadPools();
             await updatePortfolio(address);
         } catch (err) {
             console.error(err);
+            showToast("Connection Failed", err.message, "error");
         }
     }
 
     async function loadPools() {
-        if (!factoryContract) return;
+        if (!factoryContract) {
+            // Wallet not connected: load simulated/mock pools from localStorage & default list
+            const customPools = JSON.parse(localStorage.getItem("customMockPools") || "[]");
+            loadedPoolsData = [...customPools, ...defaultMockTokens];
+            tickerPools.innerText = `${loadedPoolsData.length} Meme Pools`;
+            renderPools();
+            return;
+        }
         try {
             const count = await factoryContract.getMemeCount();
             tickerPools.innerText = `${count.toString()} Meme Pools`;
-            loadedPoolsData = [];
-
+            
+            const onchainPools = [];
             for (let i = 0; i < count; i++) {
                 const tokenAddr = await factoryContract.allMemeTokens(i);
                 const pool = await factoryContract.pools(tokenAddr);
@@ -1188,23 +1498,91 @@
                 if (progress < 0) progress = 0;
                 if (progress > 100) progress = 100;
 
-                loadedPoolsData.push({
+                onchainPools.push({
                     address: tokenAddr,
                     name: name,
                     symbol: symbol,
                     ethReserves: pool.ethReserves,
-                    progress: progress
+                    progress: progress,
+                    isMock: false
                 });
             }
             
+            // Merge custom mock pools with onchain pools
+            const customPools = JSON.parse(localStorage.getItem("customMockPools") || "[]");
+            loadedPoolsData = [...onchainPools, ...customPools, ...defaultMockTokens];
             renderPools();
         } catch (err) {
             console.error("Error loading pools:", err);
+            // Fallback to local mock pools
+            const customPools = JSON.parse(localStorage.getItem("customMockPools") || "[]");
+            loadedPoolsData = [...customPools, ...defaultMockTokens];
+            renderPools();
         }
     }
 
-    // Dynamic Charting Engine
-    function drawChart(progress, symbol) {
+    // Dynamic price history generator
+    function initPriceHistory(token) {
+        const history = [];
+        let price = parseFloat(ethers.utils.formatEther(token.ethReserves)) || 0.1;
+        for (let i = 0; i < 15; i++) {
+            price += (Math.random() - 0.46) * (price * 0.05);
+            if (price < 0.0001) price = 0.0001;
+            history.push(price);
+        }
+        priceHistories[token.address] = history;
+    }
+
+    // Dynamic Charting Engine with dynamic inputs
+    // Control options for charts
+    window.setChartType = function(type) {
+        chartType = type;
+        document.getElementById("btnLineChart").classList.toggle("active", type === "line");
+        document.getElementById("btnCandleChart").classList.toggle("active", type === "candle");
+        if (activeTokenAddress) {
+            const token = loadedPoolsData.find(t => t.address === activeTokenAddress);
+            if (token) drawChart(100, token.symbol, priceHistories[token.address]);
+        }
+    };
+
+    window.toggleIndicator = function(ind) {
+        activeIndicators[ind] = !activeIndicators[ind];
+        document.getElementById(`btn${ind.toUpperCase()}Indicator`).classList.toggle("active", activeIndicators[ind]);
+        if (activeTokenAddress) {
+            const token = loadedPoolsData.find(t => t.address === activeTokenAddress);
+            if (token) drawChart(100, token.symbol, priceHistories[token.address]);
+        }
+    };
+
+    window.generateRefLink = function() {
+        const wallet = document.getElementById("refWalletInput").value.trim();
+        if (!wallet || !wallet.startsWith("0x")) {
+            showToast("Invalid Wallet ❌", "Please enter a valid wallet address starting with 0x");
+            return;
+        }
+        const origin = window.location.origin;
+        const refLink = `${origin}/?ref=${wallet}`;
+        document.getElementById("refLinkText").innerText = refLink;
+        document.getElementById("refLinkContainer").style.display = "block";
+        showToast("Link Generated 🔗", "Your referral link is ready to copy!");
+        localStorage.setItem("myRefWallet", wallet);
+    };
+
+    window.copyRefLink = function() {
+        const link = document.getElementById("refLinkText").innerText;
+        navigator.clipboard.writeText(link);
+        showToast("Copied 📋", "Referral link copied to clipboard!");
+    };
+
+    // Load active referrer from URL parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const ref = urlParams.get("ref");
+    if (ref && ref.startsWith("0x")) {
+        localStorage.setItem("activeReferrer", ref);
+        console.log("Referrer registered:", ref);
+    }
+
+    function drawChart(progress, symbol, history) {
         const canvas = document.getElementById("priceChart");
         if (!canvas) return;
         const ctx = canvas.getContext("2d");
@@ -1222,50 +1600,155 @@
             ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(w, i); ctx.stroke();
         }
 
-        // Generate synthetic historical prices that scale upwards based on progress
-        const points = [];
-        const steps = 14;
-        let baseline = 12;
-        for (let i = 0; i <= steps; i++) {
-            const ratio = i / steps;
-            const progressPush = ratio * progress * 0.9;
-            baseline += (Math.random() - 0.38) * 6 + progressPush * 0.4;
-            if (baseline < 4) baseline = 4;
-            points.push(baseline);
+        const points = history || [];
+        if (points.length === 0) return;
+
+        const min = Math.min(...points);
+        const max = Math.max(...points);
+        const range = max - min || 0.01;
+        const stepX = w / (points.length - 1);
+
+        if (chartType === "line") {
+            // Draw neon glow chart path
+            ctx.shadowBlur = 12;
+            ctx.shadowColor = "rgba(0, 255, 136, 0.4)";
+            ctx.strokeStyle = "rgba(0, 255, 136, 1)";
+            ctx.lineWidth = 3.5;
+            ctx.beginPath();
+
+            points.forEach((p, idx) => {
+                const x = idx * stepX;
+                const y = h - 15 - ((p - min) / range) * (h - 30);
+                if (idx === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            });
+            ctx.stroke();
+
+            // Draw filled gradient under the line
+            ctx.shadowBlur = 0;
+            ctx.beginPath();
+            points.forEach((p, idx) => {
+                const x = idx * stepX;
+                const y = h - 15 - ((p - min) / range) * (h - 30);
+                if (idx === 0) ctx.moveTo(x, h);
+                ctx.lineTo(x, y);
+            });
+            ctx.lineTo(w, h);
+            ctx.closePath();
+            const grad = ctx.createLinearGradient(0, 0, 0, h);
+            grad.addColorStop(0, "rgba(0, 255, 136, 0.18)");
+            grad.addColorStop(1, "rgba(0, 255, 136, 0)");
+            ctx.fillStyle = grad;
+            ctx.fill();
+        } else if (chartType === "candle") {
+            // Draw Candlesticks
+            ctx.shadowBlur = 0;
+            points.forEach((p, idx) => {
+                if (idx === 0) return;
+                const open = points[idx - 1];
+                const close = p;
+                
+                const diff = Math.abs(close - open);
+                const high = Math.max(open, close) + diff * 0.4 + (Math.sin(idx) * 0.01 * range);
+                const low = Math.min(open, close) - diff * 0.4 - (Math.cos(idx) * 0.01 * range);
+                
+                const x = idx * stepX;
+                const yOpen = h - 15 - ((open - min) / range) * (h - 30);
+                const yClose = h - 15 - ((close - min) / range) * (h - 30);
+                const yHigh = h - 15 - ((high - min) / range) * (h - 30);
+                const yLow = h - 15 - ((low - min) / range) * (h - 30);
+                
+                const isBullish = close >= open;
+                const color = isBullish ? "var(--neon-green)" : "var(--neon-pink)";
+                ctx.strokeStyle = color;
+                ctx.fillStyle = color;
+                ctx.lineWidth = 2;
+                
+                // Draw wick (high to low)
+                ctx.beginPath();
+                ctx.moveTo(x, yHigh);
+                ctx.lineTo(x, yLow);
+                ctx.stroke();
+                
+                // Draw body
+                const bodyHeight = Math.max(3, Math.abs(yClose - yOpen));
+                const bodyWidth = Math.max(6, stepX * 0.6);
+                ctx.fillRect(x - bodyWidth/2, Math.min(yOpen, yClose), bodyWidth, bodyHeight);
+            });
         }
 
-        // Draw neon glow chart path
-        ctx.shadowBlur = 12;
-        ctx.shadowColor = "rgba(0, 255, 136, 0.4)";
-        ctx.strokeStyle = "rgba(0, 255, 136, 1)";
-        ctx.lineWidth = 3.5;
-        ctx.beginPath();
+        // Draw Bollinger Bands (BBands) if active
+        if (activeIndicators.bbands) {
+            ctx.shadowBlur = 0;
+            ctx.lineWidth = 1.5;
+            ctx.strokeStyle = "rgba(250, 204, 21, 0.4)";
+            
+            const period = 5;
+            const bbandsPoints = [];
+            
+            for (let i = 0; i < points.length; i++) {
+                const slice = points.slice(Math.max(0, i - period + 1), i + 1);
+                const avg = slice.reduce((a, b) => a + b, 0) / slice.length;
+                const variance = slice.reduce((a, b) => a + Math.pow(b - avg, 2), 0) / slice.length;
+                const stddev = Math.sqrt(variance) || (range * 0.02);
+                
+                bbandsPoints.push({
+                    x: i * stepX,
+                    top: h - 15 - (((avg + stddev * 1.5) - min) / range) * (h - 30),
+                    bottom: h - 15 - (((avg - stddev * 1.5) - min) / range) * (h - 30)
+                });
+            }
+            
+            ctx.beginPath();
+            bbandsPoints.forEach((pt, idx) => {
+                if (idx === 0) ctx.moveTo(pt.x, pt.top);
+                else ctx.lineTo(pt.x, pt.top);
+            });
+            ctx.stroke();
+            
+            ctx.beginPath();
+            bbandsPoints.forEach((pt, idx) => {
+                if (idx === 0) ctx.moveTo(pt.x, pt.bottom);
+                else ctx.lineTo(pt.x, pt.bottom);
+            });
+            ctx.stroke();
+        }
 
-        const stepX = w / steps;
-        points.forEach((p, idx) => {
-            const x = idx * stepX;
-            const y = h - (p / 75) * h - 15;
-            if (idx === 0) ctx.moveTo(x, y);
-            else ctx.lineTo(x, y);
-        });
-        ctx.stroke();
+        // Draw SMA if active
+        if (activeIndicators.sma) {
+            ctx.shadowBlur = 0;
+            ctx.strokeStyle = "var(--neon-yellow)";
+            ctx.lineWidth = 2.5;
+            ctx.beginPath();
+            
+            const period = 5;
+            points.forEach((p, idx) => {
+                const slice = points.slice(Math.max(0, idx - period + 1), idx + 1);
+                const avg = slice.reduce((a, b) => a + b, 0) / slice.length;
+                const x = idx * stepX;
+                const y = h - 15 - ((avg - min) / range) * (h - 30);
+                if (idx === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            });
+            ctx.stroke();
+        }
 
-        // Draw filled gradient under the line
-        ctx.shadowBlur = 0;
+        // Draw dynamic live price dot
+        const lastIdx = points.length - 1;
+        const lastX = lastIdx * stepX;
+        const lastY = h - 15 - ((points[lastIdx] - min) / range) * (h - 30);
+        
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = "rgba(0, 255, 136, 0.8)";
+        ctx.fillStyle = "var(--neon-green)";
         ctx.beginPath();
-        points.forEach((p, idx) => {
-            const x = idx * stepX;
-            const y = h - (p / 75) * h - 15;
-            if (idx === 0) ctx.moveTo(x, h);
-            ctx.lineTo(x, y);
-        });
-        ctx.lineTo(w, h);
-        ctx.closePath();
-        const grad = ctx.createLinearGradient(0, 0, 0, h);
-        grad.addColorStop(0, "rgba(0, 255, 136, 0.18)");
-        grad.addColorStop(1, "rgba(0, 255, 136, 0)");
-        ctx.fillStyle = grad;
+        ctx.arc(lastX, lastY, 6, 0, 2 * Math.PI);
         ctx.fill();
+        ctx.shadowBlur = 0;
+
+        // Update visual price texts
+        const lastPrice = points[lastIdx];
+        document.getElementById("chartTickerText").innerText = `$${lastPrice.toFixed(4)}`;
     }
 
     function renderPools() {
@@ -1289,7 +1772,6 @@
         const trendingRow = document.getElementById("trendingRow");
         trendingRow.innerHTML = "";
         
-        // Take top 4 or use mocks if empty
         const topTrending = [...loadedPoolsData].sort((a, b) => b.progress - a.progress).slice(0, 4);
         if (topTrending.length > 0) {
             topTrending.forEach(t => {
@@ -1303,18 +1785,9 @@
                         <span class="trending-prog">${t.progress}%</span>
                     </div>
                 `;
+                badge.style.cursor = "pointer";
                 trendingRow.appendChild(badge);
             });
-        } else {
-            trendingRow.innerHTML = `
-                <div class="trending-badge">
-                    <div class="trending-avatar" style="background:linear-gradient(135deg, var(--neon-yellow), #000)">K</div>
-                    <div class="trending-info">
-                        <span class="trending-sym">$KOTH</span>
-                        <span class="trending-prog">0%</span>
-                    </div>
-                </div>
-            `;
         }
 
         // Render King of the Hill card using highest progress pool
@@ -1327,7 +1800,6 @@
             kothCard.style.display = "flex";
             kothCard.onclick = () => selectToken(topMeme.address, topMeme.symbol, topMeme.progress);
             
-            // Set default active token if none selected
             if (!activeTokenAddress) {
                 selectToken(topMeme.address, topMeme.symbol, topMeme.progress);
             }
@@ -1375,8 +1847,17 @@
         statusBox.style.display = "none";
         tradeAmountInput.value = "";
         
-        // Draw the neon chart
-        drawChart(progress, symbol);
+        // Generate price history if it doesn't exist
+        if (!priceHistories[addr]) {
+            const token = loadedPoolsData.find(t => t.address === addr);
+            if (token) {
+                initPriceHistory(token);
+            } else {
+                priceHistories[addr] = [0.1, 0.12, 0.11, 0.13, 0.15, 0.14, 0.18];
+            }
+        }
+        
+        drawChart(progress, symbol, priceHistories[addr]);
     }
 
     function setQuickAmount(amt) {
@@ -1387,6 +1868,415 @@
         }
     }
 
+    // Spot vs Option trading panels mode selectors
+    function setTradeMode(mode) {
+        currentMode = mode;
+        const spotBtn = document.getElementById("modeSpotBtn");
+        const optionsBtn = document.getElementById("modeOptionsBtn");
+        const spotContainer = document.getElementById("spotTradeContainer");
+        const optionsContainer = document.getElementById("optionsTradeContainer");
+        
+        if (mode === "spot") {
+            spotBtn.classList.add("active");
+            optionsBtn.classList.remove("active");
+            spotContainer.style.display = "block";
+            optionsContainer.style.display = "none";
+        } else {
+            optionsBtn.classList.add("active");
+            spotBtn.classList.remove("active");
+            spotContainer.style.display = "none";
+            optionsContainer.style.display = "block";
+        }
+    }
+
+    // Option Configurator methods
+    function setOptionType(type) {
+        selectedOptionType = type;
+        const callBtn = document.getElementById("optCallBtn");
+        const putBtn = document.getElementById("optPutBtn");
+        const execBtn = document.getElementById("optExecuteBtn");
+        
+        if (type === "call") {
+            callBtn.classList.add("active");
+            putBtn.classList.remove("active");
+            execBtn.className = "action-btn buy";
+            execBtn.innerText = "Buy Call Option Contract";
+        } else {
+            putBtn.classList.add("active");
+            callBtn.classList.remove("active");
+            execBtn.className = "action-btn sell";
+            execBtn.innerText = "Buy Put Option Contract";
+        }
+    }
+
+    function executeOptionPurchase() {
+        const premiumInput = document.getElementById("optPremium");
+        const premium = parseFloat(premiumInput.value);
+        if (!premium || isNaN(premium) || premium <= 0) {
+            alert("Please enter a valid margin premium.");
+            return;
+        }
+        
+        const leverage = parseInt(document.getElementById("optLeverage").value);
+        const expiry = parseInt(document.getElementById("optExpiry").value);
+        
+        buyOption(selectedOptionType, expiry, leverage, premium);
+    }
+
+    function buyOption(type, expirySec, leverage, premium) {
+        if (paperBalance < premium) {
+            showToast("Margin Deficit", "You don't have enough simulated ETH balance to purchase this option.", "error");
+            return;
+        }
+        const token = loadedPoolsData.find(t => t.address === activeTokenAddress);
+        if (!token) return;
+        
+        const history = priceHistories[token.address] || [0.1];
+        const strikePrice = history[history.length - 1];
+        
+        paperBalance -= premium;
+        localStorage.setItem("paperBalance", paperBalance);
+        
+        const expiryTime = Date.now() + expirySec * 1000;
+        const contract = {
+            id: "opt_" + Math.random().toString(36).substr(2, 9),
+            tokenAddress: token.address,
+            tokenSymbol: token.symbol,
+            type: type, // 'call' or 'put'
+            strikePrice: strikePrice,
+            premium: premium,
+            leverage: leverage,
+            expiryTime: expiryTime,
+            closed: false
+        };
+        
+        activeOptions.push(contract);
+        showToast("Contract Opened ⚡", `Bought ${leverage}x ${type.toUpperCase()} Option at strike ${strikePrice.toFixed(4)}`, "success");
+        playRetroTradeSound();
+        renderOptionsPositions();
+        
+        const address = connectBtn.innerText.includes("...") ? connectBtn.innerText : "Connected User";
+        updatePortfolio(address);
+    }
+
+    function updateOptionsTickers(currentPrice) {
+        let changed = false;
+        const now = Date.now();
+        
+        activeOptions.forEach(opt => {
+            if (opt.closed) return;
+            
+            if (opt.tokenAddress === activeTokenAddress) {
+                let priceDiff = (currentPrice - opt.strikePrice) / opt.strikePrice;
+                if (opt.type === "put") {
+                    priceDiff = -priceDiff;
+                }
+                
+                let pnlPercent = priceDiff * opt.leverage;
+                if (pnlPercent <= -1.0) {
+                    // Margin Call / Liquidation
+                    opt.closed = true;
+                    opt.currentPnl = -opt.premium;
+                    opt.currentPnlPercent = -100;
+                    showToast("Position Liquidated! 💀", `${opt.tokenSymbol} option hit safety margin and was liquidated by Sheriff.`, "error");
+                    changed = true;
+                } else {
+                    opt.currentPnl = pnlPercent * opt.premium;
+                    opt.currentPnlPercent = pnlPercent * 100;
+                }
+            }
+            
+            if (now >= opt.expiryTime && !opt.closed) {
+                opt.closed = true;
+                const finalPnl = opt.currentPnl || 0;
+                const payout = opt.premium + finalPnl;
+                paperBalance += payout;
+                localStorage.setItem("paperBalance", paperBalance);
+                
+                if (finalPnl >= 0) {
+                    showToast("Option Expired 🏆", `${opt.tokenSymbol} Call settled in profit: +${finalPnl.toFixed(4)} ETH`, "success");
+                } else {
+                    showToast("Option Expired 📉", `${opt.tokenSymbol} settled out-of-the-money: ${finalPnl.toFixed(4)} ETH`, "error");
+                }
+                changed = true;
+            }
+        });
+        
+        if (changed) {
+            activeOptions = activeOptions.filter(opt => !opt.closed);
+            const address = connectBtn.innerText.includes("...") ? connectBtn.innerText : "Connected User";
+            updatePortfolio(address);
+        }
+        
+        renderOptionsPositions();
+    }
+
+    function renderOptionsPositions() {
+        const listDiv = document.getElementById("optionsList");
+        const activeOptionsCard = document.getElementById("activeOptionsCard");
+        
+        if (!listDiv) return;
+        
+        const unclosed = activeOptions.filter(o => !o.closed);
+        if (unclosed.length === 0) {
+            activeOptionsCard.style.display = "none";
+            return;
+        }
+        
+        activeOptionsCard.style.display = "block";
+        listDiv.innerHTML = "";
+        
+        unclosed.forEach(opt => {
+            const remaining = Math.max(0, Math.round((opt.expiryTime - Date.now()) / 1000));
+            const pnl = opt.currentPnl || 0;
+            const pnlPercent = opt.currentPnlPercent || 0;
+            const isProfit = pnl >= 0;
+            const pnlColor = isProfit ? "var(--neon-green)" : "var(--neon-pink)";
+            const sign = isProfit ? "+" : "";
+            
+            const row = document.createElement("div");
+            row.style.background = "var(--bg-input)";
+            row.style.border = "1px solid var(--border-color)";
+            row.style.borderRadius = "10px";
+            row.style.padding = "12px 14px";
+            row.style.display = "flex";
+            row.style.flexDirection = "column";
+            row.style.gap = "4px";
+            
+            row.innerHTML = `
+                <div style="display:flex; justify-content:space-between; font-size:12px;">
+                    <span style="font-weight:700; color:${opt.type === "call" ? "var(--neon-green)" : "var(--neon-pink)"};">
+                        $${opt.tokenSymbol} ${opt.type.toUpperCase()} Option (${opt.leverage}x)
+                    </span>
+                    <span style="font-family:var(--font-mono); color:var(--text-gray);">${remaining}s remaining</span>
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:4px;">
+                    <span style="font-size:11px; color:var(--text-gray);">Strike: ${opt.strikePrice.toFixed(4)}</span>
+                    <span style="font-family:var(--font-mono); font-weight:700; color:${pnlColor};">
+                        ${sign}${pnlPercent.toFixed(1)}% (${sign}${pnl.toFixed(4)} ETH)
+                    </span>
+                </div>
+                <div style="margin-top:6px; display:flex; justify-content:space-between; align-items:center;">
+                    <button onclick="closeOptionEarly('${opt.id}')" style="background:rgba(255,255,255,0.05); border:1px solid var(--border-color); color:var(--text-white); font-size:10px; font-weight:700; border-radius:4px; padding:3px 8px; cursor:pointer;">
+                        Close Option Early
+                    </button>
+                </div>
+            `;
+            listDiv.appendChild(row);
+        });
+    }
+
+    function closeOptionEarly(id) {
+        const opt = activeOptions.find(o => o.id === id);
+        if (!opt || opt.closed) return;
+        
+        opt.closed = true;
+        const finalPnl = opt.currentPnl || 0;
+        const payout = opt.premium + finalPnl;
+        paperBalance += payout;
+        localStorage.setItem("paperBalance", paperBalance);
+        
+        showToast("Position Exited ⚡", `Secured profit/loss of ${finalPnl >= 0 ? "+" : ""}${finalPnl.toFixed(4)} ETH`, "success");
+        activeOptions = activeOptions.filter(o => !o.closed);
+        renderOptionsPositions();
+        const address = connectBtn.innerText.includes("...") ? connectBtn.innerText : "Connected User";
+        updatePortfolio(address);
+    }
+
+    // Scratchcard modal handlers
+    function openScratchcard() {
+        document.getElementById("scratchModal").style.display = "flex";
+        document.getElementById("scratchClaimBtn").style.display = "none";
+        document.getElementById("scratchHint").style.display = "block";
+        scratchCompleted = false;
+        
+        const rewards = [
+            { name: "0.05 AAPL stock fractional", ticker: "AAPL", amount: 0.05, emoji: "🍏" },
+            { name: "0.02 TSLA stock fractional", ticker: "TSLA", amount: 0.02, emoji: "🚗" },
+            { name: "25,000 $RHCOIN meme tokens", ticker: "RHCOIN", amount: 25000, emoji: "🏹" },
+            { name: "10,000 $DOGE meme tokens", ticker: "DOGE", amount: 10000, emoji: "🐕" },
+            { name: "0.025 ETH Gas Rebate", ticker: "ETH", amount: 0.025, emoji: "⛽" }
+        ];
+        const reward = rewards[Math.floor(Math.random() * rewards.length)];
+        
+        document.getElementById("scratchPrizeName").innerText = reward.name;
+        document.getElementById("scratchPrizeName").dataset.reward = JSON.stringify(reward);
+        document.querySelector("#scratchPrize span:first-child").innerText = reward.emoji;
+        
+        const canvas = document.getElementById("scratchCanvas");
+        const ctx = canvas.getContext("2d");
+        
+        // Draw scratchable surface
+        const grad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+        grad.addColorStop(0, "#facc15");
+        grad.addColorStop(1, "#b45309");
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        ctx.fillStyle = "#000000";
+        ctx.font = "bold 15px 'Outfit', sans-serif";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText("SCRATCH TO REVEAL REWARD", canvas.width / 2, canvas.height / 2);
+        
+        let isDrawing = false;
+        
+        function scratch(e) {
+            if (!isDrawing) return;
+            const rect = canvas.getBoundingClientRect();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            const x = clientX - rect.left;
+            const y = clientY - rect.top;
+            
+            ctx.globalCompositeOperation = 'destination-out';
+            ctx.beginPath();
+            ctx.arc(x, y, 22, 0, Math.PI * 2);
+            ctx.fill();
+            
+            checkScratchProgress();
+        }
+        
+        canvas.onmousedown = () => { isDrawing = true; };
+        canvas.onmousemove = scratch;
+        window.onmouseup = () => { isDrawing = false; };
+        
+        canvas.ontouchstart = () => { isDrawing = true; };
+        canvas.ontouchmove = scratch;
+        canvas.ontouchend = () => { isDrawing = false; };
+    }
+
+    function checkScratchProgress() {
+        if (scratchCompleted) return;
+        const canvas = document.getElementById("scratchCanvas");
+        const ctx = canvas.getContext("2d");
+        const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        let cleared = 0;
+        
+        for (let i = 0; i < imgData.data.length; i += 4) {
+            if (imgData.data[i + 3] === 0) cleared++;
+        }
+        
+        const pct = cleared / (canvas.width * canvas.height);
+        if (pct > 0.45) {
+            scratchCompleted = true;
+            canvas.style.transition = "opacity 0.5s ease";
+            canvas.style.opacity = 0;
+            setTimeout(() => {
+                canvas.getContext("2d").clearRect(0,0,canvas.width,canvas.height);
+                canvas.style.opacity = 1;
+            }, 500);
+            
+            document.getElementById("scratchClaimBtn").style.display = "block";
+            document.getElementById("scratchHint").style.display = "none";
+            
+            const prizeData = JSON.parse(document.getElementById("scratchPrizeName").dataset.reward);
+            awardPrize(prizeData);
+        }
+    }
+
+    function awardPrize(prize) {
+        if (prize.ticker === "ETH") {
+            paperBalance += prize.amount;
+            localStorage.setItem("paperBalance", paperBalance);
+        } else {
+            const portfolio = JSON.parse(localStorage.getItem("mockHoldings") || "{}");
+            portfolio[prize.ticker] = (portfolio[prize.ticker] || 0) + prize.amount;
+            localStorage.setItem("mockHoldings", JSON.stringify(portfolio));
+        }
+        
+        showToast("Claim Successful 🎁", `You received ${prize.name}!`, "success");
+        const address = connectBtn.innerText.includes("...") ? connectBtn.innerText : "Connected User";
+        updatePortfolio(address);
+    }
+
+    function closeScratchcard() {
+        document.getElementById("scratchModal").style.display = "none";
+    }
+
+    async function updatePortfolio(walletAddress) {
+        if (!walletAddress) walletAddress = "0xMockUserWalletAddress";
+        portfolioWalletAddr.innerText = walletAddress;
+        
+        let ethBalanceStr = "0.0000 ETH";
+        let count = 0;
+        let assetRows = "";
+        
+        if (connectBtn.innerText.includes("...")) {
+            // Real Web3 Mode
+            try {
+                const balance = await provider.getBalance(walletAddress);
+                ethBalanceStr = `${parseFloat(ethers.utils.formatEther(balance)).toFixed(4)} ETH`;
+                
+                // standard tokens
+                for (const [ticker, address] of Object.entries(standardTokens)) {
+                    const erc20 = new ethers.Contract(address, tokenAbi, provider);
+                    const bal = await erc20.balanceOf(walletAddress);
+                    if (bal.gt(0)) {
+                        count++;
+                        assetRows += `
+                            <tr>
+                                <td>${ticker === "USDG" ? "USDG Stablecoin" : `${ticker} Stock Asset`}</td>
+                                <td><span class="progress-badge" style="background:rgba(255,0,102,0.08); color:var(--neon-pink); border-color:var(--neon-pink);">${ticker}</span></td>
+                                <td style="text-align:right; font-family:var(--font-mono);">${parseFloat(ethers.utils.formatUnits(bal, 18)).toFixed(4)}</td>
+                            </tr>
+                        `;
+                    }
+                }
+                // Custom pools
+                for (let i = 0; i < loadedPoolsData.length; i++) {
+                    const token = loadedPoolsData[i];
+                    if (token.isMock) continue; // skip mock tokens in real mode
+                    const erc20 = new ethers.Contract(token.address, tokenAbi, provider);
+                    const bal = await erc20.balanceOf(walletAddress);
+                    if (bal.gt(0)) {
+                        count++;
+                        assetRows += `
+                            <tr>
+                                <td>${token.name}</td>
+                                <td><span class="progress-badge">${token.symbol}</span></td>
+                                <td style="text-align:right; font-family:var(--font-mono);">${parseFloat(ethers.utils.formatUnits(bal, 18)).toFixed(4)}</td>
+                            </tr>
+                        `;
+                    }
+                }
+            } catch (err) {
+                console.error("Error fetching real portfolio:", err);
+            }
+        } else {
+            // Simulated/Mock Mode
+            ethBalanceStr = `${paperBalance.toFixed(4)} ETH`;
+            const mockHoldings = JSON.parse(localStorage.getItem("mockHoldings") || "{}");
+            
+            // Render mock holdings
+            for (const [ticker, amount] of Object.entries(mockHoldings)) {
+                if (amount > 0) {
+                    count++;
+                    const name = ticker === "AAPL" ? "Apple Stock" : ticker === "TSLA" ? "Tesla Stock" : ticker === "USDG" ? "USDG Stablecoin" : `${ticker} Meme Token`;
+                    const tickerStyle = (ticker === "AAPL" || ticker === "TSLA") 
+                        ? `background:rgba(255,0,102,0.08); color:var(--neon-pink); border-color:var(--neon-pink);`
+                        : ``;
+                    assetRows += `
+                        <tr>
+                            <td>${name}</td>
+                            <td><span class="progress-badge" style="${tickerStyle}">${ticker}</span></td>
+                            <td style="text-align:right; font-family:var(--font-mono);">${amount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 4})}</td>
+                        </tr>
+                    `;
+                }
+            }
+        }
+        
+        portEthBalance.innerText = ethBalanceStr;
+        portAssetCount.innerText = count.toString();
+        portfolioAssetBody.innerHTML = count > 0 ? assetRows : `<tr><td colspan="3" style="text-align:center; color:var(--text-gray);">No asset holdings detected on Robinhood L2.</td></tr>`;
+    }
+
+    searchInput.addEventListener("input", renderPools);
+    sortInput.addEventListener("change", renderPools);
+    connectBtn.addEventListener("click", connectWallet);
+
+    // Swap tab click listeners
     tabBuy.addEventListener("click", () => {
         tradeMode = "buy";
         tabBuy.className = "trade-tab-btn active buy";
@@ -1409,37 +2299,92 @@
         document.getElementById("quickAmountsContainer").style.display = "none";
     });
 
+    // Deploy meme token listener (offline fallback)
     launchBtn.addEventListener("click", async () => {
-        if (!factoryContract) return alert("Connect wallet first!");
         const name = document.getElementById("tokName").value.trim();
         const symbol = document.getElementById("tokSymbol").value.trim();
         if (!name || !symbol) return alert("Fill in name and symbol.");
 
-        try {
-            launchBtn.innerText = "Deploying...";
-            launchBtn.disabled = true;
-            
-            const tx = await factoryContract.deployMemeToken(name, symbol, 1000000000, {
-                value: ethers.utils.parseEther("0.0005")
-            });
-            
-            await tx.wait();
-            alert("Token deployed successfully!");
-            document.getElementById("tokName").value = "";
-            document.getElementById("tokSymbol").value = "";
-            
-            await loadPools();
-            switchView("launchpad");
-        } catch (err) {
-            alert("Deployment failed: " + err.message);
-        } finally {
-            launchBtn.innerText = "Deploy Meme Token (0.0005 ETH)";
-            launchBtn.disabled = false;
+        launchBtn.innerText = "Deploying...";
+        launchBtn.disabled = true;
+        
+        if (connectBtn.innerText.includes("...")) {
+            // Real Web3 Mode
+            try {
+                const tx = await factoryContract.deployMemeToken(name, symbol, 1000000000, {
+                    value: ethers.utils.parseEther("0.0005")
+                });
+                await tx.wait();
+                showToast("Token Deployed 🚀", `Created $${symbol.toUpperCase()} successfully on-chain!`, "success");
+                document.getElementById("tokName").value = "";
+                document.getElementById("tokSymbol").value = "";
+                await loadPools();
+                switchView("launchpad");
+            } catch (err) {
+                alert("Deployment failed: " + err.message);
+            } finally {
+                launchBtn.innerText = "Deploy Meme Token (0.0005 ETH)";
+                launchBtn.disabled = false;
+            }
+        } else {
+            // Simulated Mode
+            setTimeout(() => {
+                if (paperBalance < 0.0005) {
+                    alert("Insufficient paper ETH for deployment (0.0005 ETH needed).");
+                    launchBtn.innerText = "Deploy Meme Token (0.0005 ETH)";
+                    launchBtn.disabled = false;
+                    return;
+                }
+                
+                paperBalance -= 0.0005;
+                localStorage.setItem("paperBalance", paperBalance);
+                
+                const newAddress = "0xMockToken" + Math.random().toString(16).substr(2, 32);
+                const newPool = {
+                    address: newAddress,
+                    name: name,
+                    symbol: symbol.toUpperCase(),
+                    ethReserves: ethers.utils.parseEther("0.0005"),
+                    progress: 0,
+                    isMock: true
+                };
+                
+                loadedPoolsData.unshift(newPool);
+                
+                const customPools = JSON.parse(localStorage.getItem("customMockPools") || "[]");
+                customPools.push(newPool);
+                localStorage.setItem("customMockPools", JSON.stringify(customPools));
+
+                // Process referrer commission for token launch
+                const referrer = localStorage.getItem("activeReferrer");
+                if (referrer) {
+                    let earned = parseFloat(localStorage.getItem(`refEarned_${referrer}`) || "0.0");
+                    earned += 0.0001; // 20% of 0.0005 ETH launch fee
+                    localStorage.setItem(`refEarned_${referrer}`, earned.toString());
+
+                    let count = parseInt(localStorage.getItem(`refCount_${referrer}`) || "0");
+                    count += 1;
+                    localStorage.setItem(`refCount_${referrer}`, count.toString());
+
+                    showToast("Referral Earned! 💸", `0.0001 ETH sent to referrer: ${referrer.slice(0,6)}...${referrer.slice(-4)}`, "success");
+                }
+                
+                showToast("Token Deployed 🚀", `Successfully created $${symbol.toUpperCase()} on Robinhood L2!`, "success");
+                
+                document.getElementById("tokName").value = "";
+                document.getElementById("tokSymbol").value = "";
+                renderPools();
+                selectToken(newPool.address, newPool.symbol, 0);
+                switchView("launchpad");
+                launchBtn.innerText = "Deploy Meme Token (0.0005 ETH)";
+                launchBtn.disabled = false;
+            }, 1500);
         }
     });
 
+    // Spot Trade purchase action button listener (offline fallback)
     tradeBtn.addEventListener("click", async () => {
-        if (!factoryContract || !activeTokenAddress) return;
+        if (!activeTokenAddress) return;
         const amount = tradeAmountInput.value.trim();
         if (!amount || isNaN(amount) || parseFloat(amount) <= 0) {
             alert("Please enter a valid amount.");
@@ -1448,92 +2393,144 @@
 
         statusBox.style.display = "block";
         statusBox.classList.remove("error-state");
-        statusBody.innerText = "Waiting for wallet transaction signatures...";
-
-        try {
-            tradeBtn.disabled = true;
-            if (tradeMode === "buy") {
-                const valueWei = ethers.utils.parseEther(amount);
-                const tx = await factoryContract.buyMemeToken(activeTokenAddress, {
-                    value: valueWei
-                });
-                statusBody.innerText = `Tx broadcasted: ${tx.hash}\nWaiting for network confirmation...`;
-                await tx.wait();
-                statusBody.innerText = `✅ Success! Swap complete.`;
-                playRetroTradeSound();
-            } else {
-                const tokenAmount = ethers.utils.parseEther(amount);
-                statusBody.innerText = "Requesting token allowance approval...";
-                const tokenContract = new ethers.Contract(activeTokenAddress, tokenAbi, signer);
-                const approveTx = await tokenContract.approve(factoryAddress, tokenAmount);
-                await approveTx.wait();
-                
-                statusBody.innerText = "Executing sell transaction...";
-                const tx = await factoryContract.sellMemeToken(activeTokenAddress, tokenAmount);
-                statusBody.innerText = `Tx broadcasted: ${tx.hash}\nWaiting for network confirmation...`;
-                await tx.wait();
-                statusBody.innerText = `✅ Success! Swap complete.`;
-                playRetroTradeSound();
+        
+        if (connectBtn.innerText.includes("...")) {
+            // Real Web3 Mode
+            statusBody.innerText = "Waiting for wallet transaction signatures...";
+            try {
+                tradeBtn.disabled = true;
+                if (tradeMode === "buy") {
+                    const valueWei = ethers.utils.parseEther(amount);
+                    const tx = await factoryContract.buyMemeToken(activeTokenAddress, {
+                        value: valueWei
+                    });
+                    statusBody.innerText = `Tx broadcasted: ${tx.hash}\nWaiting for network confirmation...`;
+                    await tx.wait();
+                    statusBody.innerText = `✅ Success! Swap complete.`;
+                    playRetroTradeSound();
+                } else {
+                    const tokenAmount = ethers.utils.parseEther(amount);
+                    statusBody.innerText = "Requesting token allowance approval...";
+                    const tokenContract = new ethers.Contract(activeTokenAddress, tokenAbi, signer);
+                    const approveTx = await tokenContract.approve(factoryAddress, tokenAmount);
+                    await approveTx.wait();
+                    
+                    statusBody.innerText = "Executing sell transaction...";
+                    const tx = await factoryContract.sellMemeToken(activeTokenAddress, tokenAmount);
+                    statusBody.innerText = `Tx broadcasted: ${tx.hash}\nWaiting for network confirmation...`;
+                    await tx.wait();
+                    statusBody.innerText = `✅ Success! Swap complete.`;
+                    playRetroTradeSound();
+                }
+                await loadPools();
+                const address = await signer.getAddress();
+                await updatePortfolio(address);
+            } catch (err) {
+                statusBox.classList.add("error-state");
+                statusBody.innerText = `❌ Error: ${err.message}`;
+            } finally {
+                tradeBtn.disabled = false;
             }
-            await loadPools();
-            const address = await signer.getAddress();
-            await updatePortfolio(address);
-        } catch (err) {
-            statusBox.classList.add("error-state");
-            statusBody.innerText = `❌ Error: ${err.message}`;
-        } finally {
-            tradeBtn.disabled = false;
+        } else {
+            // Mock Trading Mode
+            tradeBtn.disabled = true;
+            statusBody.innerText = "Executing simulated L2 trade...";
+            
+            setTimeout(() => {
+                const token = loadedPoolsData.find(t => t.address === activeTokenAddress);
+                if (!token) {
+                    statusBox.classList.add("error-state");
+                    statusBody.innerText = `❌ Error: Active token not found.`;
+                    tradeBtn.disabled = false;
+                    return;
+                }
+                
+                const amtNum = parseFloat(amount);
+                const mockHoldings = JSON.parse(localStorage.getItem("mockHoldings") || "{}");
+                
+                if (tradeMode === "buy") {
+                    if (paperBalance < amtNum) {
+                        statusBox.classList.add("error-state");
+                        statusBody.innerText = `❌ Error: Insufficient simulated ETH balance.`;
+                        tradeBtn.disabled = false;
+                        return;
+                    }
+                    
+                    const rate = 1000000;
+                    const tokensBought = amtNum * rate;
+                    
+                    paperBalance -= amtNum;
+                    localStorage.setItem("paperBalance", paperBalance);
+                    
+                    mockHoldings[token.symbol] = (mockHoldings[token.symbol] || 0) + tokensBought;
+                    localStorage.setItem("mockHoldings", JSON.stringify(mockHoldings));
+                    
+                    token.progress = Math.min(100, token.progress + Math.round(amtNum * 15));
+                    if (priceHistories[token.address]) {
+                        const history = priceHistories[token.address];
+                        history.push(history[history.length - 1] * (1 + amtNum * 0.15));
+                    }
+                    
+                    // Pay swap fee referral commission (20% of 1% fee = 0.2% of swap amount)
+                    const refBuyer = localStorage.getItem("activeReferrer");
+                    if (refBuyer) {
+                        const fee = amtNum * 0.01 * 0.20;
+                        let earned = parseFloat(localStorage.getItem(`refEarned_${refBuyer}`) || "0.0");
+                        earned += fee;
+                        localStorage.setItem(`refEarned_${refBuyer}`, earned.toString());
+                        showToast("Referral Fee Paid! 💸", `${fee.toFixed(6)} ETH commission sent to referrer: ${refBuyer.slice(0,6)}...${refBuyer.slice(-4)}`, "success");
+                    }
+
+                    showToast("Simulated Swap Complete 🟩", `Bought ${tokensBought.toLocaleString()} $${token.symbol} for ${amtNum} ETH`, "success");
+                    statusBody.innerText = `✅ Success! Simulated swap complete.`;
+                    playRetroTradeSound();
+                } else {
+                    const currentTokens = mockHoldings[token.symbol] || 0;
+                    if (currentTokens < amtNum) {
+                        statusBox.classList.add("error-state");
+                        statusBody.innerText = `❌ Error: Insufficient tokens to sell.`;
+                        tradeBtn.disabled = false;
+                        return;
+                    }
+                    
+                    const rate = 1000000;
+                    const ethReceived = amtNum / rate;
+                    
+                    paperBalance += ethReceived;
+                    localStorage.setItem("paperBalance", paperBalance);
+                    
+                    mockHoldings[token.symbol] = currentTokens - amtNum;
+                    localStorage.setItem("mockHoldings", JSON.stringify(mockHoldings));
+                    
+                    token.progress = Math.max(0, token.progress - Math.round(ethReceived * 15));
+                    if (priceHistories[token.address]) {
+                        const history = priceHistories[token.address];
+                        history.push(history[history.length - 1] * (1 - ethReceived * 0.15));
+                    }
+
+                    // Pay swap fee referral commission for selling
+                    const refSeller = localStorage.getItem("activeReferrer");
+                    if (refSeller) {
+                        const fee = ethReceived * 0.01 * 0.20;
+                        let earned = parseFloat(localStorage.getItem(`refEarned_${refSeller}`) || "0.0");
+                        earned += fee;
+                        localStorage.setItem(`refEarned_${refSeller}`, earned.toString());
+                        showToast("Referral Fee Paid! 💸", `${fee.toFixed(6)} ETH commission sent to referrer: ${refSeller.slice(0,6)}...${refSeller.slice(-4)}`, "success");
+                    }
+                    
+                    showToast("Simulated Swap Complete 🟥", `Sold ${amtNum.toLocaleString()} $${token.symbol} for ${ethReceived.toFixed(6)} ETH`, "success");
+                    statusBody.innerText = `✅ Success! Simulated Swap complete.`;
+                    playRetroTradeSound();
+                }
+                
+                renderPools();
+                updatePortfolio();
+                tradeBtn.disabled = false;
+            }, 1000);
         }
     });
 
-    async function updatePortfolio(walletAddress) {
-        portfolioWalletAddr.innerText = walletAddress;
-        
-        const balance = await provider.getBalance(walletAddress);
-        portEthBalance.innerText = `${parseFloat(ethers.utils.formatEther(balance)).toFixed(4)} ETH`;
-
-        let assetRows = "";
-        let count = 0;
-
-        for (const [ticker, address] of Object.entries(standardTokens)) {
-            try {
-                const erc20 = new ethers.Contract(address, tokenAbi, provider);
-                const bal = await erc20.balanceOf(walletAddress);
-                if (bal.gt(0)) {
-                    count++;
-                    assetRows += `
-                        <tr>
-                            <td>${ticker === "USDG" ? "USDG Stablecoin" : `${ticker} Stock Asset`}</td>
-                            <td><span class="progress-badge" style="background:rgba(255,0,102,0.08); color:var(--neon-pink); border-color:var(--neon-pink);">${ticker}</span></td>
-                            <td style="text-align:right; font-family:var(--font-mono);">${ethers.utils.formatUnits(bal, 18)}</td>
-                        </tr>
-                    `;
-                }
-            } catch (e) {}
-        }
-
-        for (let i = 0; i < loadedPoolsData.length; i++) {
-            const token = loadedPoolsData[i];
-            try {
-                const erc20 = new ethers.Contract(token.address, tokenAbi, provider);
-                const bal = await erc20.balanceOf(walletAddress);
-                if (bal.gt(0)) {
-                    count++;
-                    assetRows += `
-                        <tr>
-                            <td>${token.name}</td>
-                            <td><span class="progress-badge">${token.symbol}</span></td>
-                            <td style="text-align:right; font-family:var(--font-mono);">${ethers.utils.formatUnits(bal, 18)}</td>
-                        </tr>
-                    `;
-                }
-            } catch (e) {}
-        }
-
-        portAssetCount.innerText = count.toString();
-        portfolioAssetBody.innerHTML = count > 0 ? assetRows : `<tr><td colspan="3" style="text-align:center; color:var(--text-gray);">No asset holdings detected on Robinhood L2.</td></tr>`;
-    }
-
+    // Swap From and Swap To calculators
     swapFromAmount.addEventListener("input", () => {
         const amt = parseFloat(swapFromAmount.value);
         if (amt && amt > 0) {
@@ -1544,32 +2541,153 @@
         }
     });
 
+    // DEX swap listener (offline fallback)
     dexSwapBtn.addEventListener("click", async () => {
-        if (!signer) return alert("Connect wallet first!");
         const amt = swapFromAmount.value;
         if (!amt || parseFloat(amt) <= 0) return alert("Enter amount to swap.");
-
-        dexSwapBtn.innerText = "Interacting with Rabby...";
-        try {
-            const tx = await signer.sendTransaction({
-                to: "0x0000000000000000000000000000000000000000",
-                value: 0
-            });
-            alert("Swap completed successfully!");
-            swapFromAmount.value = "";
-            swapToAmount.value = "";
-            const address = await signer.getAddress();
-            await updatePortfolio(address);
-        } catch (err) {
-            alert("Swap aborted: " + err.message);
-        } finally {
-            dexSwapBtn.innerText = "Execute Swap (Mock Router)";
+        
+        dexSwapBtn.innerText = "Processing Swap...";
+        dexSwapBtn.disabled = true;
+        
+        if (connectBtn.innerText.includes("...")) {
+            // Real Web3 Mode
+            try {
+                const tx = await signer.sendTransaction({
+                    to: "0x0000000000000000000000000000000000000000",
+                    value: 0
+                });
+                alert("Swap completed successfully!");
+                swapFromAmount.value = "";
+                swapToAmount.value = "";
+                const address = await signer.getAddress();
+                await updatePortfolio(address);
+            } catch (err) {
+                alert("Swap aborted: " + err.message);
+            } finally {
+                dexSwapBtn.innerText = "Execute Swap (Mock Router)";
+                dexSwapBtn.disabled = false;
+            }
+        } else {
+            // Simulated Mode
+            setTimeout(() => {
+                const fromAsset = swapFromSelect.value;
+                const toAsset = swapToSelect.value;
+                const fromAmt = parseFloat(amt);
+                
+                const mockHoldings = JSON.parse(localStorage.getItem("mockHoldings") || "{}");
+                
+                let hasBalance = false;
+                if (fromAsset === "ETH") {
+                    hasBalance = paperBalance >= fromAmt;
+                } else {
+                    hasBalance = (mockHoldings[fromAsset] || 0) >= fromAmt;
+                }
+                
+                if (!hasBalance) {
+                    alert("Insufficient simulated balance for swap.");
+                    dexSwapBtn.innerText = "Execute Swap (Mock Router)";
+                    dexSwapBtn.disabled = false;
+                    return;
+                }
+                
+                // Deduct fromAsset
+                if (fromAsset === "ETH") {
+                    paperBalance -= fromAmt;
+                    localStorage.setItem("paperBalance", paperBalance);
+                } else {
+                    mockHoldings[fromAsset] = (mockHoldings[fromAsset] || 0) - fromAmt;
+                }
+                
+                const prices = { "ETH": 3000, "AAPL": 150, "TSLA": 200, "USDG": 1 };
+                const rate = prices[fromAsset] / prices[toAsset];
+                const toAmt = fromAmt * rate;
+                
+                // Add toAsset
+                if (toAsset === "ETH") {
+                    paperBalance += toAmt;
+                    localStorage.setItem("paperBalance", paperBalance);
+                } else {
+                    mockHoldings[toAsset] = (mockHoldings[toAsset] || 0) + toAmt;
+                }
+                
+                localStorage.setItem("mockHoldings", JSON.stringify(mockHoldings));
+                showToast("Swap Successful 🔄", `Exchanged ${fromAmt} ${fromAsset} for ${toAmt.toFixed(4)} ${toAsset}`, "success");
+                
+                swapFromAmount.value = "";
+                swapToAmount.value = "";
+                updatePortfolio();
+                
+                dexSwapBtn.innerText = "Execute Swap (Mock Router)";
+                dexSwapBtn.disabled = false;
+            }, 1000);
         }
     });
 
-    searchInput.addEventListener("input", renderPools);
-    sortInput.addEventListener("change", renderPools);
-    connectBtn.addEventListener("click", connectWallet);
+    // Window initialization & interval ticking setups
+    window.addEventListener("DOMContentLoaded", () => {
+        // Initialize localStorage if empty
+        if (!localStorage.getItem("paperBalance")) {
+            localStorage.setItem("paperBalance", "10.0");
+        }
+        paperBalance = parseFloat(localStorage.getItem("paperBalance"));
+        
+        if (!localStorage.getItem("mockHoldings")) {
+            const initialHoldings = {
+                "AAPL": 0.25,
+                "TSLA": 0.1,
+                "USDG": 250.0
+            };
+            localStorage.setItem("mockHoldings", JSON.stringify(initialHoldings));
+        }
+        
+        loadPools();
+        updatePortfolio();
+
+        // Real-time ticking chart interval loop
+        setInterval(() => {
+            if (activeTokenAddress) {
+                const token = loadedPoolsData.find(t => t.address === activeTokenAddress);
+                if (token) {
+                    if (!priceHistories[token.address]) {
+                        initPriceHistory(token);
+                    }
+                    const history = priceHistories[token.address];
+                    let lastPrice = history[history.length - 1];
+                    
+                    // slight dynamic price fluctuation
+                    let nextPrice = lastPrice + (Math.random() - 0.49) * (lastPrice * 0.02);
+                    if (nextPrice < 0.0001) nextPrice = 0.0001;
+                    
+                    history.push(nextPrice);
+                    if (history.length > 20) history.shift();
+                    
+                    drawChart(token.progress, token.symbol, history);
+                    updateOptionsTickers(nextPrice);
+                }
+            }
+        }, 2200);
+
+        // Simulated whale tax redistribution (Merry Men rebates)
+        setInterval(() => {
+            // Only trigger if wallet is not connected (simulated dApp mode)
+            if (!connectBtn.innerText.includes("...")) {
+                const rebate = parseFloat((Math.random() * 0.0003 + 0.0001).toFixed(5));
+                paperBalance += rebate;
+                localStorage.setItem("paperBalance", paperBalance);
+                
+                const mockWhales = ["0x82fb", "0x5ed0", "0x39a1", "0xda09", "0x77c2"];
+                const whale = mockWhales[Math.floor(Math.random() * mockWhales.length)];
+                
+                showToast("Merry Men Rebate 🏹", `Taxed whale wallet ${whale} and distributed +${rebate} ETH rebate to your balance!`, "info");
+                updatePortfolio();
+            }
+        }, 18000);
+
+        // Active option positions expiry clock ticking
+        setInterval(() => {
+            renderOptionsPositions();
+        }, 1000);
+    });
 </script>
 
 </body>
