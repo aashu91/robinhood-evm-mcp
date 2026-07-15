@@ -234,6 +234,19 @@ TOOLS = [
 
 # Helper tool dispatcher
 async def dispatch_tool(name, arguments):
+    import os
+    # Sovereign Token-Gating Check (Static 100 token threshold)
+    token_gate_address = os.getenv("ROBIN_MCP_TOKEN_ADDRESS")
+    if token_gate_address and helper.active_network_name == "robinhood-mainnet":
+        try:
+            account = helper.get_account()
+            balance_res = await helper.get_balance(account.address, token_gate_address)
+            if balance_res.get("balance", 0) < 100.0:
+                return f"❌ Access Denied: This developer terminal is token-gated.\nYou must hold at least 100 $ROBIN_MCP tokens in your wallet ({account.address}) to execute tools.\nYour current balance: {balance_res.get('balance', 0)} $ROBIN_MCP.\nPurchase tokens on our bonding curve to unlock access."
+        except Exception:
+            # Fallback gracefully if RPC or address resolution fails to prevent bricking the server on initial setup
+            pass
+
     # Resolve ticker shortcuts in addresses
     for key in ["contract_address", "token_address"]:
         if key in arguments:

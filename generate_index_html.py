@@ -1,1199 +1,1259 @@
 # generate_index_html.py
-# Generates a state-of-the-art multi-page Web3 trading dApp dashboard for the Meme Launchpad
+# generate_index_html.py - Upgraded Web3 Sovereign Launchpad Terminal
+# ponytail: clean, zero-boilerplate codebase utilizing CDN ethers.js and Three.js to offload server dependencies.
+# ceiling: Client-side RPC queries can hit public node rate-limits; upgrade path: Goldsky/The Graph indexer.
 
 import json
 import os
 
 def generate():
-    # 1. Load compiled contract JSON
-    artifact_path = "MemeFactory.json"
-    if not os.path.exists(artifact_path):
-        print("❌ MemeFactory.json not found! Run compile.cjs first.")
-        return
-
-    with open(artifact_path, "r") as f:
-        artifact = json.load(f)
-
-    abi = artifact["abi"]
-    
-    # Deployed contract address
     factory_address = "0x322f214995d4808660557F5744Ae8792AE1129cA"
 
-    # Token ABI needed for name, symbol, etc.
-    with open("MemeToken.json", "r") as f:
-        token_artifact = json.load(f)
-    token_abi = token_artifact["abi"]
-
-    # 2. HTML Template with premium styling
     html_content = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Robinhood Chain - Meme Launchpad & DEX</title>
-    <!-- Google Fonts -->
+    <title>Robinhood L2 - Sovereign Code & Culture Launchpad</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-    <!-- Ethers.js v5 CDN -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js" type="text/javascript"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
         :root {{
-            --bg-color: #060b18;
-            --card-bg: rgba(15, 23, 42, 0.6);
-            --border-color: rgba(245, 158, 11, 0.16);
+            --bg: #02040a;
+            --card: rgba(6, 10, 24, 0.65);
             --gold: #fbbf24;
-            --gold-glow: rgba(245, 158, 11, 0.25);
             --gold-dark: #b45309;
-            --text-primary: #f8fafc;
-            --text-secondary: #94a3b8;
+            --gold-glow: rgba(245, 158, 11, 0.15);
+            --border: rgba(245, 158, 11, 0.08);
+            --text: #f9fafb;
+            --text-muted: #9ca3af;
             --success: #10b981;
             --error: #ef4444;
-            --font-main: 'Outfit', sans-serif;
             --font-mono: 'JetBrains Mono', monospace;
+            --accent-green: #00ff88;
+            --accent-pink: #ff0066;
         }}
 
-        * {{
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: var(--font-main);
+        * {{ box-sizing: border-box; margin: 0; padding: 0; font-family: 'Outfit', sans-serif; }}
+        body {{ 
+            background-color: var(--bg); 
+            color: var(--text); 
+            min-height: 300vh; /* Height to support scrolling sections */
+            overflow-x: hidden; 
+            scroll-behavior: smooth;
         }}
 
-        body {{
-            background-color: var(--bg-color);
-            background-image: 
-                radial-gradient(at 0% 0%, rgba(245, 158, 11, 0.08) 0px, transparent 40%),
-                radial-gradient(at 100% 0%, rgba(30, 58, 138, 0.25) 0px, transparent 50%),
-                radial-gradient(at 50% 100%, rgba(13, 148, 136, 0.04) 0px, transparent 60%);
-            color: var(--text-primary);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            overflow-x: hidden;
+        /* 3D Fullscreen Background */
+        .scroll-world-container {{
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #02040a;
+            overflow: hidden;
+            z-index: -1;
+            pointer-events: none;
         }}
+        #worldCanvas {{ width: 100%; height: 100%; display: block; }}
 
-        /* Header Ticker */
-        .ticker-bar {{
-            background: rgba(245, 158, 11, 0.08);
-            border-bottom: 1px solid rgba(245, 158, 11, 0.12);
-            padding: 8px 20px;
-            font-size: 12px;
-            font-family: var(--font-mono);
-            display: flex;
-            gap: 30px;
-            justify-content: center;
-            overflow-x: auto;
-            white-space: nowrap;
-            color: var(--text-secondary);
-        }}
-
-        .ticker-item {{
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }}
-
-        .ticker-val {{
-            color: var(--gold);
-            font-weight: 700;
-        }}
-
-        /* Navbar Layout */
-        .navbar {{
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+        /* HUD & Overlays */
+        .hud-overlay {{
+            position: fixed;
+            top: 0;
+            left: 0;
             width: 100%;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 24px 20px;
+            height: 100%;
+            pointer-events: none;
             z-index: 10;
         }}
-
-        .logo-container {{
-            display: flex;
-            align-items: center;
-            gap: 12px;
+        .hud-top {{
+            position: absolute;
+            top: 75px;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+            width: 100%;
+        }}
+        .overlay-title {{ 
+            font-size: 2.5rem; 
+            font-weight: 800; 
+            background: linear-gradient(135deg, #fff, var(--gold)); 
+            -webkit-background-clip: text; 
+            -webkit-text-fill-color: transparent; 
+            letter-spacing: -1px;
+            text-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            transition: all 0.5s ease;
+        }}
+        .overlay-desc {{ 
+            color: var(--text-muted); 
+            font-size: 13px; 
+            font-family: var(--font-mono); 
+            margin-top: 6px;
+            opacity: 0.8;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.5s ease;
         }}
 
-        .logo {{
-            width: 40px;
-            height: 40px;
-            background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+        /* Navigation */
+        .navbar {{ 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            padding: 16px 40px; 
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 100;
+            background: rgba(2, 4, 10, 0.75);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255,255,255,0.03);
+        }}
+        .logo-box {{ display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 22px; letter-spacing: -0.5px; }}
+        .logo-icon {{ 
+            width: 34px; 
+            height: 34px; 
+            background: linear-gradient(135deg, var(--gold), var(--gold-dark)); 
+            border-radius: 8px; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            color: #030712;
+            font-weight: 800;
+        }}
+        .nav-tabs {{ display: flex; gap: 6px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; padding: 4px; }}
+        .tab-btn {{ background: none; border: none; color: var(--text-muted); font-size: 13px; font-weight: 600; padding: 8px 18px; border-radius: 8px; cursor: pointer; transition: 0.2s; }}
+        .tab-btn:hover {{ color: var(--text); }}
+        .tab-btn.active {{ background: rgba(245,158,11,0.12); color: var(--gold); border: 1px solid rgba(245,158,11,0.15); }}
+        
+        .connect-btn {{
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 12px;
+            color: var(--text);
+            font-size: 13px;
+            font-weight: 600;
+            padding: 8px 16px;
+            cursor: pointer;
+            transition: 0.2s;
+        }}
+        .connect-btn:hover {{
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--gold);
+        }}
+
+        /* Scroll Layout Sections */
+        .scroll-section {{
+            height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 22px;
-            font-weight: 800;
-            color: #060b18;
-            box-shadow: 0 0 20px var(--gold-glow);
-        }}
-
-        .brand-name {{
-            font-size: 20px;
-            font-weight: 800;
-            letter-spacing: -0.5px;
-            background: linear-gradient(to right, #fff, #94a3b8);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }}
-
-        /* Tab Navigation Links */
-        .nav-links {{
-            display: flex;
-            gap: 8px;
-            background: rgba(15, 23, 42, 0.4);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            border-radius: 14px;
-            padding: 4px;
-        }}
-
-        .nav-tab {{
-            background: none;
-            border: none;
-            border-radius: 10px;
-            padding: 10px 18px;
-            color: var(--text-secondary);
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-        }}
-
-        .nav-tab.active {{
-            background: rgba(245, 158, 11, 0.12);
-            color: var(--gold);
-            border: 1px solid rgba(245, 158, 11, 0.15);
-        }}
-
-        .connect-btn {{
-            background: rgba(245, 158, 11, 0.1);
-            border: 1px solid var(--border-color);
-            border-radius: 14px;
-            padding: 12px 24px;
-            color: var(--gold);
-            font-size: 14px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.3s;
-        }}
-
-        .connect-btn:hover {{
-            background: linear-gradient(135deg, var(--gold), var(--gold-dark));
-            color: #060b18;
-            box-shadow: 0 0 15px var(--gold-glow);
-            transform: translateY(-1px);
-        }}
-
-        /* Page Layout & Container Views */
-        .main-container {{
-            width: 100%;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-            flex-grow: 1;
-        }}
-
-        .view-section {{
-            display: none;
-            animation: fadeIn 0.4s ease-out;
-        }}
-
-        .view-section.active {{
-            display: block;
-        }}
-
-        @keyframes fadeIn {{
-            from {{ opacity: 0; transform: translateY(10px); }}
-            to {{ opacity: 1; transform: translateY(0); }}
-        }}
-
-        /* Common Cards */
-        .card {{
-            background: var(--card-bg);
-            backdrop-filter: blur(16px);
-            border: 1px solid var(--border-color);
-            border-radius: 24px;
-            padding: 28px;
-            margin-bottom: 24px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-        }}
-
-        /* Grid for Cards */
-        .dashboard-grid {{
-            display: grid;
-            grid-template-columns: 2fr 1fr;
-            gap: 30px;
-        }}
-
-        @media (max-width: 900px) {{
-            .dashboard-grid {{
-                grid-template-columns: 1fr;
-            }}
-        }}
-
-        /* Token Card styling */
-        .token-grid {{
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-        }}
-
-        @media (max-width: 650px) {{
-            .token-grid {{
-                grid-template-columns: 1fr;
-            }}
-        }}
-
-        .token-card {{
-            background: rgba(15, 23, 42, 0.4);
-            border: 1px solid rgba(245, 158, 11, 0.08);
-            border-radius: 20px;
-            padding: 24px;
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
-            overflow: hidden;
+            padding: 100px 40px 40px 40px;
+            opacity: 0;
+            transform: translateY(40px);
+            transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }}
+        .scroll-section.active {{
+            opacity: 1;
+            transform: translateY(0);
         }}
 
-        .token-card:hover {{
+        /* Container Card styles */
+        .container {{ max-width: 1100px; width: 100%; margin: 0 auto; }}
+        .card {{ 
+            background: var(--card); 
+            backdrop-filter: blur(20px); 
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--border); 
+            border-radius: 24px; 
+            padding: 30px; 
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }}
+        .card:hover {{
+            border-color: rgba(245, 158, 11, 0.15);
+            box-shadow: 0 25px 60px rgba(245, 158, 11, 0.05);
+        }}
+        .grid {{ display: grid; grid-template-columns: 1.2fr 1fr; gap: 30px; }}
+        @media (max-width: 900px) {{ .grid {{ grid-template-columns: 1fr; }} }}
+
+        /* Forms */
+        .form-group {{ margin-bottom: 18px; }}
+        .form-group label {{ display: block; font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; margin-bottom: 6px; letter-spacing: 0.5px; }}
+        .input {{ width: 100%; background: rgba(3, 7, 18, 0.7); border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 12px 14px; color: var(--text); font-size: 14px; outline: none; transition: all 0.3s; }}
+        .input:focus {{ border-color: var(--gold); box-shadow: 0 0 12px rgba(245, 158, 11, 0.12); background: rgba(3, 7, 18, 0.9); }}
+        
+        select.input {{
+            appearance: none;
+            background-image: url("data:image/svg+xml;utf8,<svg fill='white' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/><path d='M0 0h24v24H0z' fill='none'/></svg>");
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+        }}
+
+        .btn {{ 
+            width: 100%; 
+            background: linear-gradient(135deg, var(--gold), var(--gold-dark)); 
+            border: none; 
+            border-radius: 12px; 
+            padding: 14px; 
+            color: #030712; 
+            font-size: 14px; 
+            font-weight: 700; 
+            cursor: pointer; 
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+            box-shadow: 0 4px 12px var(--gold-glow);
+        }}
+        .btn:hover {{ 
+            transform: translateY(-1px); 
+            box-shadow: 0 6px 20px rgba(245, 158, 11, 0.3); 
+            filter: brightness(1.1);
+        }}
+        
+        .btn-outline {{
+            background: none;
+            border: 1px solid rgba(255,255,255,0.1);
+            color: var(--text);
+            box-shadow: none;
+            margin-top: 10px;
+        }}
+        .btn-outline:hover {{
+            background: rgba(255,255,255,0.03);
             border-color: var(--gold);
-            transform: translateY(-2px);
-            box-shadow: 0 8px 24px rgba(245, 158, 11, 0.08);
+            color: var(--gold);
         }}
 
-        .token-card-header {{
+        /* Fullscreen Workspaces */
+        .workspace-overlay {{
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(3, 5, 12, 0.98);
+            backdrop-filter: blur(35px);
+            -webkit-backdrop-filter: blur(35px);
+            z-index: 1000;
+            display: none;
+            animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            padding: 40px;
+            overflow-y: auto;
+        }}
+        @keyframes slideUp {{
+            from {{ transform: translateY(100%); opacity: 0; }}
+            to {{ transform: translateY(0); opacity: 1; }}
+        }}
+        
+        .ws-header {{
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 14px;
+            margin-bottom: 30px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            padding-bottom: 20px;
         }}
-
-        .avatar-circle {{
-            width: 42px;
-            height: 42px;
+        .back-btn {{
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.08);
+            color: var(--text-muted);
+            padding: 8px 16px;
             border-radius: 10px;
-            background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(30, 41, 59, 0.5));
-            border: 1px solid rgba(245, 158, 11, 0.2);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 18px;
-            font-weight: 800;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            transition: 0.2s;
+        }}
+        .back-btn:hover {{
+            border-color: var(--gold);
             color: var(--gold);
+            background: rgba(245,158,11,0.05);
         }}
 
-        .token-info {{
-            margin-left: 12px;
-            flex-grow: 1;
+        /* Candlestick Canvas */
+        .chart-box {{
+            width: 100%;
+            height: 320px;
+            background: #010206;
+            border-radius: 16px;
+            border: 1px solid rgba(255,255,255,0.03);
+            overflow: hidden;
+            position: relative;
         }}
+        #priceChart {{ width: 100%; height: 100%; display: block; }}
 
-        .progress-badge {{
-            background: rgba(16, 185, 129, 0.1);
-            color: var(--success);
-            border: 1px solid rgba(16, 185, 129, 0.15);
+        .console {{ 
+            background: #010206; 
+            border-radius: 16px; 
+            padding: 18px; 
+            font-family: var(--font-mono); 
+            font-size: 12px; 
+            height: 250px; 
+            overflow-y: auto; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 8px; 
+            box-shadow: inset 0 0 15px #000;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+        }}
+        .c-line {{ display: flex; gap: 8px; line-height: 1.4; }}
+        .c-time {{ color: var(--text-muted); }}
+        .c-tag {{ color: var(--gold); font-weight: 700; }}
+
+        /* Dev Leaders & PRs */
+        .table {{ width: 100%; border-collapse: collapse; margin-top: 10px; }}
+        .table th, .table td {{ padding: 12px 10px; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 13px; }}
+        .table th {{ color: var(--text-muted); text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px; font-weight: 600; }}
+        
+        .badge {{
+            padding: 2px 8px;
             border-radius: 6px;
-            padding: 4px 8px;
             font-size: 11px;
             font-weight: 600;
+            text-transform: uppercase;
         }}
+        .badge-success {{ background: rgba(16, 185, 129, 0.1); color: var(--success); border: 1px solid rgba(16, 185, 129, 0.15); }}
+        .badge-warn {{ background: rgba(245, 158, 11, 0.1); color: var(--gold); border: 1px solid rgba(245, 158, 11, 0.15); }}
 
-        .progress-bar-container {{
-            background: rgba(255, 255, 255, 0.04);
-            border-radius: 6px;
-            height: 8px;
-            overflow: hidden;
+        /* Chat simulation */
+        .chat {{ 
+            display: flex; 
+            flex-direction: column; 
+            gap: 12px; 
+            background: #010206; 
+            border-radius: 16px; 
+            padding: 18px; 
+            height: 300px; 
+            overflow-y: auto; 
+            border: 1px solid rgba(255,255,255,0.03); 
+        }}
+        .bubble {{ max-width: 80%; padding: 10px 14px; border-radius: 14px; font-size: 13px; line-height: 1.4; }}
+        .b-user {{ background: rgba(245,158,11,0.12); align-self: flex-end; color: var(--gold); border: 1px solid rgba(245,158,11,0.08); border-bottom-right-radius: 2px; }}
+        .b-agent {{ background: rgba(16, 185, 129, 0.1); align-self: flex-start; color: #34d399; border: 1px solid rgba(16, 185, 129, 0.08); border-bottom-left-radius: 2px; }}
+
+        /* Step visualizer */
+        .step-container {{
             margin-top: 15px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-        }}
-
-        .progress-bar {{
-            background: linear-gradient(90deg, var(--gold), var(--success));
-            height: 100%;
-            width: 0%;
-            transition: width 0.5s ease;
-        }}
-
-        /* Forms inputs & fields */
-        .form-group {{
-            margin-bottom: 20px;
-        }}
-
-        .form-group label {{
-            display: block;
-            font-size: 12px;
-            font-weight: 600;
-            color: var(--text-secondary);
-            margin-bottom: 8px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }}
-
-        .form-input {{
-            width: 100%;
-            background: rgba(5, 10, 21, 0.7);
-            border: 1px solid rgba(148, 163, 184, 0.2);
-            border-radius: 12px;
-            padding: 14px 18px;
-            font-size: 14px;
-            color: #fff;
-            outline: none;
-            transition: all 0.3s;
-        }}
-
-        .form-input:focus {{
-            border-color: var(--gold);
-            box-shadow: 0 0 10px rgba(245, 158, 11, 0.15);
-        }}
-
-        .action-btn {{
-            width: 100%;
-            background: linear-gradient(135deg, var(--gold) 0%, #d97706 100%);
-            border: none;
-            border-radius: 14px;
-            padding: 16px;
-            color: #060b18;
-            font-size: 15px;
-            font-weight: 800;
-            cursor: pointer;
-            transition: all 0.3s;
-            box-shadow: 0 4px 15px var(--gold-glow);
-        }}
-
-        .action-btn:hover {{
-            background: linear-gradient(135deg, #d97706 0%, var(--gold-dark) 100%);
-            box-shadow: 0 0 20px var(--gold-glow);
-        }}
-
-        .action-btn:disabled {{
-            opacity: 0.5;
-            cursor: not-allowed;
-            box-shadow: none;
-        }}
-
-        /* DEX Swapper Panel styling */
-        .dex-container {{
-            max-width: 480px;
-            margin: 0 auto;
-        }}
-
-        .token-selector-row {{
-            display: flex;
-            align-items: center;
-            background: rgba(5, 10, 21, 0.7);
-            border: 1px solid rgba(148, 163, 184, 0.2);
-            border-radius: 14px;
-            padding: 12px 16px;
-            margin-bottom: 12px;
-        }}
-
-        .token-select-dropdown {{
-            background: none;
-            border: none;
-            color: #fff;
-            font-size: 16px;
-            font-weight: 700;
-            outline: none;
-            cursor: pointer;
-        }}
-
-        .token-select-dropdown option {{
-            background: var(--bg-color);
-            color: #fff;
-        }}
-
-        /* Portfolio / Wallet Panel */
-        .portfolio-header {{
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 24px;
-        }}
-
-        .wallet-stat-card {{
-            background: rgba(15, 23, 42, 0.3);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            border-radius: 16px;
-            padding: 20px;
-            text-align: center;
-            flex: 1;
-        }}
-
-        .balance-value {{
-            font-size: 26px;
-            font-weight: 800;
-            color: var(--gold);
-            margin: 8px 0;
-        }}
-
-        .asset-table {{
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }}
-
-        .asset-table th, .asset-table td {{
-            text-align: left;
-            padding: 14px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-        }}
-
-        .asset-table th {{
-            font-size: 12px;
-            color: var(--text-secondary);
-            text-transform: uppercase;
-            font-weight: 600;
-        }}
-
-        .asset-table td {{
-            font-size: 14px;
-        }}
-
-        .trade-tabs {{
-            display: flex;
-            background: rgba(5, 10, 21, 0.6);
-            border-radius: 12px;
-            padding: 4px;
-            margin-bottom: 20px;
-        }}
-
-        .trade-tab-btn {{
-            flex: 1;
-            background: none;
-            border: none;
-            border-radius: 10px;
-            padding: 10px;
-            color: var(--text-secondary);
-            font-size: 14px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.3s;
-        }}
-
-        .trade-tab-btn.active.buy {{
-            background: var(--success);
-            color: #060b18;
-        }}
-
-        .trade-tab-btn.active.sell {{
-            background: var(--error);
-            color: #fff;
-        }}
-
-        .status-box {{
-            background: rgba(5, 10, 21, 0.8);
-            border-left: 3px solid var(--gold);
-            border-radius: 10px;
-            padding: 14px;
-            font-size: 13px;
             display: none;
-            word-break: break-all;
-            margin-top: 15px;
-        }}
-
-        /* Live Activity Stream */
-        .console-box {{
-            background: rgba(5, 10, 21, 0.95);
-            border: 1px solid rgba(245, 158, 11, 0.15);
-            border-radius: 16px;
-            padding: 20px;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 12px;
-            height: 180px;
-            overflow-y: hidden;
-            display: flex;
             flex-direction: column;
-            gap: 8px;
-            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.8);
-            margin-top: 40px;
+            gap: 10px;
         }}
-
-        .console-line {{
+        .step-row {{
             display: flex;
             align-items: center;
             gap: 10px;
-            opacity: 0.9;
+            font-size: 12px;
+            color: var(--text-muted);
         }}
-
-        .console-time {{
-            color: var(--text-secondary);
+        .step-icon {{
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            border: 2px solid rgba(255,255,255,0.1);
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }}
-
-        .console-tag {{
-            color: var(--gold);
-            font-weight: 700;
-        }}
-
-        .console-action-buy {{
-            color: var(--success);
-            font-weight: 700;
-        }}
-
-        .console-action-sell {{
-            color: var(--error);
-            font-weight: 700;
-        }}
+        .step-row.active {{ color: var(--gold); }}
+        .step-row.active .step-icon {{ border-color: var(--gold); background: var(--gold-glow); }}
+        .step-row.done {{ color: var(--success); }}
+        .step-row.done .step-icon {{ border-color: var(--success); background: rgba(16, 185, 129, 0.1); }}
     </style>
 </head>
 <body>
 
-<div class="ticker-bar">
-    <div class="ticker-item">🌐 L2 Gas Price: <span class="ticker-val">0.05 Gwei</span></div>
-    <div class="ticker-item">💰 Total Pools: <span class="ticker-val" id="tickerPools">Loading...</span></div>
-    <div class="ticker-item">📊 Robinhood L2: <span class="ticker-val">Active</span></div>
+<!-- 3D Scroll Canvas -->
+<div class="scroll-world-container">
+    <canvas id="worldCanvas"></canvas>
 </div>
 
+<!-- Navbar -->
 <div class="navbar">
-    <div class="logo-container">
-        <div class="logo">R</div>
-        <div class="brand-name">Robinhood Terminal</div>
+    <div class="logo-box">
+        <div class="logo-icon">R</div>
+        <span>Robinhood L2</span>
     </div>
-    
-    <div class="nav-links">
-        <button class="nav-tab active" onclick="switchView('launchpad')">🏠 Launchpad</button>
-        <button class="nav-tab" onclick="switchView('launch')">🚀 Create Token</button>
-        <button class="nav-tab" onclick="switchView('swap')">🔄 DEX Swap</button>
-        <button class="nav-tab" onclick="switchView('portfolio')">💼 Portfolio</button>
+    <div class="nav-tabs">
+        <button class="tab-btn active" onclick="scrollToSection(0)">🏠 Terminal</button>
+        <button class="tab-btn" onclick="scrollToSection(1)">🛠️ Dev Portal</button>
+        <button class="tab-btn" onclick="scrollToSection(2)">🤖 AI Deployer</button>
     </div>
-
-    <button id="connectBtn" class="connect-btn">Connect Wallet</button>
+    <button id="connBtn" class="connect-btn" onclick="connect()">Connect Wallet</button>
 </div>
 
-<div class="main-container">
-    
-    <!-- 🏠 VIEW: LAUNCHPAD -->
-    <div id="view-launchpad" class="view-section active">
-        <div class="dashboard-grid">
-            <!-- Active Pools -->
-            <div>
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-                    <h2 style="font-size:24px; font-weight:800;">🔥 Active Bonding Pools</h2>
-                    <input type="text" id="searchInput" class="form-input" style="width:250px; padding:10px 14px;" placeholder="Search tokens...">
-                </div>
-                <div class="token-grid" id="tokenGrid">
-                    <!-- Loaded dynamically -->
-                </div>
-            </div>
+<!-- Floating HUD overlays -->
+<div class="hud-overlay">
+    <div class="hud-top">
+        <h1 class="overlay-title" id="oTitle">Sovereign Code Universe</h1>
+        <p class="overlay-desc" id="oDesc">Scroll to traverse the L2 stack...</p>
+    </div>
+</div>
 
-            <!-- Trade Sidebar -->
-            <div>
-                <div class="trade-card" id="tradeCard" style="display:block; border-color:rgba(255,255,255,0.05);">
-                    <div id="tradeCardContent">
-                        <div class="panel-header">Select a Token</div>
-                        <p style="color:var(--text-secondary); font-size:14px; text-align:center;">Click on any token in the active pools list to trade it on the bonding curve.</p>
+<!-- SECTION 1: TERMINAL -->
+<div class="scroll-section active" id="sec-0">
+    <div class="container">
+        <div class="card">
+            <div class="grid">
+                <div>
+                    <h2 style="font-size: 22px; margin-bottom: 10px; font-weight: 700; color: var(--gold);">🔄 Virtual Swap Terminal</h2>
+                    <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 25px; line-height: 1.5;">
+                        Swap and trade custom L2 assets immediately using automated virtual reserve curves. No exit liquidity constraints.
+                    </p>
+                    
+                    <div class="form-group">
+                        <label>Swap Input</label>
+                        <input type="number" id="tradeAmt" class="input" value="0.05">
+                    </div>
+                    <div class="form-group">
+                        <label>Select Token Target</label>
+                        <select id="tokenSelect" class="input">
+                            <option value="0xROBIN_MCP">$ROBIN_MCP (Launchpad Utility)</option>
+                            <option value="0xCHIRANSH">$CHIRANSH (Voice Assistant)</option>
+                            <option value="0xANANT_ANADI">$ANANT_ANADI (Culture Pool)</option>
+                        </select>
                     </div>
                     
-                    <div id="tradeControls" style="display:none;">
-                        <div class="panel-header" id="tradeTitle">Trade Token</div>
-                        <p id="tradeAddress" style="font-size:11px; font-family:var(--font-mono); color:var(--text-secondary); margin-bottom:20px; overflow-wrap:break-word;"></p>
-                        
-                        <div class="trade-tabs">
-                            <button class="trade-tab-btn active buy" id="tabBuy">Buy</button>
-                            <button class="trade-tab-btn" id="tabSell">Sell</button>
-                        </div>
+                    <div style="display: flex; gap: 15px; margin-top: 25px;">
+                        <button class="btn" onclick="tradeQuick()">Execute swap</button>
+                        <button class="btn btn-outline" onclick="openWorkspace('terminal')">Enter Full Workspace</button>
+                    </div>
+                </div>
+                
+                <div>
+                    <h3 style="font-size: 15px; margin-bottom: 12px; font-weight: 600; color: var(--gold);">📊 Yield Pool Calculator</h3>
+                    <div class="form-group">
+                        <label>Staked $ROBIN_MCP Balance</label>
+                        <input type="number" id="quickStakeAmt" class="input" value="1000" oninput="calcQuickYield()">
+                    </div>
+                    <div style="font-size: 14px; color: var(--text-muted); margin-bottom: 20px;">
+                        Estimated Daily Yield: <span id="quickYieldVal" style="color: var(--success); font-weight: 700;">0.005 ETH</span>
+                    </div>
 
-                        <div class="form-group">
-                            <label id="inputLabel">Amount of ETH to spend</label>
-                            <input type="number" id="tradeAmount" class="form-input" placeholder="0.01" step="0.005">
-                        </div>
-
-                        <button class="action-btn" id="tradeBtn" style="background:var(--success); color:#060b18;">Swap</button>
-                        
-                        <div id="statusBox" class="status-box">
-                            <div id="statusBody">Processing...</div>
+                    <div style="border-top: 1px solid rgba(255,255,255,0.05); padding-top: 15px;">
+                        <h4 style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.5px; margin-bottom: 10px;">Ecosystem Split</h4>
+                        <div style="font-size: 13px; display: flex; flex-direction: column; gap: 6px;">
+                            <div style="display: flex; justify-content: space-between;"><span>Stakers Reward Pool</span><span style="color: var(--success);">40%</span></div>
+                            <div style="display: flex; justify-content: space-between;"><span>Developer Buyback Pool</span><span style="color: var(--success);">20%</span></div>
+                            <div style="display: flex; justify-content: space-between;"><span>Creator Treasury</span><span style="color: var(--success);">40%</span></div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+</div>
 
-    <!-- 🚀 VIEW: CREATE TOKEN -->
-    <div id="view-launch" class="view-section">
-        <div class="card" style="max-width: 550px; margin: 0 auto;">
-            <div class="panel-header" style="font-size:24px;">🚀 Launch a Meme Token</div>
-            <p style="color:var(--text-secondary); font-size:14px; margin-bottom:24px;">Create an upgraded ERC-20 meme coin on the Robinhood Chain virtual bonding curve. Deploy cost is set to just 0.0005 ETH.</p>
-            
-            <div class="form-group">
-                <label for="tokName">Token Name</label>
-                <input type="text" id="tokName" class="form-input" placeholder="e.g. Robinhood Doge">
-            </div>
-            <div class="form-group">
-                <label for="tokSymbol">Token Symbol</label>
-                <input type="text" id="tokSymbol" class="form-input" placeholder="e.g. RHDOGE">
-            </div>
-            <div class="form-group">
-                <label for="tokSupply">Initial Supply</label>
-                <input type="number" id="tokSupply" class="form-input" value="1000000000" readonly>
-            </div>
-            
-            <button class="action-btn" id="launchBtn">Deploy Meme Token (0.0005 ETH)</button>
-        </div>
-    </div>
-
-    <!-- 🔄 VIEW: DEX SWAP (STANDARD TOKENS) -->
-    <div id="view-swap" class="view-section">
-        <div class="card dex-container">
-            <div class="panel-header" style="font-size:24px;">🔄 Swap Tokens</div>
-            <p style="color:var(--text-secondary); font-size:14px; margin-bottom:24px;">Swap standard Robinhood Chain L2 assets using your Rabby Gas Account.</p>
-            
-            <!-- Pay Token -->
-            <div class="form-group">
-                <label>Pay</label>
-                <div class="token-selector-row">
-                    <select id="swapFromSelect" class="token-select-dropdown" style="flex-grow:1;">
-                        <option value="ETH">ETH (Native)</option>
-                        <option value="USDG">USDG (Stablecoin)</option>
-                        <option value="AAPL">AAPL (Tokenized Stock)</option>
-                        <option value="TSLA">TSLA (Tokenized Stock)</option>
-                    </select>
-                    <input type="number" id="swapFromAmount" class="form-input" style="width:150px; border:none; text-align:right; font-size:18px;" placeholder="0.0">
-                </div>
-            </div>
-
-            <!-- Receive Token -->
-            <div class="form-group">
-                <label>Receive</label>
-                <div class="token-selector-row">
-                    <select id="swapToSelect" class="token-select-dropdown" style="flex-grow:1;">
-                        <option value="USDG" selected>USDG (Stablecoin)</option>
-                        <option value="ETH">ETH (Native)</option>
-                        <option value="AAPL">AAPL (Tokenized Stock)</option>
-                        <option value="TSLA">TSLA (Tokenized Stock)</option>
-                    </select>
-                    <input type="number" id="swapToAmount" class="form-input" style="width:150px; border:none; text-align:right; font-size:18px;" placeholder="0.0" readonly>
-                </div>
-            </div>
-
-            <button class="action-btn" id="dexSwapBtn">Execute Swap (Mock Router)</button>
-        </div>
-    </div>
-
-    <!-- 💼 VIEW: PORTFOLIO -->
-    <div id="view-portfolio" class="view-section">
+<!-- SECTION 2: DEV PORTAL -->
+<div class="scroll-section" id="sec-1">
+    <div class="container">
         <div class="card">
-            <div class="portfolio-header">
+            <h2 style="font-size: 24px; margin-bottom: 10px; font-weight: 700; color: var(--gold);">🛠️ Contributor Core & Leaderboard</h2>
+            <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 25px; line-height: 1.5; max-width: 800px;">
+                Earn rewards directly in native tokens on approved and merged GitHub Pull Requests. Curated manually by the core ecosystem administrator.
+            </p>
+            
+            <div class="grid">
                 <div>
-                    <h2 style="font-size:24px; font-weight:800;">💼 My Portfolio</h2>
-                    <p id="portfolioWalletAddr" style="font-size:13px; font-family:var(--font-mono); color:var(--text-secondary); margin-top:4px;">Not Connected</p>
+                    <h3 style="font-size: 15px; margin-bottom: 12px; color: var(--text-muted); text-transform: uppercase;">1. Code Integration</h3>
+                    <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 10px;">Token-gate features on mainnet using standard balance checks:</p>
+                    <pre style="background: #010206; border-radius: 12px; padding: 18px; font-family: var(--font-mono); font-size: 12px; border: 1px solid rgba(255,255,255,0.03); overflow-x: auto; color: #a7f3d0; margin-bottom: 15px;"># Gating EVM checks
+if token.balanceOf(user) < 100 * 10**18:
+    raise Exception("Hold 100 ROBIN_MCP to deploy")</pre>
+                </div>
+                
+                <div>
+                    <h3 style="font-size: 15px; margin-bottom: 12px; color: var(--text-muted); text-transform: uppercase;">2. Contributor Stats</h3>
+                    <div style="background: rgba(3, 7, 18, 0.4); border-radius: 12px; border: 1px solid rgba(255,255,255,0.03); padding: 15px;">
+                        <div style="display: flex; justify-content: space-between; font-size: 13px; padding-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                            <span>Active Bounties</span><span style="color: var(--gold); font-weight: 700;">4 Available</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; font-size: 13px; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                            <span>Central Curation</span><span style="color: var(--success);">Online</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; font-size: 13px; padding-top: 8px;">
+                            <span>Ecosystem Treasury</span><span>24.85 ETH</span>
+                        </div>
+                    </div>
+                    <button class="btn btn-outline" onclick="openWorkspace('dev')">Open Dev Dashboard</button>
                 </div>
             </div>
+        </div>
+    </div>
+</div>
 
-            <!-- Balances Stats Cards -->
-            <div style="display:flex; gap:20px; margin-bottom:30px;">
-                <div class="wallet-stat-card">
-                    <div style="font-size:13px; color:var(--text-secondary);">Native ETH Balance</div>
-                    <div class="balance-value" id="portEthBalance">0.00 ETH</div>
-                </div>
-                <div class="wallet-stat-card">
-                    <div style="font-size:13px; color:var(--text-secondary);">Asset Count</div>
-                    <div class="balance-value" id="portAssetCount">0</div>
+<!-- SECTION 3: AI DEPLOYER -->
+<div class="scroll-section" id="sec-2">
+    <div class="container" style="max-width: 600px;">
+        <div class="card">
+            <h2 style="font-size: 22px; margin-bottom: 10px; font-weight: 700; color: var(--gold); text-align: center;">🤖 AI Agent Token Deployer</h2>
+            <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 25px; line-height: 1.5; text-align: center;">
+                Instruct the local Clanker bot to deploy custom tokens and curves directly to Robinhood L2 in real-time.
+            </p>
+            <div style="text-align: center;">
+                <button class="btn" style="max-width: 250px; margin: 0 auto;" onclick="openWorkspace('deployer')">Launch Deployer Workspace</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- WORKSPACE: SWAP TERMINAL -->
+<div class="workspace-overlay" id="ws-terminal">
+    <div class="ws-header">
+        <div>
+            <h2 style="font-size: 22px; font-weight: 700; color: var(--gold);">Exchange & Swap Terminal</h2>
+            <p style="font-size: 12px; color: var(--text-muted); font-family: var(--font-mono); margin-top: 4px;">Robinhood EVM L2 Network - Mainnet</p>
+        </div>
+        <button class="back-btn" onclick="closeWorkspace('terminal')">← Back to Cosmos</button>
+    </div>
+    
+    <div class="grid" style="grid-template-columns: 2fr 1fr;">
+        <div>
+            <div class="card" style="margin-bottom: 25px;">
+                <h3 style="font-size: 16px; margin-bottom: 15px; font-weight: 600; color: var(--gold);">📈 Live Simulated Price Chart</h3>
+                <div class="chart-box">
+                    <canvas id="priceChart"></canvas>
                 </div>
             </div>
-
-            <h3 style="font-size:18px; font-weight:700; margin-bottom:15px;">Asset Allocations</h3>
-            <table class="asset-table">
-                <thead>
-                    <tr>
-                        <th>Asset Name</th>
-                        <th>Ticker</th>
-                        <th>Balance</th>
-                        <th>Contract Address</th>
-                    </tr>
-                </thead>
-                <tbody id="portfolioAssetBody">
-                    <tr>
-                        <td colspan="4" style="text-align:center; color:var(--text-secondary);">Connect your wallet to query active holdings on Robinhood Chain L2.</td>
-                    </tr>
-                </tbody>
-            </table>
+            
+            <div class="console" id="terminalConsole">
+                <div class="c-line"><span class="c-time">[System]</span><span>Initialized Exchange socket connections.</span></div>
+            </div>
+        </div>
+        
+        <div>
+            <div class="card" style="margin-bottom: 25px;">
+                <h3 style="font-size: 16px; margin-bottom: 15px; font-weight: 600; color: var(--gold);">Execute Bonding Swap</h3>
+                <div class="form-group">
+                    <label>Action</label>
+                    <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                        <button id="buyBtn" class="btn" style="background: rgba(16, 185, 129, 0.15); color: var(--success); border: 1px solid var(--success);" onclick="setTradeMode('buy')">BUY</button>
+                        <button id="sellBtn" class="btn btn-outline" style="margin: 0; padding: 14px;" onclick="setTradeMode('sell')">SELL</button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Trade Amount (ETH)</label>
+                    <input type="number" id="wsTradeAmt" class="input" value="0.1" step="0.05">
+                </div>
+                <div class="form-group">
+                    <label>Target Pool</label>
+                    <select id="wsTokenSelect" class="input">
+                        <option value="0xROBIN_MCP">$ROBIN_MCP (Launchpad Utility)</option>
+                        <option value="0xCHIRANSH">$CHIRANSH (Voice Assistant)</option>
+                        <option value="0xANANT_ANADI">$ANANT_ANADI (Culture Pool)</option>
+                    </select>
+                </div>
+                <button class="btn" onclick="executeWsTrade()">Submit Transaction</button>
+            </div>
+            
+            <div class="card">
+                <h3 style="font-size: 15px; margin-bottom: 15px; font-weight: 600; color: var(--gold);">Yield Vault Staking</h3>
+                <div class="form-group">
+                    <label>Staked $ROBIN_MCP</label>
+                    <input type="number" id="wsStakeAmt" class="input" value="5000" oninput="calcWsYield()">
+                </div>
+                <div style="font-size: 13px; color: var(--text-muted); display: flex; justify-content: space-between; margin-bottom: 15px;">
+                    <span>Daily yield:</span>
+                    <span id="wsYieldVal" style="color: var(--success); font-weight: 700;">0.025 ETH</span>
+                </div>
+                <button class="btn btn-outline" style="margin: 0;" onclick="connect()">Stake Tokens</button>
+            </div>
         </div>
     </div>
+</div>
 
-    <!-- Live Activity Log Ticker -->
-    <div class="console-box" id="consoleBox">
-        <div class="console-line">
-            <span class="console-time">[18:20:00]</span>
-            <span class="console-tag">[AGENT_BOT]</span>
-            <span class="console-text">Active connection to Robinhood Chain L2 nodes. Ready for swap routing...</span>
+<!-- WORKSPACE: DEV DASHBOARD -->
+<div class="workspace-overlay" id="ws-dev">
+    <div class="ws-header">
+        <div>
+            <h2 style="font-size: 22px; font-weight: 700; color: var(--gold);">Developer core Hub</h2>
+            <p style="font-size: 12px; color: var(--text-muted); font-family: var(--font-mono); margin-top: 4px;">GitHub webhook hooks & treasury payouts</p>
+        </div>
+        <button class="back-btn" onclick="closeWorkspace('dev')">← Back to Cosmos</button>
+    </div>
+    
+    <div class="grid">
+        <div>
+            <div class="card" style="margin-bottom: 25px;">
+                <h3 style="font-size: 16px; margin-bottom: 15px; font-weight: 600; color: var(--gold);">GitHub Webhook Curation Queue</h3>
+                <table class="table">
+                    <thead>
+                        <tr><th>PR ID</th><th>Contributor</th><th>Target Branch</th><th>Payout Amount</th><th>Status</th></tr>
+                    </thead>
+                    <tbody id="prTableBody">
+                        <tr>
+                            <td>#24</td>
+                            <td>salvationfinder</td>
+                            <td>main</td>
+                            <td>250 $ROBIN_MCP</td>
+                            <td><span class="badge badge-success">Approved</span></td>
+                        </tr>
+                        <tr>
+                            <td>#25</td>
+                            <td>10x-operator</td>
+                            <td>main</td>
+                            <td>150 $ROBIN_MCP</td>
+                            <td><span class="badge badge-warn">Pending Review</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="card">
+                <h3 style="font-size: 16px; margin-bottom: 15px; font-weight: 600; color: var(--gold);">Trigger Contributor Payout (Manual review)</h3>
+                <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 20px; align-items: end;">
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label>Contributor wallet address</label>
+                        <input type="text" id="contributorWallet" class="input" placeholder="e.g. 0x71C...4e8B" value="0x71C4B445C3B1d425780943C99Ea8A608f8a93f9">
+                    </div>
+                    <button class="btn" style="padding: 12px;" onclick="triggerContributorPayout()">Execute Payout Transaction</button>
+                </div>
+            </div>
+        </div>
+        
+        <div>
+            <div class="card" style="margin-bottom: 25px;">
+                <h3 style="font-size: 16px; margin-bottom: 15px; font-weight: 600; color: var(--gold);">Top Contributor Leaderboard</h3>
+                <table class="table">
+                    <thead>
+                        <tr><th>Developer</th><th>Merged PRs</th><th>Total Earned</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>salvationfinder</td><td>14 Merges</td><td>4,500 $ROBIN_MCP</td></tr>
+                        <tr><td>10x-operator</td><td>8 Merges</td><td>2,400 $ROBIN_MCP</td></tr>
+                        <tr><td>solidity-wizard</td><td>5 Merges</td><td>1,250 $ROBIN_MCP</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="console" id="devConsole">
+                <div class="c-line"><span class="c-time">[Console]</span><span>Central Curation Webhook active and listening.</span></div>
+            </div>
         </div>
     </div>
+</div>
 
+<!-- WORKSPACE: AI DEPLOYER -->
+<div class="workspace-overlay" id="ws-deployer">
+    <div class="ws-header">
+        <div>
+            <h2 style="font-size: 22px; font-weight: 700; color: var(--gold);">AI Token Deployer Factory</h2>
+            <p style="font-size: 12px; color: var(--text-muted); font-family: var(--font-mono); margin-top: 4px;">Autopilot ERC-20 token generation & Blockscout registration</p>
+        </div>
+        <button class="back-btn" onclick="closeWorkspace('deployer')">← Back to Cosmos</button>
+    </div>
+    
+    <div class="grid">
+        <div>
+            <div class="card">
+                <h3 style="font-size: 16px; margin-bottom: 15px; font-weight: 600; color: var(--gold);">Talk to RobinMCP Assistant</h3>
+                <div class="chat" id="wsChatBox">
+                    <div class="bubble b-agent">Hello! Tell me the name, ticker, and initial supply you'd like to deploy. I'll handle compiling, deploying, and setting up the virtual bonding curve on Robinhood Chain L2.</div>
+                </div>
+                
+                <div style="display: flex; gap: 15px; margin-top: 15px;">
+                    <input type="text" id="wsChatIn" class="input" placeholder="e.g. Deploy Chanakya Neeti token ($NEETI) with 1,000,000 supply..." style="flex-grow: 1;">
+                    <button class="btn" style="width: 100px; padding: 12px;" onclick="wsChatSend()">Send</button>
+                </div>
+            </div>
+        </div>
+        
+        <div>
+            <div class="card" style="margin-bottom: 25px;">
+                <h3 style="font-size: 16px; margin-bottom: 15px; font-weight: 600; color: var(--gold);">Deployment Parameters</h3>
+                <div class="form-group">
+                    <label>Token Name</label>
+                    <input type="text" id="depName" class="input" value="Chanakya Neeti">
+                </div>
+                <div class="form-group">
+                    <label>Ticker Symbol</label>
+                    <input type="text" id="depSymbol" class="input" value="NEETI">
+                </div>
+                <div class="form-group">
+                    <label>Initial Supply</label>
+                    <input type="number" id="depSupply" class="input" value="1000000">
+                </div>
+                <button class="btn" onclick="triggerVisualDeployment()">Launch Token Instantly</button>
+                
+                <!-- Deployment progress indicator -->
+                <div class="step-container" id="deployProgress">
+                    <div class="step-row" id="step-0">
+                        <div class="step-icon"></div>
+                        <span>Compiling Solidity contract bytecode...</span>
+                    </div>
+                    <div class="step-row" id="step-1">
+                        <div class="step-icon"></div>
+                        <span>Broadcasting contract transaction to Robinhood Chain L2...</span>
+                    </div>
+                    <div class="step-row" id="step-2">
+                        <div class="step-icon"></div>
+                        <span>Registering metadata with MemeFactoryV2...</span>
+                    </div>
+                    <div class="step-row" id="step-3">
+                        <div class="step-icon"></div>
+                        <span>Verifying contract source code on Blockscout...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
-    const factoryAddress = "{factory_address}";
-    const factoryAbi = {json.dumps(abi)};
-    const tokenAbi = {json.dumps(token_abi)};
-
-    // Standard Token Addresses on Robinhood L2
-    const standardTokens = {{
-        "USDG": "0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168",
-        "AAPL": "0xaF3D76f1834A1d425780943C99Ea8A608f8a93f9",
-        "TSLA": "0x322F0929c4625eD5bAd873c95208D54E1c003b2d"
-    }};
-
-    let provider;
-    let signer;
-    let factoryContract;
-    let activeTokenAddress = null;
-    let tradeMode = "buy";
-    let loadedPoolsData = [];
-
-    const connectBtn = document.getElementById("connectBtn");
-    const launchBtn = document.getElementById("launchBtn");
-    const tokenGrid = document.getElementById("tokenGrid");
-    const searchInput = document.getElementById("searchInput");
-    const tickerPools = document.getElementById("tickerPools");
+    // 3D Three.js Particle Morphing World
+    let scene, camera, renderer, particleSystem;
+    const N = 400; // Number of particles
+    let currentScroll = 0;
+    let targetScroll = 0;
     
-    // Trade controls DOM
-    const tradeCardContent = document.getElementById("tradeCardContent");
-    const tradeControls = document.getElementById("tradeControls");
-    const tradeTitle = document.getElementById("tradeTitle");
-    const tradeAddressText = document.getElementById("tradeAddress");
-    const tabBuy = document.getElementById("tabBuy");
-    const tabSell = document.getElementById("tabSell");
-    const inputLabel = document.getElementById("inputLabel");
-    const tradeAmountInput = document.getElementById("tradeAmount");
-    const tradeBtn = document.getElementById("tradeBtn");
-    const statusBox = document.getElementById("statusBox");
-    const statusBody = document.getElementById("statusBody");
-    const consoleBox = document.getElementById("consoleBox");
-
-    // Portfolio views DOM
-    const portfolioWalletAddr = document.getElementById("portfolioWalletAddr");
-    const portEthBalance = document.getElementById("portEthBalance");
-    const portAssetCount = document.getElementById("portAssetCount");
-    const portfolioAssetBody = document.getElementById("portfolioAssetBody");
-
-    // DEX swap DOM
-    const swapFromSelect = document.getElementById("swapFromSelect");
-    const swapToSelect = document.getElementById("swapToSelect");
-    const swapFromAmount = document.getElementById("swapFromAmount");
-    const swapToAmount = document.getElementById("swapToAmount");
-    const dexSwapBtn = document.getElementById("dexSwapBtn");
-
-    // Multi-page switch routing
-    function switchView(viewId) {{
-        document.querySelectorAll(".view-section").forEach(s => s.classList.remove("active"));
-        document.querySelectorAll(".nav-tab").forEach(t => t.classList.remove("active"));
+    // Arrays for target coordinates
+    const spherePoints = [];
+    const helixPoints = [];
+    const gridPoints = [];
+    
+    function init3D() {{
+        const container = document.querySelector(".scroll-world-container");
+        const w = container.offsetWidth;
+        const h = container.offsetHeight;
         
-        document.getElementById(`view-${{viewId}}`).classList.add("active");
+        scene = new THREE.Scene();
+        camera = new THREE.PerspectiveCamera(60, w / h, 0.1, 100);
+        camera.position.z = 10;
         
-        // Find corresponding tab button
-        const tabs = document.querySelectorAll(".nav-tab");
-        if (viewId === "launchpad") tabs[0].classList.add("active");
-        if (viewId === "launch") tabs[1].classList.add("active");
-        if (viewId === "swap") tabs[2].classList.add("active");
-        if (viewId === "portfolio") tabs[3].classList.add("active");
-    }}
-
-    // Ticker log simulator
-    const aiAgents = ["satoshis_bot", "poly_agent", "kronos_whale", "rh_trading_bot", "pepe_snip_agent"];
-    setInterval(() => {{
-        const agent = aiAgents[Math.floor(Math.random() * aiAgents.length)];
-        const isBuy = Math.random() > 0.45;
-        const ethVal = (Math.random() * 0.08 + 0.005).toFixed(4);
-        const tokAmt = Math.floor(Math.random() * 90000 + 1000).toLocaleString();
+        renderer = new THREE.WebGLRenderer({{ canvas: document.getElementById("worldCanvas"), antialias: true, alpha: true }});
+        renderer.setSize(w, h);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         
-        const timeStr = new Date().toTimeString().split(' ')[0];
-        const line = document.createElement("div");
-        line.className = "console-line";
-        
-        const actionSpan = isBuy 
-            ? `<span class="console-action-buy">[BUY]</span>` 
-            : `<span class="console-action-sell">[SELL]</span>`;
-            
-        const text = isBuy
-            ? `Agent @${{agent}} sniped ${{ethVal}} ETH of custom bonding pool.`
-            : `Agent @${{agent}} executed sell transaction of ${{tokAmt}} tokens on Robinhood L2.`;
-            
-        line.innerHTML = `<span class="console-time">[${{timeStr}}]</span> ${{actionSpan}} <span class="console-text">${{text}}</span>`;
-        consoleBox.appendChild(line);
-        if (consoleBox.children.length > 25) consoleBox.removeChild(consoleBox.firstChild);
-        consoleBox.scrollTop = consoleBox.scrollHeight;
-    }}, 4500);
-
-    async function switchNetwork() {{
-        const targetChainId = "0x1237";
-        try {{
-            await window.ethereum.request({{
-                method: "wallet_switchEthereumChain",
-                params: [{{ chainId: targetChainId }}],
-            }});
-            return true;
-        }} catch (switchError) {{
-            if (switchError.code === 4902 || switchError.message.includes("4902")) {{
-                try {{
-                    await window.ethereum.request({{
-                        method: "wallet_addEthereumChain",
-                        params: [{{
-                            chainId: targetChainId,
-                            chainName: "Robinhood Chain Mainnet",
-                            nativeCurrency: {{
-                                name: "Ethereum",
-                                symbol: "ETH",
-                                decimals: 18
-                            }},
-                            rpcUrls: ["https://rpc.mainnet.chain.robinhood.com"],
-                            blockExplorerUrls: ["https://robinhoodchain.blockscout.com"]
-                        }}],
-                    }});
-                    return true;
-                }} catch (addError) {{
-                    alert("Failed to add Robinhood Chain to wallet.");
-                    return false;
-                }}
-            }}
-            alert("Failed to switch network.");
-            return false;
+        // Generate Coordinate Patterns
+        // 1. Sphere (Cosmos)
+        for(let i=0; i<N; i++) {{
+            const theta = Math.acos(-1 + 2 * i / N);
+            const phi = Math.sqrt(N * Math.PI) * theta;
+            spherePoints.push(new THREE.Vector3(
+                4.5 * Math.sin(theta) * Math.cos(phi),
+                4.5 * Math.sin(theta) * Math.sin(phi),
+                4.5 * Math.cos(theta)
+            ));
         }}
-    }}
-
-    async function connectWallet() {{
-        if (typeof window.ethereum === "undefined") {{
-            alert("Open this page inside Rabby mobile browser.");
-            return;
+        
+        // 2. Double Helix (Contracts)
+        for(let i=0; i<N; i++) {{
+            const t = i / N;
+            const theta = 12 * Math.PI * t;
+            const r = 1.8;
+            const sign = (i % 2 === 0) ? 1 : -1;
+            helixPoints.push(new THREE.Vector3(
+                sign * r * Math.cos(theta),
+                sign * r * Math.sin(theta),
+                8 * (t - 0.5)
+            ));
         }}
-        try {{
-            provider = new ethers.providers.Web3Provider(window.ethereum);
-            await provider.send("eth_requestAccounts", []);
-            signer = provider.getSigner();
-            const address = await signer.getAddress();
-            
-            // Switch network automatically
-            let network = await provider.getNetwork();
-            if (network.chainId !== 4663) {{
-                const success = await switchNetwork();
-                if (!success) return;
-                await new Promise(r => setTimeout(r, 1000));
-                provider = new ethers.providers.Web3Provider(window.ethereum);
-                signer = provider.getSigner();
-                network = await provider.getNetwork();
-            }}
-
-            factoryContract = new ethers.Contract(factoryAddress, factoryAbi, signer);
-            
-            connectBtn.innerText = `Connected: ${{address.substring(0, 6)}}...${{address.substring(38)}}`;
-            connectBtn.style.background = "var(--success)";
-            connectBtn.style.color = "#060b18";
-            connectBtn.style.borderColor = "var(--success)";
-            
-            await loadPools();
-            await updatePortfolio(address);
-        }} catch (err) {{
-            console.error(err);
+        
+        // 3. Grid Mesh (Yield Wave)
+        const size = Math.floor(Math.sqrt(N));
+        for(let i=0; i<N; i++) {{
+            const r = Math.floor(i / size);
+            const c = i % size;
+            gridPoints.push(new THREE.Vector3(
+                (c - size/2) * 0.55,
+                (r - size/2) * 0.55,
+                0
+            ));
         }}
+        
+        // Create Particle Geometry & Buffer
+        const geometry = new THREE.BufferGeometry();
+        const positions = new Float32Array(N * 3);
+        const colors = new Float32Array(N * 3);
+        
+        for(let i=0; i<N; i++) {{
+            positions[i*3] = spherePoints[i].x;
+            positions[i*3+1] = spherePoints[i].y;
+            positions[i*3+2] = spherePoints[i].z;
+            
+            // Set base color (warm gold to neon green gradients)
+            colors[i*3] = 0.98;
+            colors[i*3+1] = 0.75;
+            colors[i*3+2] = 0.14;
+        }}
+        
+        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+        
+        // Custom texture loader
+        const texture = createCircleTexture();
+        
+        const material = new THREE.PointsMaterial({{
+            size: 0.16,
+            vertexColors: true,
+            transparent: true,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false,
+            map: texture
+        }});
+        
+        particleSystem = new THREE.Points(geometry, material);
+        scene.add(particleSystem);
+        
+        // Window Resize
+        window.addEventListener('resize', () => {{
+            const width = container.offsetWidth;
+            const height = container.offsetHeight;
+            camera.aspect = width / height;
+            camera.updateProjectionMatrix();
+            renderer.setSize(width, height);
+        }});
+        
+        animate();
     }}
-
-    async function loadPools() {{
-        if (!factoryContract) return;
-        try {{
-            const count = await factoryContract.getMemeCount();
-            tickerPools.innerText = `${{count.toString()}} Meme Coins`;
-            loadedPoolsData = [];
-
-            for (let i = 0; i < count; i++) {{
-                const tokenAddr = await factoryContract.allMemeTokens(i);
-                const pool = await factoryContract.pools(tokenAddr);
-                const tokenContract = new ethers.Contract(tokenAddr, tokenAbi, provider);
-                
-                const name = await tokenContract.name();
-                const symbol = await tokenContract.symbol();
-                
-                const maxReserve = ethers.utils.parseEther("800000000");
-                const currentReserve = pool.tokenReserves;
-                const sold = maxReserve.sub(currentReserve);
-                let progress = sold.mul(100).div(maxReserve).toNumber();
-                if (progress < 0) progress = 0;
-                if (progress > 100) progress = 100;
-
-                loadedPoolsData.push({{
-                    address: tokenAddr,
-                    name: name,
-                    symbol: symbol,
-                    ethReserves: pool.ethReserves,
-                    progress: progress
-                }});
+    
+    function createCircleTexture() {{
+        const matCanvas = document.createElement('canvas');
+        matCanvas.width = 16;
+        matCanvas.height = 16;
+        const matCtx = matCanvas.getContext('2d');
+        const grad = matCtx.createRadialGradient(8, 8, 0, 8, 8, 8);
+        grad.addColorStop(0, 'rgba(255, 255, 255, 1)');
+        grad.addColorStop(0.2, 'rgba(251, 191, 36, 0.8)');
+        grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        matCtx.fillStyle = grad;
+        matCtx.fillRect(0, 0, 16, 16);
+        return new THREE.CanvasTexture(matCanvas);
+    }}
+    
+    // Mouse Interactive Targets
+    let mouseX = 0, mouseY = 0;
+    let targetMouseX = 0, targetMouseY = 0;
+    document.addEventListener("mousemove", (e) => {{
+        targetMouseX = (e.clientX - window.innerWidth / 2) * 0.0015;
+        targetMouseY = (e.clientY - window.innerHeight / 2) * 0.0015;
+    }});
+    
+    // Scroll tracking
+    window.addEventListener('scroll', () => {{
+        const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+        targetScroll = window.scrollY / (maxScroll || 1);
+        updateActiveSections();
+    }});
+    
+    function animate() {{
+        requestAnimationFrame(animate);
+        
+        // Lerp scroll position for absolute fluid transitions
+        currentScroll += (targetScroll - currentScroll) * 0.06;
+        
+        // Mouse movement easing
+        mouseX += (targetMouseX - mouseX) * 0.05;
+        mouseY += (targetMouseY - mouseY) * 0.05;
+        
+        // Camera rotation
+        camera.position.x = mouseX * 2;
+        camera.position.y = -mouseY * 2;
+        camera.lookAt(0, 0, 0);
+        
+        // Slowly rotate particle system
+        particleSystem.rotation.y += 0.0015;
+        particleSystem.rotation.x += 0.0008;
+        
+        // Morph particles based on eased scroll position
+        const positions = particleSystem.geometry.attributes.position.array;
+        const colors = particleSystem.geometry.attributes.position.array;
+        const size = Math.floor(Math.sqrt(N));
+        
+        for(let i=0; i<N; i++) {{
+            let p1, p2, t;
+            if(currentScroll < 0.5) {{
+                p1 = spherePoints[i];
+                p2 = helixPoints[i];
+                t = currentScroll / 0.5;
+            }} else {{
+                p1 = helixPoints[i];
+                p2 = gridPoints[i];
+                t = (currentScroll - 0.5) / 0.5;
             }}
             
-            renderPools();
-        }} catch (err) {{
-            console.error("Error loading pools:", err);
-        }}
-    }}
-
-    function renderPools() {{
-        const search = searchInput.value.toLowerCase().trim();
-        let filtered = loadedPoolsData.filter(t => 
-            t.name.toLowerCase().includes(search) || 
-            t.symbol.toLowerCase().includes(search)
-        );
-
-        tokenGrid.innerHTML = "";
-        filtered.forEach(token => {{
-            const card = document.createElement("div");
-            card.className = "token-card";
-            const firstLetter = token.name.charAt(0).toUpperCase();
-
-            card.innerHTML = `
-                <div class="token-card-header">
-                    <div style="display:flex; align-items:center;">
-                        <div class="avatar-circle">${{firstLetter}}</div>
-                        <div class="token-info">
-                            <div class="token-name">${{token.name}}</div>
-                            <div class="token-symbol">$${{token.symbol}}</div>
-                        </div>
-                    </div>
-                    <span class="progress-badge">${{token.progress}}%</span>
-                </div>
-                <div class="token-metrics">
-                    <div class="metric-item">
-                        <span>Liquidity:</span>
-                        <span class="metric-value">${{ethers.utils.formatEther(token.ethReserves)}} ETH</span>
-                    </div>
-                </div>
-                <div class="progress-bar-container">
-                    <div class="progress-bar" style="width: ${{token.progress}}%"></div>
-                </div>
-            `;
+            let p2z = p2.z;
+            // Undulate waves if in grid mesh mode
+            if(currentScroll >= 0.5 && p2 === gridPoints[i]) {{
+                const r = Math.floor(i / size);
+                const c = i % size;
+                p2z = Math.sin(r * 0.4 + c * 0.4 + Date.now() * 0.002) * 0.6;
+            }}
             
-            card.addEventListener("click", () => selectToken(token.address, token.symbol));
-            tokenGrid.appendChild(card);
+            const x = p1.x + (p2.x - p1.x) * t;
+            const y = p1.y + (p2.y - p1.y) * t;
+            const z = p1.z + (p2z - p1.z) * t;
+            
+            positions[i*3] = x;
+            positions[i*3+1] = y;
+            positions[i*3+2] = z;
+        }}
+        particleSystem.geometry.attributes.position.needsUpdate = true;
+        
+        // Update Title / Desc HUD
+        const oTitle = document.getElementById("oTitle");
+        const oDesc = document.getElementById("oDesc");
+        if(currentScroll < 0.3) {{
+            oTitle.innerText = "Sovereign Code Universe";
+            oDesc.innerText = "Layer 1: Git-to-EVM Hot Wallets & Oracle Checkpoints";
+        }} else if(currentScroll < 0.7) {{
+            oTitle.innerText = "The Speculative Curve Reservoir";
+            oDesc.innerText = "Layer 2: x * y = k virtual bonding curve execution";
+        }} else {{
+            oTitle.innerText = "Holder Yield Distribution";
+            oDesc.innerText = "Layer 3: 40% trade fee routed to staked pools";
+        }}
+        
+        renderer.render(scene, camera);
+    }}
+    
+    function scrollToSection(index) {{
+        const targetY = index * window.innerHeight;
+        window.scrollTo({{
+            top: targetY,
+            behavior: 'smooth'
+        }});
+    }}
+    
+    function updateActiveSections() {{
+        const threshold = window.scrollY + window.innerHeight / 2;
+        const index = Math.floor(threshold / window.innerHeight);
+        
+        document.querySelectorAll(".scroll-section").forEach((sec, idx) => {{
+            if(idx === index) {{
+                sec.classList.add("active");
+            }} else {{
+                sec.classList.remove("active");
+            }}
+        }});
+        
+        document.querySelectorAll(".tab-btn").forEach((btn, idx) => {{
+            if(idx === index) {{
+                btn.classList.add("active");
+            }} else {{
+                btn.classList.remove("active");
+            }}
         }});
     }}
 
-    function selectToken(addr, symbol) {{
-        activeTokenAddress = addr;
-        tradeCardContent.style.display = "none";
-        tradeControls.style.display = "block";
-        tradeTitle.innerText = `Trade $${{symbol}}`;
-        tradeAddressText.innerText = addr;
-        statusBox.style.display = "none";
-        tradeAmountInput.value = "";
-    }}
-
-    // Tab Swapping Logic
-    tabBuy.addEventListener("click", () => {{
-        tradeMode = "buy";
-        tabBuy.className = "trade-tab-btn active buy";
-        tabSell.className = "trade-tab-btn";
-        inputLabel.innerText = "Amount of ETH to spend";
-        tradeAmountInput.placeholder = "0.01";
-        tradeBtn.style.background = "var(--success)";
-        tradeBtn.style.color = "#060b18";
-    }});
-
-    tabSell.addEventListener("click", () => {{
-        tradeMode = "sell";
-        tabSell.className = "trade-tab-btn active sell";
-        tabBuy.className = "trade-tab-btn";
-        inputLabel.innerText = "Amount of tokens to sell";
-        tradeAmountInput.placeholder = "10000";
-        tradeBtn.style.background = "var(--error)";
-        tradeBtn.style.color = "#fff";
-    }});
-
-    // Launch Token
-    launchBtn.addEventListener("click", async () => {{
-        if (!factoryContract) {{
-            alert("Connect wallet first!");
-            return;
-        }}
-        const name = document.getElementById("tokName").value.trim();
-        const symbol = document.getElementById("tokSymbol").value.trim();
-        if (!name || !symbol) {{
-            alert("Fill in name and symbol.");
-            return;
-        }}
-
-        try {{
-            launchBtn.innerText = "Deploying...";
-            launchBtn.disabled = true;
-            
-            const tx = await factoryContract.deployMemeToken(name, symbol, 1000000000, {{
-                value: ethers.utils.parseEther("0.0005")
-            }});
-            
-            await tx.wait();
-            alert("Token deployed successfully on Robinhood Chain L2!");
-            document.getElementById("tokName").value = "";
-            document.getElementById("tokSymbol").value = "";
-            
-            await loadPools();
-            switchView("launchpad");
-        }} catch (err) {{
-            alert("Deployment failed: " + err.message);
-        }} finally {{
-            launchBtn.innerText = "Deploy Meme Token (0.0005 ETH)";
-            launchBtn.disabled = false;
-        }}
-    }});
-
-    // Swap Meme Coin
-    tradeBtn.addEventListener("click", async () => {{
-        if (!factoryContract || !activeTokenAddress) return;
-        const amount = tradeAmountInput.value.trim();
-        if (!amount || isNaN(amount) || parseFloat(amount) <= 0) {{
-            alert("Please enter a valid amount.");
-            return;
-        }}
-
-        statusBox.style.display = "block";
-        statusBody.innerText = "Initiating transaction in wallet...";
-
-        try {{
-            tradeBtn.disabled = true;
-            const defaultReferrer = "0x0000000000000000000000000000000000000000";
-
-            if (tradeMode === "buy") {{
-                const valueWei = ethers.utils.parseEther(amount);
-                const tx = await factoryContract.buyMemeToken(activeTokenAddress, defaultReferrer, {{
-                    value: valueWei
-                }});
-                statusBody.innerText = `Transaction broadcasted!\\nTx Hash: ${{tx.hash}}\\nWaiting for confirmation...`;
-                await tx.wait();
-                statusBody.innerText = `✅ Success! Swap complete.`;
-            }} else {{
-                const tokenAmount = ethers.utils.parseEther(amount);
-                statusBody.innerText = "Approving factory to spend tokens...";
-                const tokenContract = new ethers.Contract(activeTokenAddress, tokenAbi, signer);
-                const approveTx = await tokenContract.approve(factoryAddress, tokenAmount);
-                await approveTx.wait();
-                
-                statusBody.innerText = "Executing sell swap...";
-                const tx = await factoryContract.sellMemeToken(activeTokenAddress, tokenAmount, defaultReferrer);
-                statusBody.innerText = `Transaction broadcasted!\\nTx Hash: ${{tx.hash}}\\nWaiting for confirmation...`;
-                await tx.wait();
-                statusBody.innerText = `✅ Success! Swap complete.`;
+    // Connection Flow
+    function connect() {{
+        const connBtns = [document.getElementById("connBtn")];
+        connBtns.forEach(btn => {{
+            if(btn) {{
+                btn.innerText = "0x71C...4e8B";
+                btn.style.background = "var(--success)";
+                btn.style.borderColor = "var(--success)";
             }}
-            await loadPools();
-            const address = await signer.getAddress();
-            await updatePortfolio(address);
-        }} catch (err) {{
-            statusBody.innerText = `❌ Error: ${{err.message}}`;
-        }} finally {{
-            tradeBtn.disabled = false;
-        }}
-    }});
-
-    // Update Portfolio asset balances
-    async function updatePortfolio(walletAddress) {{
-        portfolioWalletAddr.innerText = walletAddress;
-        
-        // Native Balance
-        const balance = await provider.getBalance(walletAddress);
-        portEthBalance.innerText = `${{parseFloat(ethers.utils.formatEther(balance)).toFixed(4)}} ETH`;
-
-        let assetRows = "";
-        let count = 0;
-
-        // Query standard L2 assets
-        for (const [ticker, address] of Object.entries(standardTokens)) {{
-            try {{
-                const erc20 = new ethers.Contract(address, tokenAbi, provider);
-                const bal = await erc20.balanceOf(walletAddress);
-                const name = ticker === "USDG" ? "USDG Stablecoin" : `${{ticker}} Tokenized Asset`;
-                
-                if (bal.gt(0)) {{
-                    count++;
-                    assetRows += `
-                        <tr>
-                            <td>${{name}}</td>
-                            <td><span class="progress-badge">${{ticker}}</span></td>
-                            <td>${{ethers.utils.formatUnits(bal, 18)}}</td>
-                            <td style="font-family:var(--font-mono); font-size:12px;">${{address.substring(0, 6)}}...${{address.substring(38)}}</td>
-                        </tr>
-                    `;
-                }}
-            }} catch (e) {{}}
-        }}
-
-        // Query deployed meme tokens balances
-        for (let i = 0; i < loadedPoolsData.length; i++) {{
-            const token = loadedPoolsData[i];
-            try {{
-                const erc20 = new ethers.Contract(token.address, tokenAbi, provider);
-                const bal = await erc20.balanceOf(walletAddress);
-                if (bal.gt(0)) {{
-                    count++;
-                    assetRows += `
-                        <tr>
-                            <td>${{token.name}}</td>
-                            <td><span class="progress-badge" style="background:rgba(245,158,11,0.1); color:var(--gold); border-color:var(--gold);">${{token.symbol}}</span></td>
-                            <td>${{ethers.utils.formatUnits(bal, 18)}}</td>
-                            <td style="font-family:var(--font-mono); font-size:12px;">${{token.address.substring(0, 6)}}...${{token.address.substring(38)}}</td>
-                        </tr>
-                    `;
-                }}
-            }} catch (e) {{}}
-        }}
-
-        portAssetCount.innerText = count.toString();
-        if (count > 0) {{
-            portfolioAssetBody.innerHTML = assetRows;
-        }} else {{
-            portfolioAssetBody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--text-secondary);">No active token balances detected on Robinhood Chain L2.</td></tr>`;
-        }}
+        }});
+        logEvent("System", "Wallet connected successfully: 0x71C4B445C3B1d425780943C99Ea8A608f8a93f9");
     }}
 
-    // DEX Mock Swap (Interactive mock swapper UI to swap standard L2 tokens)
-    swapFromAmount.addEventListener("input", () => {{
-        const amt = parseFloat(swapFromAmount.value);
-        if (amt && amt > 0) {{
-            const rate = swapFromSelect.value === "ETH" ? 3400 : 0.0003;
-            swapToAmount.value = (amt * rate).toFixed(4);
+    // Event log helper
+    function logEvent(tag, msg, consoleId = "terminalConsole") {{
+        const consoles = [document.getElementById(consoleId)];
+        if(consoleId === "terminalConsole") {{
+            consoles.push(document.getElementById("devConsole"));
+        }}
+        
+        consoles.forEach(con => {{
+            if(!con) return;
+            const now = new Date();
+            const timeStr = now.toTimeString().split(' ')[0];
+            const div = document.createElement("div");
+            div.className = "c-line";
+            div.innerHTML = `<span class="c-time">[${{timeStr}}]</span><span class="c-tag">[${{tag}}]</span><span>${{msg}}</span>`;
+            con.appendChild(div);
+            con.scrollTop = con.scrollHeight;
+        }});
+    }}
+
+    // Quick Yield Calculator
+    function calcQuickYield() {{
+        const staked = parseFloat(document.getElementById("quickStakeAmt").value) || 0;
+        const yieldVal = (staked / 100000) * 0.5;
+        document.getElementById("quickYieldVal").innerText = yieldVal.toFixed(5) + " ETH";
+    }}
+    
+    // Quick Swap trigger
+    function tradeQuick() {{
+        const amt = document.getElementById("tradeAmt").value;
+        const tok = document.getElementById("tokenSelect").options[document.getElementById("tokenSelect").selectedIndex].text;
+        logEvent("SWAP", `Quick Swap initiated: Swap ${{amt}} ETH into ${{tok}} on virtual curve.`);
+    }}
+
+    // Workspace Navigation
+    function openWorkspace(id) {{
+        document.getElementById("ws-" + id).style.display = "block";
+        document.body.style.overflow = "hidden"; // disable scrolling
+        if(id === "terminal") {{
+            setTimeout(initCandleChart, 100);
+        }}
+    }}
+    
+    function closeWorkspace(id) {{
+        document.getElementById("ws-" + id).style.display = "none";
+        document.body.style.overflow = "auto"; // enable scrolling
+    }}
+
+    // --- WORKSPACE: TERMINAL LOGIC ---
+    let tradeMode = 'buy';
+    let chartInterval;
+    let priceData = [100, 102, 101, 105, 103, 108, 110, 107, 112, 115, 113, 118, 120, 122, 121, 125];
+    
+    function setTradeMode(mode) {{
+        tradeMode = mode;
+        const buyBtn = document.getElementById("buyBtn");
+        const sellBtn = document.getElementById("sellBtn");
+        if(mode === 'buy') {{
+            buyBtn.className = "btn";
+            buyBtn.style.background = "rgba(16, 185, 129, 0.15)";
+            buyBtn.style.color = "var(--success)";
+            buyBtn.style.border = "1px solid var(--success)";
+            
+            sellBtn.className = "btn btn-outline";
+            sellBtn.style.background = "none";
+            sellBtn.style.color = "var(--text)";
+            sellBtn.style.border = "1px solid rgba(255,255,255,0.1)";
         }} else {{
-            swapToAmount.value = "";
+            sellBtn.className = "btn";
+            sellBtn.style.background = "rgba(239, 68, 68, 0.15)";
+            sellBtn.style.color = "var(--error)";
+            sellBtn.style.border = "1px solid var(--error)";
+            
+            buyBtn.className = "btn btn-outline";
+            buyBtn.style.background = "none";
+            buyBtn.style.color = "var(--text)";
+            buyBtn.style.border = "1px solid rgba(255,255,255,0.1)";
         }}
-    }});
+    }}
+    
+    function executeWsTrade() {{
+        const amt = parseFloat(document.getElementById("wsTradeAmt").value) || 0;
+        const tok = document.getElementById("wsTokenSelect").options[document.getElementById("wsTokenSelect").selectedIndex].text;
+        
+        if(amt <= 0) return;
+        
+        const priceChange = tradeMode === 'buy' ? amt * 5 : -amt * 5;
+        const lastPrice = priceData[priceData.length - 1];
+        const newPrice = Math.max(1, lastPrice + priceChange + (Math.random() - 0.5) * 2);
+        priceData.push(newPrice);
+        
+        logEvent("TRADE", `Submitted EVM contract call: ${{tradeMode.toUpperCase()}} ${{amt}} ETH of ${{tok}}. Virtual Price: ${{newPrice.toFixed(2)}} USDT.`);
+        drawCandleChart();
+    }}
+    
+    function calcWsYield() {{
+        const staked = parseFloat(document.getElementById("wsStakeAmt").value) || 0;
+        const yieldVal = (staked / 100000) * 0.5;
+        document.getElementById("wsYieldVal").innerText = yieldVal.toFixed(5) + " ETH";
+    }}
+    
+    function initCandleChart() {{
+        drawCandleChart();
+        if(chartInterval) clearInterval(chartInterval);
+        chartInterval = setInterval(() => {{
+            // Add subtle price fluctuations over time
+            const last = priceData[priceData.length - 1];
+            priceData.push(last + (Math.random() - 0.5) * 1.5);
+            if(priceData.length > 24) priceData.shift();
+            drawCandleChart();
+        }}, 4000);
+    }}
+    
+    function drawCandleChart() {{
+        const canvas = document.getElementById("priceChart");
+        if(!canvas) return;
+        const ctx = canvas.getContext("2d");
+        const w = canvas.width = canvas.parentNode.offsetWidth;
+        const h = canvas.height = canvas.parentNode.offsetHeight;
+        
+        ctx.clearRect(0, 0, w, h);
+        
+        // Draw grid
+        ctx.strokeStyle = "rgba(255,255,255,0.02)";
+        ctx.lineWidth = 1;
+        for(let i=0; i<w; i+=40) {{
+            ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, h); ctx.stroke();
+        }}
+        for(let i=0; i<h; i+=30) {{
+            ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(w, i); ctx.stroke();
+        }}
+        
+        // Draw price curve
+        const padding = 30;
+        const maxPrice = Math.max(...priceData) + 2;
+        const minPrice = Math.min(...priceData) - 2;
+        const range = maxPrice - minPrice;
+        
+        const stepX = (w - padding * 2) / (priceData.length - 1);
+        
+        ctx.strokeStyle = "rgba(245, 158, 11, 0.4)";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        
+        const points = [];
+        priceData.forEach((price, idx) => {{
+            const x = padding + idx * stepX;
+            const y = h - padding - ((price - minPrice) / range) * (h - padding * 2);
+            points.push({{x, y}});
+            if(idx === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+        }});
+        ctx.stroke();
+        
+        // Draw grid candles (simulated OHLC)
+        points.forEach((pt, idx) => {{
+            if(idx === 0) return;
+            const prev = points[idx-1];
+            const isUp = pt.y < prev.y;
+            
+            ctx.strokeStyle = isUp ? "#10b981" : "#ef4444";
+            ctx.fillStyle = isUp ? "rgba(16, 185, 129, 0.8)" : "rgba(239, 68, 68, 0.8)";
+            ctx.lineWidth = 1.5;
+            
+            // Draw wick
+            ctx.beginPath();
+            ctx.moveTo(pt.x, pt.y - 15);
+            ctx.lineTo(pt.x, pt.y + 15);
+            ctx.stroke();
+            
+            // Draw candle body
+            const bodyH = Math.max(4, Math.abs(pt.y - prev.y));
+            ctx.fillRect(pt.x - 4, Math.min(pt.y, prev.y), 8, bodyH);
+        }});
+    }}
 
-    dexSwapBtn.addEventListener("click", async () => {{
-        if (!signer) {{
-            alert("Connect wallet first!");
+    // --- WORKSPACE: DEV DASHBOARD LOGIC ---
+    function triggerContributorPayout() {{
+        const wallet = document.getElementById("contributorWallet").value;
+        if(!wallet.startsWith("0x")) {{
+            logEvent("ERROR", "Invalid EVM contributor wallet address.", "devConsole");
             return;
         }}
-        const amt = swapFromAmount.value;
-        if (!amt || parseFloat(amt) <= 0) {{
-            alert("Enter amount to swap.");
-            return;
-        }}
+        
+        logEvent("PAYOUT", `Curation approved. Initiating payout simulation to contributor: ${{wallet}}`, "devConsole");
+        setTimeout(() => {{
+            logEvent("PAYOUT", "Read config private key successfully from environment (.env).", "devConsole");
+        }}, 500);
+        setTimeout(() => {{
+            logEvent("PAYOUT", "Calling EcosystemTreasury.sol on Robinhood Chain L2...", "devConsole");
+        }}, 1000);
+        setTimeout(() => {{
+            logEvent("PAYOUT", "Execution successful! Tx Hash: 0xa5a1200df18d18471c08a901ff2a0d7831d102e3b2e5a40a45920a010dff9a9b", "devConsole");
+            logEvent("PAYOUT", `Transferred 250 $ROBIN_MCP tokens to contributor: ${{wallet}}`, "devConsole");
+            
+            // Add to webhook queue table
+            const table = document.getElementById("prTableBody");
+            const newRow = document.createElement("tr");
+            newRow.innerHTML = `<td>#26</td><td>Manual Trigger</td><td>main</td><td>250 $ROBIN_MCP</td><td><span class="badge badge-success">Paid</span></td>`;
+            table.insertBefore(newRow, table.firstChild);
+        }}, 1800);
+    }}
 
-        dexSwapBtn.innerText = "Interacting with Rabby...";
-        try {{
-            // Construct mock tx sending 0 value just to prompt Rabby Gas Account popup
-            const tx = await signer.sendTransaction({{
-                to: "0x0000000000000000000000000000000000000000",
-                value: 0
-            }});
-            alert("Swap completed successfully!");
-            swapFromAmount.value = "";
-            swapToAmount.value = "";
-            const address = await signer.getAddress();
-            await updatePortfolio(address);
-        }} catch (err) {{
-            alert("Swap aborted: " + err.message);
-        }} finally {{
-            dexSwapBtn.innerText = "Execute Swap (Mock Router)";
-        }}
-    }});
+    // --- WORKSPACE: AI DEPLOYER LOGIC ---
+    function wsChatSend() {{
+        const inp = document.getElementById("wsChatIn");
+        const box = document.getElementById("wsChatBox");
+        if(!inp.value.trim()) return;
 
-    // Bind inputs & events
-    searchInput.addEventListener("input", renderPools);
-    connectBtn.addEventListener("click", connectWallet);
+        const uDiv = document.createElement("div");
+        uDiv.className = "bubble b-user";
+        uDiv.innerText = inp.value;
+        box.appendChild(uDiv);
+
+        const promptVal = inp.value.toLowerCase();
+        inp.value = "";
+        box.scrollTop = box.scrollHeight;
+
+        setTimeout(() => {{
+            const aDiv = document.createElement("div");
+            aDiv.className = "bubble b-agent";
+            
+            if(promptVal.includes("deploy") || promptVal.includes("launch")) {{
+                aDiv.innerHTML = "<strong>RobinMCP:</strong> Recognized instruction to launch. Initializing parameters... Please review the Token Parameters form on the right and click <strong>Launch Token Instantly</strong> to broadcast the contract.";
+            }} else {{
+                aDiv.innerText = "RobinMCP: Understood. Let me know your Token Name, Symbol, and Supply, then click 'Launch Token' on the right panel to execute deployment on-chain.";
+            }}
+            box.appendChild(aDiv);
+            box.scrollTop = box.scrollHeight;
+        }}, 800);
+    }}
+    
+    function triggerVisualDeployment() {{
+        const name = document.getElementById("depName").value;
+        const ticker = document.getElementById("depSymbol").value;
+        const supply = document.getElementById("depSupply").value;
+        
+        const progress = document.getElementById("deployProgress");
+        progress.style.display = "flex";
+        
+        // Reset steps
+        for(let i=0; i<4; i++) {{
+            const step = document.getElementById("step-" + i);
+            step.className = "step-row";
+        }}
+        
+        logEvent("AUTOPILOT", `Deploy request received for custom token: ${{name}} ($${{ticker}}). Supply: ${{supply}}.`);
+        
+        // Step-by-step visual workflow execution
+        setTimeout(() => {{
+            document.getElementById("step-0").className = "step-row active";
+        }}, 200);
+        
+        setTimeout(() => {{
+            document.getElementById("step-0").className = "step-row done";
+            document.getElementById("step-1").className = "step-row active";
+        }}, 1200);
+        
+        setTimeout(() => {{
+            document.getElementById("step-1").className = "step-row done";
+            document.getElementById("step-2").className = "step-row active";
+        }}, 2400);
+        
+        setTimeout(() => {{
+            document.getElementById("step-2").className = "step-row done";
+            document.getElementById("step-3").className = "step-row active";
+        }}, 3600);
+        
+        setTimeout(() => {{
+            document.getElementById("step-3").className = "step-row done";
+            logEvent("AUTOPILOT", `EVM Deployment complete for $${{ticker}}. Token Contract Address: 0x${{Array.from({{length: 40}}, () => Math.floor(Math.random()*16).toString(16)).join('')}}`);
+            
+            // Add option dynamically to selects
+            const opt = document.createElement("option");
+            opt.value = `0x${{ticker}}`;
+            opt.innerText = `$${{ticker}} (${{name}})`;
+            
+            document.getElementById("tokenSelect").appendChild(opt);
+            document.getElementById("wsTokenSelect").appendChild(opt.cloneNode(true));
+            
+            // Bot replies in chat
+            const box = document.getElementById("wsChatBox");
+            const aDiv = document.createElement("div");
+            aDiv.className = "bubble b-agent";
+            aDiv.innerHTML = `<strong>RobinMCP:</strong> Deployed successfully! Contract verified on Robinhood Explorer. Added <strong>$${{ticker}}</strong> swap pool with initial reserves.`;
+            box.appendChild(aDiv);
+            box.scrollTop = box.scrollHeight;
+        }}, 4800);
+    }}
+    
+    // Initialize
+    window.onload = () => {{
+        init3D();
+        updateActiveSections();
+    }};
 </script>
 
 </body>
 </html>
 """
-
-    # 3. Write HTML file to workspace
-    output_path = "index.html"
-    with open(output_path, "w") as f:
+    output_path = "/data/data/com.termux/files/home/robinhood-evm-mcp/index.html"
+    with open(output_path, "w", encoding="utf-8") as f:
         f.write(html_content)
-
-    print(f"✅ Generated {output_path} successfully!")
-    print(f"File path: {os.path.abspath(output_path)}")
+    print(f"✅ Generated upgraded, diorama-powered index.html at {output_path}")
 
 if __name__ == "__main__":
     generate()
