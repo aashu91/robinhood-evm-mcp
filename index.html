@@ -622,6 +622,25 @@ if token.balanceOf(user) < 100 * 10**18:
             </div>
         </div>
     </div>
+    
+    <!-- 6 SPEC DOCS FOR VIBECODING -->
+    <div class="card" style="margin-top: 25px;">
+        <h3 style="font-size: 16px; margin-bottom: 10px; font-weight: 600; color: var(--gold);">📋 Sovereign Vibecoding Spec Curation Framework (6 Mandatory Docs)</h3>
+        <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 20px; line-height: 1.5;">
+            Follow this framework to build applications using AI agents like Claude or GPT. Having these 6 documents prepared beforehand cuts prompting errors, prevents endless loops, and saves thousands of tokens.
+        </p>
+        <div class="nav-tabs" style="width: max-content; margin-bottom: 20px;">
+            <button class="tab-btn active" onclick="switchSpecTab(0)">1. PRD</button>
+            <button class="tab-btn" onclick="switchSpecTab(1)">2. TRD</button>
+            <button class="tab-btn" onclick="switchSpecTab(2)">3. App Flow</button>
+            <button class="tab-btn" onclick="switchSpecTab(3)">4. UI/UX Design</button>
+            <button class="tab-btn" onclick="switchSpecTab(4)">5. Backend Schema</button>
+            <button class="tab-btn" onclick="switchSpecTab(5)">6. Plan</button>
+        </div>
+        <div id="spec-content-box" style="background: #010206; border-radius: 12px; padding: 20px; border: 1px solid rgba(255,255,255,0.03); min-height: 150px;">
+            <!-- Loaded dynamically in javascript -->
+        </div>
+    </div>
 </div>
 
 <!-- WORKSPACE: AI DEPLOYER -->
@@ -1229,10 +1248,52 @@ if token.balanceOf(user) < 100 * 10**18:
         }, 4800);
     }
     
+    // --- WORKSPACE: VIBECODING SPEC HUB ---
+    const specDocs = [
+        {
+            title: "1. Product Requirement Document (PRD)",
+            content: "<strong>Overview:</strong> A Web3/EVM launchpad designed to transition meme-style tokens into curated developer-backed utility tokens.<br><strong>Objectives:</strong> Eliminate PvP casino rugs by routing 20% of trading fees to a Developer Buyback Pool, and 40% to Staked Holders. Centralized curation by the repository owner ensures only verified commits earn native payouts.<br><strong>Success Metrics:</strong> Developer retention, code contribution volume, locked utility values, and token price appreciation via automated contract buybacks."
+        },
+        {
+            title: "2. Technical Requirement Document (TRD)",
+            content: "<strong>L2 Execution Chain:</strong> Robinhood Chain L2 (Arbitrum Orbit Rollup) for sub-penny gas executing EVM transactions.<br><strong>Smart Contracts:</strong> MemeFactoryV2.sol (token deployment), EcosystemTreasury.sol (40/40/20 fee split), StakingYield.sol (yield vault).<br><strong>Tooling Stack:</strong> Python-based EVM Model Context Protocol (MCP) server for local AI code execution, SQLite cache for ABI signatures, and a local Python payout script (.env gated) for developer reward signing."
+        },
+        {
+            title: "3. App Flow (User Navigation)",
+            content: "<strong>Path 1:</strong> User enters landing page -> connects wallet -> interacts with virtual bonding curve swaps on the Swap Terminal.<br><strong>Path 2:</strong> User stakes native $ROBIN_MCP -> claims accumulated ETH yield dynamically in the Staking Vault.<br><strong>Path 3:</strong> Developer merges GitHub PR -> Webhook logs PR details -> Admin runs local payout script -> EcosystemTreasury swaps ETH for tokens and transfers them to the developer wallet."
+        },
+        {
+            title: "4. UI/UX Design System Spec",
+            content: "<strong>Design Language:</strong> Sleek dark mode blending Anant Anaadi branding (Navy backgrounds, Saffron Gold accents, Cream texts) with Launchpad highlights (Neon Green for buy alerts, Neon Pink for sells).<br><strong>Typography:</strong> 'Outfit' for titles and headers, 'JetBrains Mono' for developer console outputs, code blocks, and transaction hashes.<br><strong>Components:</strong> Glassmorphic cards (radial gradients, translucent borders, high backdrop blur) and full-screen overlay workspaces to give an app-like feel."
+        },
+        {
+            title: "5. Backend Schema (EVM & SQLite)",
+            content: "<strong>EVM Contracts state:</strong><br>- MemeFactoryV2: Keeps a mapping of all active token pools and virtual curve reserves (tokenReserves, ethReserves).<br>- EcosystemTreasury: Tracks Creator balance, Staker yield pool balance, and Developer rewards pool balance.<br><strong>Local SQLite cache:</strong><br>- ABIs Table: Maps contract_address to ABI JSON.<br>- Tickers Table: Maps ticker symbol to EVM contract address.<br>- Payouts Table: Logs PR_ID, wallet_address, transaction_hash, and payout_date."
+        },
+        {
+            title: "6. Implementation Plan (Build Phases)",
+            content: "<strong>Phase 1 (Planning & Core Contracts):</strong> Solidity specs for factory bonding curves, EcosystemTreasury, and StakingYield contracts. (Status: Done)<br><strong>Phase 2 (Developer CLI tool):</strong> Local payout signing CLI and EVM MCP token-gating middleware. (Status: Done)<br><strong>Phase 3 (Frontend upgrade):</strong> Full-screen 3D particle morphing scroll world website with glassmorphic workspace dashboards. (Status: Done)<br><strong>Phase 4 (Testnet Launch & Audits):</strong> Deploy contracts to Robinhood Testnet, verify source code on Blockscout explorer, and run public client-side audits. (Status: Next)"
+        }
+    ];
+
+    function switchSpecTab(index) {
+        const btns = document.querySelectorAll("#ws-dev .nav-tabs button");
+        btns.forEach((btn, idx) => {
+            if(idx === index) btn.classList.add("active");
+            else btn.classList.remove("active");
+        });
+        
+        const doc = specDocs[index];
+        const box = document.getElementById("spec-content-box");
+        box.innerHTML = `<h4 style="color: var(--gold); font-size:14px; margin-bottom:10px; font-weight:600;">$${doc.title}</h4>
+                         <div style="color: var(--text-muted); font-size:13px; line-height:1.6;">$${doc.content}</div>`;
+    }
+
     // Initialize
     window.onload = () => {
         init3D();
         updateActiveSections();
+        switchSpecTab(0);
     };
 </script>
 
