@@ -106,6 +106,35 @@ class Web3Helper:
                 "error": f"Failed to fetch ERC20 properties: {str(e)}"
             }
 
+    async def load_abi_helper(self, contract_address, abi_type=None):
+        """Helper to resolve ABI from constants, local JSON files, or DB cache."""
+        import json
+        if abi_type and abi_type in PREPACKAGED_ABIS:
+            return PREPACKAGED_ABIS[abi_type]
+            
+        if abi_type:
+            # Check if there is a local compiled JSON file
+            local_paths = [
+                os.path.join(os.path.dirname(__file__), f"{abi_type}.json"),
+                os.path.join(os.path.dirname(__file__), "contracts", f"{abi_type}.json")
+            ]
+            for path in local_paths:
+                if os.path.exists(path):
+                    try:
+                        with open(path, "r") as f:
+                            data = json.load(f)
+                            if "abi" in data:
+                                return data["abi"]
+                    except Exception:
+                        pass
+                        
+        if contract_address:
+            stored_abi, _ = await get_abi(contract_address)
+            if stored_abi:
+                return stored_abi
+                
+        return PREPACKAGED_ABIS["ERC20"]
+
     async def query_contract(self, contract_address, function_name, args=None, abi_type=None):
         """Performs a read-only query on a smart contract."""
         if not self.w3.is_connected():
@@ -114,19 +143,7 @@ class Web3Helper:
         contract_address = Web3.to_checksum_address(contract_address)
         args = args or []
         
-        # Retrieve ABI
-        abi = None
-        if abi_type and abi_type in PREPACKAGED_ABIS:
-            abi = PREPACKAGED_ABIS[abi_type]
-        else:
-            # Check SQLite custom ABI cache
-            stored_abi, _ = await get_abi(contract_address)
-            if stored_abi:
-                abi = stored_abi
-            else:
-                # Default to ERC-20 as generic fallback
-                abi = PREPACKAGED_ABIS["ERC20"]
-
+        abi = await self.load_abi_helper(contract_address, abi_type)
         contract = self.w3.eth.contract(address=contract_address, abi=abi)
         func = getattr(contract.functions, function_name)
         result = func(*args).call()
@@ -143,17 +160,7 @@ class Web3Helper:
         # Load signer details
         account = self.get_account()
         
-        # Fetch ABI
-        abi = None
-        if abi_type and abi_type in PREPACKAGED_ABIS:
-            abi = PREPACKAGED_ABIS[abi_type]
-        else:
-            stored_abi, _ = await get_abi(contract_address)
-            if stored_abi:
-                abi = stored_abi
-            else:
-                abi = PREPACKAGED_ABIS["ERC20"]
-                
+        abi = await self.load_abi_helper(contract_address, abi_type)
         contract = self.w3.eth.contract(address=contract_address, abi=abi)
         func = getattr(contract.functions, function_name)
         
@@ -173,6 +180,7 @@ class Web3Helper:
         # Build transaction
         transaction = func(*args).build_transaction(tx_params)
         return transaction
+
 
     async def sign_and_send_transaction(self, tx):
         """Signs and broadcasts a pre-built transaction to the RPC."""
@@ -670,6 +678,247 @@ class Web3Helper:
             pass
             
         return price_points
+
+    async def deploy_community_trust_factory(self):
+        """Deploys a new CommunityTrustFactory contract."""
+        import json
+        json_path = os.path.join(os.path.dirname(__file__), "CommunityTrustFactory.json")
+        if not os.path.exists(json_path):
+            raise FileNotFoundError("CommunityTrustFactory.json not found. Run compileTrust.cjs first.")
+        
+        with open(json_path, "r") as f:
+            artifact = json.load(f)
+            
+        abi = artifact["abi"]
+        bytecode = artifact["bytecode"]
+        
+        ContractFactory = self.w3.eth.contract(abi=abi, bytecode=bytecode)
+        account = self.get_account()
+        
+        nonce = self.w3.eth.get_transaction_count(account.address)
+        gas_price = int(self.w3.eth.gas_price * 1.1)
+        
+        construct_tx = ContractFactory.constructor().build_transaction({
+            'from': account.address,
+            'nonce': nonce,
+            'gasPrice': gas_price,
+            'gas': 3000000,
+            'chainId': self.network_config["chain_id"]
+        })
+        
+        tx_hash = await self.sign_and_send_transaction(construct_tx)
+        receipt = await self.wait_for_confirmation(tx_hash)
+        
+        if receipt.get("status") == "SUCCESS":
+            raw_receipt = self.w3.eth.get_transaction_receipt(tx_hash)
+            contract_address = raw_receipt.contractAddress
+            os.environ["COMMUNITY_TRUST_FACTORY_ADDRESS"] = contract_address
+            
+            env_file_path = ".env" if os.path.exists(".env") else os.path.expanduser("~/.env")
+            if os.path.exists(env_file_path):
+                with open(env_file_path, "r") as f:
+                    lines = f.readlines()
+                new_lines = [l for l in lines if not l.strip().startswith("COMMUNITY_TRUST_FACTORY_ADDRESS=")]
+                new_lines.append(f"\nCOMMUNITY_TRUST_FACTORY_ADDRESS={contract_address}\n")
+                with open(env_file_path, "w") as f:
+                    f.writelines(new_lines)
+            return {
+                "status": "SUCCESS",
+                "contract_address": contract_address,
+                "tx_hash": tx_hash
+            }
+        return {
+            "status": "FAILED",
+            "tx_hash": tx_hash
+        }
+
+    async def deploy_community_trust(self, factory_address, name, directors, required_signatures):
+        """Deploys a new CommunityTrust contract through the factory."""
+        directors = [self.w3.to_checksum_address(d) for d in directors]
+        factory_address = self.w3.to_checksum_address(factory_address)
+        
+        tx = await self.estimate_and_build_tx(
+            contract_address=factory_address,
+            function_name="createTrust",
+            args=[name, directors, int(required_signatures)],
+            abi_type="CommunityTrustFactory",
+            value_wei=0
+        )
+        
+        tx_hash = await self.sign_and_send_transaction(tx)
+        receipt = await self.wait_for_confirmation(tx_hash)
+        
+        if receipt.get("status") == "SUCCESS":
+            trusts_count = await self.query_contract(factory_address, "getTrustCount", [], "CommunityTrustFactory")
+            trust_address = await self.query_contract(factory_address, "allTrusts", [trusts_count - 1], "CommunityTrustFactory")
+            return {
+                "status": "SUCCESS",
+                "trust_address": trust_address,
+                "tx_hash": tx_hash
+            }
+        return {
+            "status": "FAILED",
+            "tx_hash": tx_hash
+        }
+
+    async def deposit_to_trust(self, trust_address, eth_amount):
+        """Deposits ETH to pool wealth in the trust."""
+        trust_address = self.w3.to_checksum_address(trust_address)
+        value_wei = self.w3.to_wei(eth_amount, 'ether')
+        
+        tx = await self.estimate_and_build_tx(
+            contract_address=trust_address,
+            function_name="deposit",
+            args=[],
+            abi_type="CommunityTrust",
+            value_wei=value_wei
+        )
+        tx_hash = await self.sign_and_send_transaction(tx)
+        receipt = await self.wait_for_confirmation(tx_hash)
+        return receipt
+
+    async def propose_trust_transaction(self, trust_address, destination, value_wei, calldata_hex):
+        """Proposes a transaction inside the trust (Directors only)."""
+        trust_address = self.w3.to_checksum_address(trust_address)
+        destination = self.w3.to_checksum_address(destination)
+        
+        calldata_bytes = bytes.fromhex(calldata_hex[2:]) if calldata_hex.startswith("0x") else bytes.fromhex(calldata_hex)
+        
+        tx = await self.estimate_and_build_tx(
+            contract_address=trust_address,
+            function_name="proposeTransaction",
+            args=[destination, int(value_wei), calldata_bytes],
+            abi_type="CommunityTrust",
+            value_wei=0
+        )
+        tx_hash = await self.sign_and_send_transaction(tx)
+        receipt = await self.wait_for_confirmation(tx_hash)
+        return receipt
+
+    async def sign_trust_proposal(self, trust_address, proposal_id):
+        """Signs a proposed transaction (Directors only)."""
+        trust_address = self.w3.to_checksum_address(trust_address)
+        
+        tx = await self.estimate_and_build_tx(
+            contract_address=trust_address,
+            function_name="signTransaction",
+            args=[int(proposal_id)],
+            abi_type="CommunityTrust",
+            value_wei=0
+        )
+        tx_hash = await self.sign_and_send_transaction(tx)
+        receipt = await self.wait_for_confirmation(tx_hash)
+        return receipt
+
+    async def execute_trust_proposal(self, trust_address, proposal_id):
+        """Executes a proposed transaction once signature threshold is reached."""
+        trust_address = self.w3.to_checksum_address(trust_address)
+        
+        tx = await self.estimate_and_build_tx(
+            contract_address=trust_address,
+            function_name="executeTransaction",
+            args=[int(proposal_id)],
+            abi_type="CommunityTrust",
+            value_wei=0
+        )
+        tx_hash = await self.sign_and_send_transaction(tx)
+        receipt = await self.wait_for_confirmation(tx_hash)
+        return receipt
+
+    async def distribute_trust_dividends(self, trust_address, token_address, amount_wei):
+        """Distributes dividends to depositors in the trust."""
+        trust_address = self.w3.to_checksum_address(trust_address)
+        token_address = self.w3.to_checksum_address(token_address) if token_address != "0x0000000000000000000000000000000000000000" and token_address != "0x0" else "0x0000000000000000000000000000000000000000"
+        
+        if token_address != "0x0000000000000000000000000000000000000000":
+            account = self.get_account()
+            abi = PREPACKAGED_ABIS["ERC20"]
+            token_contract = self.w3.eth.contract(address=token_address, abi=abi)
+            allowance = token_contract.functions.allowance(account.address, trust_address).call()
+            if allowance < int(amount_wei):
+                approve_tx = await self.estimate_and_build_tx(
+                    contract_address=token_address,
+                    function_name="approve",
+                    args=[trust_address, int(amount_wei)],
+                    abi_type="ERC20",
+                    value_wei=0
+                )
+                approve_hash = await self.sign_and_send_transaction(approve_tx)
+                await self.wait_for_confirmation(approve_hash)
+
+        value_wei = int(amount_wei) if token_address == "0x0000000000000000000000000000000000000000" else 0
+        tx = await self.estimate_and_build_tx(
+            contract_address=trust_address,
+            function_name="distributeDividends",
+            args=[token_address, int(amount_wei)],
+            abi_type="CommunityTrust",
+            value_wei=value_wei
+        )
+        tx_hash = await self.sign_and_send_transaction(tx)
+        receipt = await self.wait_for_confirmation(tx_hash)
+        return receipt
+
+    async def claim_trust_dividends(self, trust_address, token_address):
+        """Claims dividends accumulated in the trust for a given token (or ETH)."""
+        trust_address = self.w3.to_checksum_address(trust_address)
+        token_address = self.w3.to_checksum_address(token_address) if token_address != "0x0000000000000000000000000000000000000000" and token_address != "0x0" else "0x0000000000000000000000000000000000000000"
+        
+        tx = await self.estimate_and_build_tx(
+            contract_address=trust_address,
+            function_name="claimDividends",
+            args=[token_address],
+            abi_type="CommunityTrust",
+            value_wei=0
+        )
+        tx_hash = await self.sign_and_send_transaction(tx)
+        receipt = await self.wait_for_confirmation(tx_hash)
+        return receipt
+
+    async def deploy_mock_asset(self, name, symbol):
+        """Deploys a mock precious metal ERC20 asset (like cGOLD or cSILVER)."""
+        import json
+        json_path = os.path.join(os.path.dirname(__file__), "MockAsset.json")
+        if not os.path.exists(json_path):
+            raise FileNotFoundError("MockAsset.json not found. Run compileTrust.cjs first.")
+            
+        with open(json_path, "r") as f:
+            artifact = json.load(f)
+            
+        abi = artifact["abi"]
+        bytecode = artifact["bytecode"]
+        
+        ContractFactory = self.w3.eth.contract(abi=abi, bytecode=bytecode)
+        account = self.get_account()
+        
+        nonce = self.w3.eth.get_transaction_count(account.address)
+        gas_price = int(self.w3.eth.gas_price * 1.1)
+        
+        construct_tx = ContractFactory.constructor(name, symbol).build_transaction({
+            'from': account.address,
+            'nonce': nonce,
+            'gasPrice': gas_price,
+            'gas': 2000000,
+            'chainId': self.network_config["chain_id"]
+        })
+        
+        tx_hash = await self.sign_and_send_transaction(construct_tx)
+        receipt = await self.wait_for_confirmation(tx_hash)
+        
+        if receipt.get("status") == "SUCCESS":
+            raw_receipt = self.w3.eth.get_transaction_receipt(tx_hash)
+            contract_address = raw_receipt.contractAddress
+            await self.import_custom_token(symbol, contract_address, name, 18)
+            return {
+                "status": "SUCCESS",
+                "contract_address": contract_address,
+                "symbol": symbol,
+                "tx_hash": tx_hash
+            }
+        return {
+            "status": "FAILED",
+            "tx_hash": tx_hash
+        }
+
 
 
 

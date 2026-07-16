@@ -39,7 +39,7 @@ def generate():
         body {{ 
             background-color: var(--bg); 
             color: var(--text); 
-            min-height: 300vh; /* Height to support scrolling sections */
+            min-height: 400vh; /* Height to support scrolling sections */
             overflow-x: hidden; 
             scroll-behavior: smooth;
         }}
@@ -380,6 +380,7 @@ def generate():
         <button class="tab-btn active" onclick="scrollToSection(0)">🏠 Terminal</button>
         <button class="tab-btn" onclick="scrollToSection(1)">🛠️ Dev Portal</button>
         <button class="tab-btn" onclick="scrollToSection(2)">🤖 AI Deployer</button>
+        <button class="tab-btn" onclick="scrollToSection(3)">🏦 Trust Bank</button>
     </div>
     <button id="connBtn" class="connect-btn" onclick="connect()">Connect Wallet</button>
 </div>
@@ -494,6 +495,150 @@ if token.balanceOf(user) < 100 * 10**18:
             </p>
             <div style="text-align: center;">
                 <button class="btn" style="max-width: 250px; margin: 0 auto;" onclick="openWorkspace('deployer')">Launch Deployer Workspace</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- SECTION 4: TRUST BANK -->
+<div class="scroll-section" id="sec-3">
+    <div class="container" style="max-width: 600px;">
+        <div class="card">
+            <h2 style="font-size: 22px; margin-bottom: 10px; font-weight: 700; color: var(--gold); text-align: center;">🏦 Community Trust Bank</h2>
+            <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 25px; line-height: 1.5; text-align: center;">
+                Establish community trust structures, appoint Managing Directors, pool wealth together, invest in Gold/Silver assets, and distribute dividends to the community.
+            </p>
+            <div style="text-align: center;">
+                <button class="btn" style="max-width: 250px; margin: 0 auto;" onclick="openWorkspace('trusts')">Launch Trust Bank</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- WORKSPACE: COMMUNITY TRUST BANK -->
+<div class="workspace-overlay" id="ws-trusts">
+    <div class="ws-header">
+        <div>
+            <h2 style="font-size: 22px; font-weight: 700; color: var(--gold);">Sovereign Trust Bank Dashboard</h2>
+            <p style="font-size: 12px; color: var(--text-muted); font-family: var(--font-mono); margin-top: 4px;">Community Trust Factory & Multi-Sig Management</p>
+        </div>
+        <button class="back-btn" onclick="closeWorkspace('trusts')">← Back to Cosmos</button>
+    </div>
+    
+    <div class="grid" style="grid-template-columns: 1fr 1.2fr;">
+        <div>
+            <!-- Create Trust Form -->
+            <div class="card" style="margin-bottom: 25px;">
+                <h3 style="font-size: 16px; margin-bottom: 15px; font-weight: 600; color: var(--gold);">Deploy New Community Trust</h3>
+                <div class="form-group">
+                    <label>Trust Name</label>
+                    <input type="text" id="trustName" class="input" value="Advaita Community Trust">
+                </div>
+                <div class="form-group">
+                    <label>Managing Directors (comma-separated 0x...)</label>
+                    <input type="text" id="trustDirectors" class="input" placeholder="0x96EA0D5C4f3Cd0d88566F5E8CDFf6addBB4159B4">
+                </div>
+                <div class="form-group">
+                    <label>Required Signatures Threshold</label>
+                    <input type="number" id="trustThreshold" class="input" value="1" min="1">
+                </div>
+                <button class="btn" onclick="triggerDeployTrust()">Deploy Trust Bank</button>
+            </div>
+            
+            <!-- Deploy Mock Asset Form -->
+            <div class="card">
+                <h3 style="font-size: 16px; margin-bottom: 15px; font-weight: 600; color: var(--gold);">Deploy Mock Gold/Silver Asset</h3>
+                <div class="form-group">
+                    <label>Asset Name</label>
+                    <input type="text" id="mockAssetName" class="input" value="Paxos Gold Mock">
+                </div>
+                <div class="form-group">
+                    <label>Asset Ticker</label>
+                    <input type="text" id="mockAssetSymbol" class="input" value="cGOLD">
+                </div>
+                <button class="btn btn-outline" onclick="triggerDeployMockAsset()">Deploy Asset</button>
+            </div>
+        </div>
+        
+        <div>
+            <!-- Pool Management & Multi-sig Dashboard -->
+            <div class="card" style="margin-bottom: 25px;">
+                <h3 style="font-size: 16px; margin-bottom: 15px; font-weight: 600; color: var(--gold);">Active Trust & Wealth Pool</h3>
+                <div style="background: rgba(0,0,0,0.4); padding: 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.03); margin-bottom: 20px;">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:10px; font-size:14px;">
+                        <span>Trust Address:</span><span id="activeTrustAddr" style="font-family:var(--font-mono); color:var(--gold);">Not Deployed</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; margin-bottom:10px; font-size:14px;">
+                        <span>Pooled Wealth:</span><span id="activeTrustBalance" style="font-weight:700;">0.00 ETH</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; font-size:14px;">
+                        <span>Your Share:</span><span id="userTrustShares">0.00 ETH (0%)</span>
+                    </div>
+                </div>
+                
+                <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                    <input type="number" id="depositTrustAmt" class="input" placeholder="Amount ETH" value="0.05">
+                    <button class="btn" style="width: 120px;" onclick="triggerDepositToTrust()">Deposit</button>
+                </div>
+                
+                <!-- Gold & Silver reserves -->
+                <h4 style="font-size: 13px; margin-bottom: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase;">Real-world Assets Reserves (Mock cGOLD/cSILVER)</h4>
+                <div style="background: rgba(0,0,0,0.3); padding: 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.03); margin-bottom: 20px;">
+                    <div style="margin-bottom: 12px;">
+                        <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:5px;">
+                            <span>Gold Reserves (cGOLD)</span><span id="goldReservesVal" style="color:var(--gold); font-weight:700;">0.00 cGOLD</span>
+                        </div>
+                        <div style="height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; overflow: hidden;">
+                            <div id="goldReservesBar" style="height: 100%; width: 0%; background: linear-gradient(90deg, var(--gold), var(--gold-dark)); transition: width 0.5s;"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:5px;">
+                            <span>Silver Reserves (cSILVER)</span><span id="silverReservesVal" style="color:#94a3b8; font-weight:700;">0.00 cSILVER</span>
+                        </div>
+                        <div style="height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; overflow: hidden;">
+                            <div id="silverReservesBar" style="height: 100%; width: 0%; background: linear-gradient(90deg, #94a3b8, #475569); transition: width 0.5s;"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Propose / Multi-sig -->
+                <h4 style="font-size: 13px; margin-bottom: 12px; font-weight: 600; color: var(--gold); text-transform: uppercase;">Propose & Sign Investment Transaction</h4>
+                <div class="grid" style="grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:20px;">
+                    <input type="text" id="propDest" class="input" placeholder="Destination Address">
+                    <input type="text" id="propData" class="input" placeholder="Calldata (Hex)">
+                </div>
+                <button class="btn btn-outline" style="margin-top:0; margin-bottom:25px;" onclick="triggerProposeTransaction()">Submit Investment Proposal</button>
+                
+                <!-- Active Proposals -->
+                <h4 style="font-size: 13px; margin-bottom: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase;">Active Multi-Sig Proposals</h4>
+                <div id="trustProposalsList" style="max-height: 150px; overflow-y: auto; background: rgba(0,0,0,0.2); border-radius: 12px; border: 1px solid rgba(255,255,255,0.03); padding: 10px; font-size:12px; color:var(--text-muted);">
+                    No active proposals.
+                </div>
+            </div>
+            
+            <!-- Dividends Section -->
+            <div class="card">
+                <h3 style="font-size: 16px; margin-bottom: 15px; font-weight: 600; color: var(--gold);">Dividends Distribution</h3>
+                <div class="grid" style="grid-template-columns: 1fr 1.2fr; gap: 15px;">
+                    <div>
+                        <h4 style="font-size: 12px; margin-bottom: 8px; color: var(--text-muted); text-transform: uppercase;">Distribute Yield</h4>
+                        <div class="form-group" style="margin-bottom: 10px;">
+                            <input type="text" id="divTokenAddr" class="input" placeholder="Token Address (or 0x0 for ETH)">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 10px;">
+                            <input type="number" id="divAmt" class="input" placeholder="Amount (Wei)">
+                        </div>
+                        <button class="btn" onclick="triggerDistributeDividends()">Distribute</button>
+                    </div>
+                    <div>
+                        <h4 style="font-size: 12px; margin-bottom: 8px; color: var(--text-muted); text-transform: uppercase;">Claim Dividends</h4>
+                        <div class="form-group" style="margin-bottom: 10px;">
+                            <input type="text" id="claimTokenAddr" class="input" placeholder="Token Address (or 0x0 for ETH)">
+                        </div>
+                        <button class="btn btn-outline" style="margin-top: 0;" onclick="triggerClaimDividends()">Claim My Dividends</button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -914,15 +1059,18 @@ if token.balanceOf(user) < 100 * 10**18:
         // Update Title / Desc HUD
         const oTitle = document.getElementById("oTitle");
         const oDesc = document.getElementById("oDesc");
-        if(currentScroll < 0.3) {{
+        if(currentScroll < 0.25) {{
             oTitle.innerText = "Sovereign Code Universe";
             oDesc.innerText = "Layer 1: Git-to-EVM Hot Wallets & Oracle Checkpoints";
-        }} else if(currentScroll < 0.7) {{
+        }} else if(currentScroll < 0.5) {{
             oTitle.innerText = "The Speculative Curve Reservoir";
             oDesc.innerText = "Layer 2: x * y = k virtual bonding curve execution";
+        }} else if(currentScroll < 0.75) {{
+            oTitle.innerText = "AI Agent Token Deployer";
+            oDesc.innerText = "Layer 3: Autopilot ERC-20 token generation";
         }} else {{
-            oTitle.innerText = "Holder Yield Distribution";
-            oDesc.innerText = "Layer 3: 40% trade fee routed to staked pools";
+            oTitle.innerText = "Sovereign Community Trust Bank";
+            oDesc.innerText = "Layer 4: Pool wealth, manage multi-sig, distribute dividends";
         }}
         
         renderer.render(scene, camera);
@@ -1298,6 +1446,198 @@ if token.balanceOf(user) < 100 * 10**18:
         const box = document.getElementById("spec-content-box");
         box.innerHTML = `<h4 style="color: var(--gold); font-size:14px; margin-bottom:10px; font-weight:600;">$${{doc.title}}</h4>
                          <div style="color: var(--text-muted); font-size:13px; line-height:1.6;">$${{doc.content}}</div>`;
+    }}
+
+    // --- WORKSPACE: COMMUNITY TRUSTS LOGIC ---
+    let deployedTrusts = [];
+    let activeTrustIndex = -1;
+    let mockAssets = [];
+    
+    function triggerDeployTrust() {{
+        const name = document.getElementById("trustName").value;
+        const dirsInput = document.getElementById("trustDirectors").value;
+        const threshold = parseInt(document.getElementById("trustThreshold").value) || 1;
+        
+        logEvent("TRUST_FACTORY", `Deploying new Community Trust Bank: "${{name}}" with threshold ${{threshold}}...`);
+        
+        setTimeout(() => {{
+            const mockAddr = "0x" + Math.random().toString(16).substring(2, 10) + "..." + Math.random().toString(16).substring(2, 6);
+            const dirs = dirsInput.split(",").map(d => d.trim()).filter(d => d);
+            if (dirs.length === 0) dirs.push("0x96EA0D5C4f3Cd0d88566F5E8CDFf6addBB4159B4");
+            
+            const newTrust = {{
+                address: mockAddr,
+                name: name,
+                directors: dirs,
+                threshold: threshold,
+                balance: 0.0,
+                shares: 0.0,
+                goldReserves: 0.0,
+                silverReserves: 0.0,
+                proposals: []
+            }};
+            
+            deployedTrusts.push(newTrust);
+            activeTrustIndex = deployedTrusts.length - 1;
+            
+            document.getElementById("activeTrustAddr").innerText = mockAddr;
+            logEvent("TRUST_FACTORY", `✅ Trust Bank "${{name}}" deployed successfully at ${{mockAddr}}!`);
+            
+            updateTrustUI();
+        }}, 1500);
+    }}
+    
+    function triggerDeployMockAsset() {{
+        const name = document.getElementById("mockAssetName").value;
+        const ticker = document.getElementById("mockAssetSymbol").value;
+        
+        logEvent("ASSET_FACTORY", `Deploying mock precious metal asset: ${{name}} ($${{ticker}})...`);
+        
+        setTimeout(() => {{
+            const mockAddr = "0x" + Math.random().toString(16).substring(2, 10) + "..." + Math.random().toString(16).substring(2, 6);
+            logEvent("ASSET_FACTORY", `✅ Asset $${{ticker}} deployed successfully at ${{mockAddr}}.`);
+            mockAssets.push({{ name, ticker, address: mockAddr }});
+        }}, 1200);
+    }}
+    
+    function triggerDepositToTrust() {{
+        if(activeTrustIndex === -1) {{
+            alert("Please deploy or select a trust first.");
+            return;
+        }}
+        const amt = parseFloat(document.getElementById("depositTrustAmt").value) || 0;
+        if(amt <= 0) return;
+        
+        const trust = deployedTrusts[activeTrustIndex];
+        logEvent("TRUST", `Depositing ${{amt}} ETH into pool at ${{trust.address}}...`);
+        
+        setTimeout(() => {{
+            trust.balance += amt;
+            trust.shares += amt;
+            logEvent("TRUST", `✅ Successfully deposited ${{amt}} ETH. Total pooled wealth: ${{trust.balance.toFixed(2)}} ETH.`);
+            updateTrustUI();
+        }}, 1000);
+    }}
+    
+    function triggerProposeTransaction() {{
+        if(activeTrustIndex === -1) return;
+        const dest = document.getElementById("propDest").value;
+        const data = document.getElementById("propData").value;
+        const trust = deployedTrusts[activeTrustIndex];
+        
+        logEvent("TRUST", `Proposing investment transaction: execute call to ${{dest}}...`);
+        
+        const propId = trust.proposals.length;
+        trust.proposals.push({{
+            id: propId,
+            destination: dest,
+            data: data,
+            signatures: 1,
+            executed: false
+        }});
+        
+        logEvent("TRUST", `✅ Proposal #${{propId}} submitted and signed by proposer. Required signatures: ${{trust.threshold}}.`);
+        updateTrustUI();
+    }}
+    
+    function signProposal(idx) {{
+        const trust = deployedTrusts[activeTrustIndex];
+        const prop = trust.proposals[idx];
+        if (prop.signatures >= trust.threshold) return;
+        
+        prop.signatures += 1;
+        logEvent("TRUST", `Signed Proposal #${{idx}}. Current signs: ${{prop.signatures}}/${{trust.threshold}}.`);
+        updateTrustUI();
+    }}
+    
+    function executeProposal(idx) {{
+        const trust = deployedTrusts[activeTrustIndex];
+        const prop = trust.proposals[idx];
+        if (prop.signatures < trust.threshold) return;
+        
+        prop.executed = true;
+        logEvent("TRUST", `Executing investment proposal #${{idx}}...`);
+        
+        setTimeout(() => {{
+            if (prop.destination.toLowerCase().includes("gold") || prop.data.toLowerCase().includes("mint") || prop.data.toLowerCase().includes("cGOLD")) {{
+                trust.goldReserves += 100.0;
+                logEvent("TRUST", "✅ Multi-sig execution successful. Gold reserves increased by 100.0 cGOLD!");
+            }} else {{
+                trust.silverReserves += 250.0;
+                logEvent("TRUST", "✅ Multi-sig execution successful. Silver reserves increased by 250.0 cSILVER!");
+            }}
+            updateTrustUI();
+        }}, 1200);
+    }}
+    
+    function triggerDistributeDividends() {{
+        if(activeTrustIndex === -1) return;
+        const token = document.getElementById("divTokenAddr").value;
+        const amt = document.getElementById("divAmt").value;
+        
+        logEvent("TRUST", `Distributing yield dividends of ${{amt}} units of asset (${{token}})...`);
+        setTimeout(() => {{
+            logEvent("TRUST", "✅ Yield dividends distributed proportionally to all depositors.");
+        }}, 1000);
+    }}
+    
+    function triggerClaimDividends() {{
+        if(activeTrustIndex === -1) return;
+        const token = document.getElementById("claimTokenAddr").value;
+        
+        logEvent("TRUST", `Claiming pending dividends for asset (${{token}})...`);
+        setTimeout(() => {{
+            logEvent("TRUST", "✅ Pending dividends claimed and transferred to wallet.");
+        }}, 1000);
+    }}
+    
+    function updateTrustUI() {{
+        if(activeTrustIndex === -1) return;
+        const trust = deployedTrusts[activeTrustIndex];
+        
+        document.getElementById("activeTrustBalance").innerText = trust.balance.toFixed(2) + " ETH";
+        document.getElementById("userTrustShares").innerText = `${{trust.shares.toFixed(2)}} ETH (100%)`;
+        
+        document.getElementById("goldReservesVal").innerText = trust.goldReserves.toFixed(2) + " cGOLD";
+        document.getElementById("silverReservesVal").innerText = trust.silverReserves.toFixed(2) + " cSILVER";
+        
+        const maxBarVal = 500.0;
+        document.getElementById("goldReservesBar").style.width = Math.min((trust.goldReserves / maxBarVal) * 100, 100) + "%";
+        document.getElementById("silverReservesBar").style.width = Math.min((trust.silverReserves / maxBarVal) * 100, 100) + "%";
+        
+        const pList = document.getElementById("trustProposalsList");
+        pList.innerHTML = "";
+        if (trust.proposals.length === 0) {{
+            pList.innerHTML = "No active proposals.";
+            return;
+        }}
+        
+        trust.proposals.forEach(p => {{
+            const div = document.createElement("div");
+            div.style.background = "rgba(255,255,255,0.02)";
+            div.style.border = "1px solid rgba(255,255,255,0.05)";
+            div.style.borderRadius = "8px";
+            div.style.padding = "10px";
+            div.style.marginBottom = "10px";
+            div.style.display = "flex";
+            div.style.justifyContent = "space-between";
+            div.style.alignItems = "center";
+            
+            const btnHtml = p.executed ? 
+                `<span style="color:var(--success);">Executed</span>` : 
+                (p.signatures >= trust.threshold ? 
+                    `<button class="btn" style="width:80px; padding:4px; font-size:11px;" onclick="executeProposal(${{p.id}})">Execute</button>` : 
+                    `<button class="btn btn-outline" style="width:80px; padding:4px; font-size:11px; margin-top:0;" onclick="signProposal(${{p.id}})">Sign (${{p.signatures}}/${{trust.threshold}})</button>`);
+                    
+            div.innerHTML = `
+                <div>
+                    <div style="font-weight:600; color:var(--text);">Prop #${{p.id}} to ${{p.destination}}</div>
+                    <div style="color:var(--text-muted); font-size:10px; font-family:var(--font-mono); margin-top:2px;">Data: ${{p.data}}</div>
+                </div>
+                <div>${{btnHtml}}</div>
+            `;
+            pList.appendChild(div);
+        }});
     }}
 
     // Initialize

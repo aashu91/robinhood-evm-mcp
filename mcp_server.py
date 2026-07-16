@@ -229,6 +229,115 @@ TOOLS = [
             },
             "required": ["token_address"]
         }
+    },
+    {
+        "name": "deploy_community_trust_factory",
+        "description": "Deploys a new CommunityTrustFactory contract to manage community banks.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {}
+        }
+    },
+    {
+        "name": "deploy_community_trust",
+        "description": "Deploys a new CommunityTrust bank through the factory.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "factory_address": {"type": "string", "description": "The CommunityTrustFactory contract address (0x...)."},
+                "name": {"type": "string", "description": "The name of the trust (e.g. Advaita Trust)."},
+                "directors": {"type": "array", "items": {"type": "string"}, "description": "Array of wallet addresses appointed as Managing Directors."},
+                "required_signatures": {"type": "integer", "description": "The number of director signatures required to execute proposals."}
+            },
+            "required": ["factory_address", "name", "directors", "required_signatures"]
+        }
+    },
+    {
+        "name": "deposit_to_trust",
+        "description": "Deposits ETH to pool wealth in the Community Trust.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "trust_address": {"type": "string", "description": "The Community Trust contract address (0x...)."},
+                "eth_amount": {"type": "number", "description": "Amount of ETH to pool/deposit (e.g. 0.1)."}
+            },
+            "required": ["trust_address", "eth_amount"]
+        }
+    },
+    {
+        "name": "propose_trust_transaction",
+        "description": "Proposes a target contract execution transaction inside the trust (Directors only).",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "trust_address": {"type": "string", "description": "The trust address."},
+                "destination": {"type": "string", "description": "The target contract address (0x...)."},
+                "value_wei": {"type": "string", "description": "Optional: Native ETH value in wei to send (default: '0').", "default": "0"},
+                "calldata_hex": {"type": "string", "description": "Calldata hex representing the function call (e.g. 0xa9059cbb...)."}
+            },
+            "required": ["trust_address", "destination", "calldata_hex"]
+        }
+    },
+    {
+        "name": "sign_trust_proposal",
+        "description": "Signs a proposed transaction (Directors only).",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "trust_address": {"type": "string", "description": "The trust address."},
+                "proposal_id": {"type": "integer", "description": "The index of the proposal to sign."}
+            },
+            "required": ["trust_address", "proposal_id"]
+        }
+    },
+    {
+        "name": "execute_trust_proposal",
+        "description": "Executes a proposal once signature threshold is reached (Directors only).",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "trust_address": {"type": "string", "description": "The trust address."},
+                "proposal_id": {"type": "integer", "description": "The index of the proposal to execute."}
+            },
+            "required": ["trust_address", "proposal_id"]
+        }
+    },
+    {
+        "name": "distribute_trust_dividends",
+        "description": "Distributes ETH or ERC-20 dividends to the trust depositors proportionally.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "trust_address": {"type": "string", "description": "The trust address."},
+                "token_address": {"type": "string", "description": "The dividend token address (or '0x0000000000000000000000000000000000000000' for ETH)."},
+                "amount_wei": {"type": "string", "description": "Amount to distribute in raw unit/wei."}
+            },
+            "required": ["trust_address", "token_address", "amount_wei"]
+        }
+    },
+    {
+        "name": "claim_trust_dividends",
+        "description": "Claims accumulated dividends in the trust.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "trust_address": {"type": "string", "description": "The trust address."},
+                "token_address": {"type": "string", "description": "The dividend token address (or '0x0000000000000000000000000000000000000000' for ETH)."}
+            },
+            "required": ["trust_address", "token_address"]
+        }
+    },
+    {
+        "name": "deploy_mock_asset",
+        "description": "Deploys a mock precious metal ERC-20 token (like cGOLD or cSILVER) for testing.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "name": {"type": "string", "description": "Name of the asset (e.g. Mock Gold)."},
+                "symbol": {"type": "string", "description": "Symbol of the asset (e.g. cGOLD)."}
+            },
+            "required": ["name", "symbol"]
+        }
     }
 ]
 
@@ -391,6 +500,63 @@ async def dispatch_tool(name, arguments):
         t_addr = arguments["token_address"]
         b_range = arguments.get("block_range", 10000)
         res = await helper.get_meme_price_history(t_addr, b_range)
+        return json.dumps(res, indent=2)
+
+    elif name == "deploy_community_trust_factory":
+        res = await helper.deploy_community_trust_factory()
+        return json.dumps(res, indent=2)
+
+    elif name == "deploy_community_trust":
+        f_addr = arguments["factory_address"]
+        t_name = arguments["name"]
+        dirs = arguments["directors"]
+        req_sigs = arguments["required_signatures"]
+        res = await helper.deploy_community_trust(f_addr, t_name, dirs, req_sigs)
+        return json.dumps(res, indent=2)
+
+    elif name == "deposit_to_trust":
+        t_addr = arguments["trust_address"]
+        eth_amt = arguments["eth_amount"]
+        res = await helper.deposit_to_trust(t_addr, eth_amt)
+        return json.dumps(res, indent=2)
+
+    elif name == "propose_trust_transaction":
+        t_addr = arguments["trust_address"]
+        dest = arguments["destination"]
+        val_wei = arguments.get("value_wei", "0")
+        c_hex = arguments["calldata_hex"]
+        res = await helper.propose_trust_transaction(t_addr, dest, int(val_wei), c_hex)
+        return json.dumps(res, indent=2)
+
+    elif name == "sign_trust_proposal":
+        t_addr = arguments["trust_address"]
+        prop_id = arguments["proposal_id"]
+        res = await helper.sign_trust_proposal(t_addr, prop_id)
+        return json.dumps(res, indent=2)
+
+    elif name == "execute_trust_proposal":
+        t_addr = arguments["trust_address"]
+        prop_id = arguments["proposal_id"]
+        res = await helper.execute_trust_proposal(t_addr, prop_id)
+        return json.dumps(res, indent=2)
+
+    elif name == "distribute_trust_dividends":
+        t_addr = arguments["trust_address"]
+        tok_addr = arguments["token_address"]
+        amt_wei = arguments["amount_wei"]
+        res = await helper.distribute_trust_dividends(t_addr, tok_addr, amt_wei)
+        return json.dumps(res, indent=2)
+
+    elif name == "claim_trust_dividends":
+        t_addr = arguments["trust_address"]
+        tok_addr = arguments["token_address"]
+        res = await helper.claim_trust_dividends(t_addr, tok_addr)
+        return json.dumps(res, indent=2)
+
+    elif name == "deploy_mock_asset":
+        a_name = arguments["name"]
+        a_sym = arguments["symbol"]
+        res = await helper.deploy_mock_asset(a_name, a_sym)
         return json.dumps(res, indent=2)
 
     else:
