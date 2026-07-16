@@ -21,6 +21,10 @@ const input = {
         }
     },
     settings: {
+        optimizer: {
+            enabled: true,
+            runs: 200
+        },
         outputSelection: {
             '*': {
                 '*': ['abi', 'evm.bytecode']
