@@ -144,5 +144,24 @@ async def process_payouts():
     print("🏁 Payout processing complete.")
     print("==============================================")
 
+import argparse
+
+async def main():
+    parser = argparse.ArgumentParser(description="GitHub Payout Bot Daemon")
+    parser.add_argument("--daemon", action="store_true", help="Run continuously in a loop")
+    parser.add_argument("--interval", type=int, default=60, help="Polling interval in seconds (default: 60)")
+    args = parser.parse_args()
+    
+    if args.daemon:
+        print(f"Starting payout bot in daemon mode (polling every {args.interval}s)...")
+        try:
+            while True:
+                await process_payouts()
+                await asyncio.sleep(args.interval)
+        except KeyboardInterrupt:
+            print("\nShutting down payout daemon gracefully.")
+    else:
+        await process_payouts()
+
 if __name__ == "__main__":
-    asyncio.run(process_payouts())
+    asyncio.run(main())

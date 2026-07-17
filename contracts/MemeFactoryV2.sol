@@ -69,7 +69,7 @@ contract MemeToken {
 
 contract MemeFactoryV2 {
     address payable public feeRecipient;
-    uint256 public constant deployFee = 0.0005 ether;
+    uint256 public constant deployFee = 0.0001 ether;
 
     
     // Upgraded V2 Fee Parameters (Total 0.5% trading fee)

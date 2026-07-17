@@ -1,0 +1,59 @@
+name: EVM MCP Server CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Check out repository
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+
+    - name: Install Node packages & compiler
+      run: |
+        npm install solc ganache
+
+    - name: Compile Solidity contracts
+      run: |
+        node compileV2.cjs
+        node compileTrust.cjs
+
+    - name: Start Local Ganache Ledger
+      run: |
+        npx ganache --deterministic --port 8545 > ganache.log 2>&1 &
+        # Wait for RPC endpoint to be healthy
+        for i in {1..10}; do
+          if curl -s -X POST --data '{"jsonrpc":"2.0","method":"eth_blockNumber","params":[],"id":1}' -H "Content-Type: application/json" http://127.0.0.1:8545 > /dev/null; then
+            echo "Ganache is up!"
+            break
+          fi
+          echo "Waiting for Ganache to boot..."
+          sleep 2
+        done
+
+    - name: Run Integration Tests
+      env:
+        ROBINHOOD_CHAIN_RPC_URL: http://127.0.0.1:8545
+        PRIVATE_KEY: 0x4f3edf983ac636a65a842ce7c78d9aa706d3b113bce9c46f30d7d21715b23b1d
+      run: |
+        python test_trust.py

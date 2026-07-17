@@ -9,5 +9,20 @@
     { "src": "/deploy", "dest": "/deploy_app.html" },
     { "src": "/ethers.umd.min.js", "dest": "/ethers.umd.min.js" },
     { "src": "/(.*)", "dest": "/index.html" }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Content-Security-Policy",
+          "value": "default-src 'self' https: data: 'unsafe-inline' 'unsafe-eval'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://rpc.mainnet.chain.robinhood.com https://rpc.testnet.chain.robinhood.com wss://rpc.mainnet.chain.robinhood.com wss://rpc.testnet.chain.robinhood.com wss://*.walletconnect.com wss://*.walletlink.org wss://*.bridge.walletconnect.org;"
+        },
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        }
+      ]
+    }
   ]
 }

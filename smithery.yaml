@@ -1,0 +1,49 @@
+# smithery.yaml
+# Smithery configuration for the Robinhood Chain EVM Model Context Protocol server.
+# For registry listing and easy installation by Cursor / Claude Code.
+
+startCommand:
+  type: stdio
+
+configSchema:
+  type: object
+  required:
+    - privateKey
+  properties:
+    privateKey:
+      type: string
+      description: "Active EVM Wallet Private Key (for signing transactions on Robinhood Chain L2)"
+    tokenAddress:
+      type: string
+      description: "Optional: $ROBIN_MCP token gate address"
+      default: "0xB6579E6489afC53Cd3eEb14eEF0EF039c65914bd"
+    factoryAddress:
+      type: string
+      description: "Optional: MemeFactoryV2 deployment address"
+      default: "0xAb783574A8B12d580659e86F01dEA310Fb300113"
+    mainnetRpc:
+      type: string
+      description: "Optional: Mainnet RPC URL"
+      default: "https://rpc.mainnet.chain.robinhood.com"
+    testnetRpc:
+      type: string
+      description: "Optional: Testnet RPC URL"
+      default: "https://rpc.testnet.chain.robinhood.com"
+
+commandFunction: |-
+  (config) => ({
+    command: 'python',
+    args: ['mcp_server.py'],
+    env: {
+      PRIVATE_KEY: config.privateKey,
+      ROBIN_MCP_TOKEN_ADDRESS: config.tokenAddress || '0xB6579E6489afC53Cd3eEb14eEF0EF039c65914bd',
+      MEME_FACTORY_ADDRESS: config.factoryAddress || '0xAb783574A8B12d580659e86F01dEA310Fb300113',
+      ROBINHOOD_MAINNET_RPC: config.mainnetRpc || 'https://rpc.mainnet.chain.robinhood.com',
+      ROBINHOOD_TESTNET_RPC: config.testnetRpc || 'https://rpc.testnet.chain.robinhood.com'
+    }
+  })
+
+exampleConfig:
+  privateKey: "0x0000000000000000000000000000000000000000000000000000000000000000"
+  tokenAddress: "0xB6579E6489afC53Cd3eEb14eEF0EF039c65914bd"
+  factoryAddress: "0xAb783574A8B12d580659e86F01dEA310Fb300113"

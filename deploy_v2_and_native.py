@@ -3,9 +3,17 @@ import asyncio
 import os
 import json
 from web3 import Web3
-from web3_helper import load_env
+def load_all_envs():
+    for path in [os.path.expanduser("~/.env"), ".env"]:
+        if os.path.exists(path):
+            with open(path, "r") as f:
+                for line in f:
+                    line = line.strip()
+                    if line and not line.startswith("#") and "=" in line:
+                        k, v = line.split("=", 1)
+                        os.environ[k.strip()] = v.strip().strip('"').strip("'")
 
-load_env()
+load_all_envs()
 
 async def main():
     print("==============================================")
@@ -112,7 +120,7 @@ async def main():
     token_symbol = "ROBIN_MCP"
     token_supply = 1000000000 # 1 Billion (V2 scales inside constructor)
     
-    deploy_fee = w3.to_wei(0.0005, 'ether') # V2 deploy fee is 0.0005 ETH
+    deploy_fee = w3.to_wei(0.0001, 'ether') # V2 deploy fee is 0.0001 ETH
     
     nonce = w3.eth.get_transaction_count(account.address)
     gas_price = int(w3.eth.gas_price * 1.1)
