@@ -186,7 +186,8 @@ class Web3Helper:
         """Signs and broadcasts a pre-built transaction to the RPC."""
         account = self.get_account()
         signed_tx = self.w3.eth.account.sign_transaction(tx, private_key=account.key)
-        tx_hash = self.w3.eth.send_raw_transaction(signed_tx.rawTransaction)
+        raw_tx = getattr(signed_tx, "raw_transaction", None) or getattr(signed_tx, "rawTransaction")
+        tx_hash = self.w3.eth.send_raw_transaction(raw_tx)
         return Web3.to_hex(tx_hash)
 
     async def wait_for_confirmation(self, tx_hash, timeout=60, poll_interval=2):
@@ -535,7 +536,8 @@ class Web3Helper:
                     'chainId': int(src_chain_id)
                 })
                 signed_approve = src_w3.eth.account.sign_transaction(approve_tx, private_key=account.key)
-                app_hash = src_w3.eth.send_raw_transaction(signed_approve.rawTransaction)
+                raw_approve = getattr(signed_approve, "raw_transaction", None) or getattr(signed_approve, "rawTransaction")
+                app_hash = src_w3.eth.send_raw_transaction(raw_approve)
                 # Wait briefly
                 await asyncio.sleep(5)
                 
@@ -569,7 +571,8 @@ class Web3Helper:
             }
         
         signed_bridge = src_w3.eth.account.sign_transaction(bridge_tx, private_key=account.key)
-        tx_hash = src_w3.eth.send_raw_transaction(signed_bridge.rawTransaction)
+        raw_bridge = getattr(signed_bridge, "raw_transaction", None) or getattr(signed_bridge, "rawTransaction")
+        tx_hash = src_w3.eth.send_raw_transaction(raw_bridge)
         
         return {
             "source_chain_id": src_chain_id,
