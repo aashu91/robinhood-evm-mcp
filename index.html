@@ -33,7 +33,7 @@
         body { 
             background-color: var(--bg); 
             color: var(--text); 
-            min-height: 400vh; /* Height to support scrolling sections */
+            min-height: 500vh; /* Height to support 5 scrolling sections */
             overflow-x: hidden; 
             scroll-behavior: smooth;
         }
@@ -52,6 +52,38 @@
         }
         ::-webkit-scrollbar-thumb:hover {
             background: rgba(251, 191, 36, 0.6);
+        }
+
+        /* Live Marquee Ticker Tape */
+        .ticker-banner {
+            background: rgba(3, 7, 18, 0.95);
+            border-bottom: 1px solid var(--border);
+            height: 34px;
+            display: flex;
+            align-items: center;
+            overflow: hidden;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 101;
+            font-size: 11px;
+            font-family: var(--font-mono);
+        }
+        .ticker-wrap {
+            display: flex;
+            white-space: nowrap;
+            animation: ticker-slide 35s linear infinite;
+        }
+        @keyframes ticker-slide {
+            0% { transform: translateX(10%); }
+            100% { transform: translateX(-100%); }
+        }
+        .ticker-item {
+            margin-right: 50px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
 
         /* 3D Fullscreen Background */
@@ -87,7 +119,7 @@
             width: 100%;
         }
         .overlay-title { 
-            font-size: 2.5rem; 
+            font-size: 2.2rem; 
             font-weight: 800; 
             background: linear-gradient(135deg, #fff, var(--gold)); 
             -webkit-background-clip: text; 
@@ -98,7 +130,7 @@
         }
         .overlay-desc { 
             color: var(--text-muted); 
-            font-size: 13px; 
+            font-size: 12px; 
             font-family: var(--font-mono); 
             margin-top: 6px;
             opacity: 0.8;
@@ -114,7 +146,7 @@
             align-items: center; 
             padding: 16px 40px; 
             position: fixed;
-            top: 0;
+            top: 34px; /* Shift down to accommodate ticker */
             left: 0;
             width: 100%;
             z-index: 100;
@@ -371,9 +403,43 @@
         .step-row.active .step-icon { border-color: var(--gold); background: var(--gold-glow); }
         .step-row.done { color: var(--success); }
         .step-row.done .step-icon { border-color: var(--success); background: rgba(16, 185, 129, 0.1); }
+
+        /* Epic Hero Screen Specs */
+        .hero-title {
+            font-size: 3.8rem;
+            font-weight: 800;
+            line-height: 1.1;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #fff, var(--gold) 40%, var(--gold-dark));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -2px;
+            text-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .hero-tagline {
+            color: var(--text-muted);
+            font-size: 16px;
+            margin-bottom: 35px;
+            line-height: 1.6;
+            max-width: 600px;
+            font-weight: 300;
+        }
     </style>
 </head>
 <body>
+
+<!-- Live Ticker Banner -->
+<div class="ticker-banner">
+    <div class="ticker-wrap">
+        <div class="ticker-item">🟢 $NEETI: 0.00012 ETH (+12%)</div>
+        <div class="ticker-item">🟡 $ROBIN_MCP: 0.0054 ETH (+4.2%)</div>
+        <div class="ticker-item">🟢 $CHIRANSH: 0.00085 ETH (+24%)</div>
+        <div class="ticker-item">🔵 $ANANT_ANADI: 0.0011 ETH (+8.5%)</div>
+        <div class="ticker-item">🟡 PAXOS GOLD: $2,340/oz</div>
+        <div class="ticker-item">🟢 $NEETI: 0.00012 ETH (+12%)</div>
+        <div class="ticker-item">🟡 $ROBIN_MCP: 0.0054 ETH (+4.2%)</div>
+    </div>
+</div>
 
 <!-- 3D Scroll Canvas -->
 <div class="scroll-world-container">
@@ -387,12 +453,14 @@
         <span>Robinhood L2</span>
     </div>
     <div class="nav-tabs">
-        <button class="tab-btn active" onclick="scrollToSection(0)">🚀 Meme Launchpad</button>
-        <button class="tab-btn" onclick="scrollToSection(1)">📈 Trading Terminal</button>
-        <button class="tab-btn" onclick="scrollToSection(2)">💎 Staking Portal</button>
-        <button class="tab-btn" onclick="scrollToSection(3)">🏦 Trust Bank</button>
+        <button class="tab-btn active" onclick="scrollToSection(0)">🏠 Core</button>
+        <button class="tab-btn" onclick="scrollToSection(1)">🚀 Launchpad</button>
+        <button class="tab-btn" onclick="scrollToSection(2)">📈 Swap</button>
+        <button class="tab-btn" onclick="scrollToSection(3)">💎 Staking</button>
+        <button class="tab-btn" onclick="scrollToSection(4)">🏦 Trusts</button>
     </div>
     <div style="display: flex; align-items: center; gap: 10px;">
+        <button class="connect-btn" onclick="openWorkspace('docs')" style="border-color: var(--gold); color: var(--gold);">📖 Spec Docs</button>
         <button class="connect-btn" onclick="openWorkspace('dev')">🛠️ Dev Hub</button>
         <button id="connBtn" class="connect-btn" onclick="connect()">Connect Wallet</button>
     </div>
@@ -401,13 +469,27 @@
 <!-- Floating HUD overlays -->
 <div class="hud-overlay">
     <div class="hud-top">
-        <h1 class="overlay-title" id="oTitle">AI Agent Meme Launchpad</h1>
+        <h1 class="overlay-title" id="oTitle">Autonomous L2 Portal</h1>
         <p class="overlay-desc" id="oDesc">Scroll to traverse the L2 stack...</p>
     </div>
 </div>
 
-<!-- SECTION 0: MEME LAUNCHPAD -->
+<!-- SECTION 0: HERO INTRO SCREEN -->
 <div class="scroll-section active" id="sec-0">
+    <div class="container" style="text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+        <h1 class="hero-title">Sovereign Code &<br>Culture Launchpad</h1>
+        <p class="hero-tagline">
+            Launch customized ERC-20 tokens via virtual bonding curves on Robinhood L2. Pool capital in multi-sig trusts, hedge inflation with real gold/silver reserves, and reward developers autonomously.
+        </p>
+        <div style="display: flex; gap: 15px;">
+            <button class="btn" style="width: 200px; padding: 16px 20px; font-size: 15px;" onclick="scrollToSection(1)">Enter Launchpad</button>
+            <button class="btn btn-outline" style="width: 200px; padding: 16px 20px; font-size: 15px; margin-top: 0;" onclick="openWorkspace('docs')">Read Philosophy</button>
+        </div>
+    </div>
+</div>
+
+<!-- SECTION 1: MEME LAUNCHPAD -->
+<div class="scroll-section" id="sec-1">
     <div class="container">
         <div class="card">
             <div class="grid">
@@ -453,8 +535,8 @@
     </div>
 </div>
 
-<!-- SECTION 1: TRADING TERMINAL -->
-<div class="scroll-section" id="sec-1">
+<!-- SECTION 2: TRADING TERMINAL -->
+<div class="scroll-section" id="sec-2">
     <div class="container">
         <div class="card">
             <div class="grid" style="grid-template-columns: 1.3fr 1fr;">
@@ -498,8 +580,8 @@
     </div>
 </div>
 
-<!-- SECTION 2: STAKING PORTAL -->
-<div class="scroll-section" id="sec-2">
+<!-- SECTION 3: STAKING PORTAL -->
+<div class="scroll-section" id="sec-3">
     <div class="container">
         <div class="card">
             <div class="grid">
@@ -544,8 +626,8 @@
     </div>
 </div>
 
-<!-- SECTION 3: TRUST BANK -->
-<div class="scroll-section" id="sec-3">
+<!-- SECTION 4: TRUST BANK -->
+<div class="scroll-section" id="sec-4">
     <div class="container">
         <div class="card" style="padding: 25px;">
             <div class="ws-header" style="margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 15px;">
@@ -656,6 +738,62 @@
                             <button class="btn btn-outline" style="margin-top: 0; padding: 10px;" onclick="triggerClaimDividends()">Claim My Dividends</button>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- WORKSPACE: PHILOSOPHY & SPEC DOCS -->
+<div class="workspace-overlay" id="ws-docs">
+    <div class="ws-header">
+        <div>
+            <h2 style="font-size: 22px; font-weight: 700; color: var(--gold);">Sovereign Platform Specs & Philosophy</h2>
+            <p style="font-size: 12px; color: var(--text-muted); font-family: var(--font-mono); margin-top: 4px;">Whole Aspect & Ecosystem Architecture</p>
+        </div>
+        <button class="back-btn" onclick="closeWorkspace('docs')">← Close Specs</button>
+    </div>
+    
+    <div class="grid" style="grid-template-columns: 1fr 1.2fr; gap: 30px;">
+        <div class="card" style="padding: 25px;">
+            <h3 style="font-size: 18px; color: var(--gold); margin-bottom: 15px; font-weight: 700;">Platform Vision & Stack</h3>
+            <p style="color: var(--text-muted); font-size: 14px; line-height: 1.6; margin-bottom: 15px;">
+                Robinhood L2 is designed as a sovereign launchpad environment running on a sub-penny gas rollup. We focus on bridging raw AI agent code output directly with culture pools and asset-backed community reserve banking.
+            </p>
+            <h4 style="font-size: 13px; color: var(--gold); margin-bottom: 8px; font-weight: 600; text-transform: uppercase;">Ecosystem Core Features:</h4>
+            <ul style="color: var(--text-muted); font-size: 13px; line-height: 1.8; margin-left: 20px; margin-bottom: 20px; display: flex; flex-direction: column; gap: 6px;">
+                <li><strong>AI Agent Autopilot Deployer:</strong> Speaks JSON-RPC over stdio loops to register custom parameters directly with Web3 smart contracts.</li>
+                <li><strong>Dynamic Virtual Curves:</strong> Constant product bonding curve sweeps that ensure zero initial pool liquidity requirements for meme coins.</li>
+                <li><strong>Asset Reserve Staking:</strong> Lock native $ROBIN_MCP to extract platform transaction fees proportionally.</li>
+                <li><strong>Community multi-sig banks:</strong> Deploy family or cooperative treasuries, acquire mock gold/silver hedges, and distribute dividends.</li>
+            </ul>
+        </div>
+        
+        <div>
+            <div class="card" style="padding: 25px; margin-bottom: 25px;">
+                <h3 style="font-size: 18px; color: var(--gold); margin-bottom: 15px; font-weight: 700;">40 / 40 / 20 Fee Split Mechanics</h3>
+                <div style="background: rgba(3, 7, 18, 0.5); padding: 18px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.03); display: flex; flex-direction: column; gap: 12px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <span style="font-weight:600; color:var(--text);">Stakers Dividend Pool</span>
+                        <span style="color:var(--success); font-weight:700; font-size:16px;">40%</span>
+                    </div>
+                    <p style="color:var(--text-muted); font-size:12px; margin-top:-6px; line-height:1.4;">
+                        40% of all swap and deployment fees accumulated on L2 curves are routed directly to holders staking native $ROBIN_MCP.
+                    </p>
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <span style="font-weight:600; color:var(--text);">Creator Endowment Treasury</span>
+                        <span style="color:var(--success); font-weight:700; font-size:16px;">40%</span>
+                    </div>
+                    <p style="color:var(--text-muted); font-size:12px; margin-top:-6px; line-height:1.4;">
+                        40% is pooled to support sovereign culture pools (like Anant Anaadi history curation) and organic platform marketing outreach.
+                    </p>
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <span style="font-weight:600; color:var(--text);">Developer Buyback Pool</span>
+                        <span style="color:var(--success); font-weight:700; font-size:16px;">20%</span>
+                    </div>
+                    <p style="color:var(--text-muted); font-size:12px; margin-top:-6px; line-height:1.4;">
+                        20% is locked into an automated buyback treasury that purchases $ROBIN_MCP tokens from curves to continuously support developer payouts.
+                    </p>
                 </div>
             </div>
         </div>
@@ -802,11 +940,12 @@
     let currentScroll = 0;
     let targetScroll = 0;
     
-    // Arrays for target coordinates
+    // Arrays for 5 target coordinate states
     const spherePoints = [];
     const helixPoints = [];
     const gridPoints = [];
     const torusPoints = [];
+    const pyramidPoints = [];
     
     function init3D() {
         const container = document.querySelector(".scroll-world-container");
@@ -822,7 +961,7 @@
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         
         // Generate Coordinate Patterns
-        // 1. Sphere (Meme Launchpad)
+        // 1. Sphere (Hero Welcome)
         for(let i=0; i<N; i++) {
             const theta = Math.acos(-1 + 2 * i / N);
             const phi = Math.sqrt(N * Math.PI) * theta;
@@ -833,7 +972,7 @@
             ));
         }
         
-        // 2. Double Helix (Trading Terminal)
+        // 2. Double Helix (Meme Launchpad)
         for(let i=0; i<N; i++) {
             const t = i / N;
             const theta = 12 * Math.PI * t;
@@ -846,7 +985,7 @@
             ));
         }
         
-        // 3. Grid Mesh (Staking Portal)
+        // 3. Grid Mesh (Swap Terminal)
         const size = Math.floor(Math.sqrt(N));
         for(let i=0; i<N; i++) {
             const r = Math.floor(i / size);
@@ -858,7 +997,7 @@
             ));
         }
 
-        // 4. Torus (Trust Bank)
+        // 4. Torus (Staking Vault)
         const torusR = 3.5;
         const torusr = 1.2;
         for(let i=0; i<N; i++) {
@@ -868,6 +1007,18 @@
                 (torusR + torusr * Math.cos(v)) * Math.cos(u),
                 (torusR + torusr * Math.cos(v)) * Math.sin(u),
                 torusr * Math.sin(v)
+            ));
+        }
+
+        // 5. Pyramid/Cone (Trust Bank)
+        for(let i=0; i<N; i++) {
+            const t = i / N;
+            const r = 3.5 * (1.0 - t);
+            const theta = 16 * Math.PI * t;
+            pyramidPoints.push(new THREE.Vector3(
+                r * Math.cos(theta),
+                r * Math.sin(theta),
+                8 * (t - 0.5)
             ));
         }
         
@@ -890,7 +1041,6 @@
         geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
         geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
         
-        // Custom texture loader
         const texture = createCircleTexture();
         
         const material = new THREE.PointsMaterial({
@@ -905,7 +1055,6 @@
         particleSystem = new THREE.Points(geometry, material);
         scene.add(particleSystem);
         
-        // Window Resize
         window.addEventListener('resize', () => {
             const width = container.offsetWidth;
             const height = container.offsetHeight;
@@ -949,46 +1098,46 @@
     function animate() {
         requestAnimationFrame(animate);
         
-        // Lerp scroll position for absolute fluid transitions
         currentScroll += (targetScroll - currentScroll) * 0.06;
         
-        // Mouse movement easing
         mouseX += (targetMouseX - mouseX) * 0.05;
         mouseY += (targetMouseY - mouseY) * 0.05;
         
-        // Camera position & fly-through parallax
         camera.position.x = mouseX * 2.5;
         camera.position.y = -mouseY * 2.5 - currentScroll * 2;
         camera.position.z = 11 - currentScroll * 6; // Starts at 11, zooms in to 5
         camera.lookAt(0, 0, 0);
         
-        // Slowly rotate particle system
         particleSystem.rotation.y = currentScroll * Math.PI * 0.5 + Date.now() * 0.0001;
         particleSystem.rotation.x = currentScroll * Math.PI * 0.2 + Date.now() * 0.00005;
         
-        // Morph particles based on eased scroll position
+        // Morph particles based on eased scroll position across 5 states
         const positions = particleSystem.geometry.attributes.position.array;
         const size = Math.floor(Math.sqrt(N));
         
         for(let i=0; i<N; i++) {
             let p1, p2, t;
-            if(currentScroll < 0.33) {
+            if(currentScroll < 0.25) {
                 p1 = spherePoints[i];
                 p2 = helixPoints[i];
-                t = currentScroll / 0.33;
-            } else if(currentScroll < 0.66) {
+                t = currentScroll / 0.25;
+            } else if(currentScroll < 0.5) {
                 p1 = helixPoints[i];
                 p2 = gridPoints[i];
-                t = (currentScroll - 0.33) / 0.33;
-            } else {
+                t = (currentScroll - 0.25) / 0.25;
+            } else if(currentScroll < 0.75) {
                 p1 = gridPoints[i];
                 p2 = torusPoints[i];
-                t = (currentScroll - 0.66) / 0.34;
+                t = (currentScroll - 0.5) / 0.25;
+            } else {
+                p1 = torusPoints[i];
+                p2 = pyramidPoints[i];
+                t = (currentScroll - 0.75) / 0.25;
             }
             
             let p2z = p2.z;
             // Undulate waves if in grid mesh mode
-            if(currentScroll >= 0.33 && currentScroll < 0.66 && p2 === gridPoints[i]) {
+            if(currentScroll >= 0.25 && currentScroll < 0.5 && p2 === gridPoints[i]) {
                 const r = Math.floor(i / size);
                 const c = i % size;
                 p2z = Math.sin(r * 0.4 + c * 0.4 + Date.now() * 0.002) * 0.6;
@@ -1007,13 +1156,16 @@
         // Update Title / Desc HUD
         const oTitle = document.getElementById("oTitle");
         const oDesc = document.getElementById("oDesc");
-        if(currentScroll < 0.25) {
+        if(currentScroll < 0.2) {
+            oTitle.innerText = "Autonomous L2 Portal";
+            oDesc.innerText = "Mainnet Core: Scroll to explore stack";
+        } else if(currentScroll < 0.4) {
             oTitle.innerText = "AI Agent Meme Launchpad";
-            oDesc.innerText = "Layer 1: Autonomous ERC-20 deployer & Clanker agent";
-        } else if(currentScroll < 0.5) {
+            oDesc.innerText = "Layer 1: Speak to Clanker bot to deploy custom tokens";
+        } else if(currentScroll < 0.6) {
             oTitle.innerText = "Virtual Trading Terminal";
             oDesc.innerText = "Layer 2: x * y = k bonding swaps & real-time pricing";
-        } else if(currentScroll < 0.75) {
+        } else if(currentScroll < 0.8) {
             oTitle.innerText = "Platform Yield Staking";
             oDesc.innerText = "Layer 3: Stake native tokens, claim fee-split yields";
         } else {
@@ -1066,14 +1218,12 @@
         }
 
         try {
-            // Request accounts
             const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
             userAddress = accounts[0];
             
             provider = new ethers.providers.Web3Provider(window.ethereum);
             signer = provider.getSigner();
             
-            // Ensure network is correct (Robinhood Chain Mainnet - ChainID 4663)
             let network = await provider.getNetwork();
             if (network.chainId !== 4663) {
                 try {
@@ -1103,11 +1253,9 @@
                 network = await provider.getNetwork();
             }
             
-            // Initialize contract instances
             memeFactoryContract = new ethers.Contract(MEME_FACTORY_ADDRESS, ABIs.MemeFactory, signer);
             trustFactoryContract = new ethers.Contract(TRUST_FACTORY_ADDRESS, ABIs.CommunityTrustFactory, signer);
             
-            // Update connection buttons
             const shortened = userAddress.substring(0, 6) + "..." + userAddress.substring(userAddress.length - 4);
             const connBtn = document.getElementById("connBtn");
             if (connBtn) {
@@ -1119,7 +1267,6 @@
             logEvent("System", `Wallet connected: ${userAddress}`);
             isMockMode = false;
 
-            // Load on-chain state
             await loadTokenPools();
             await loadActiveTrustDetails();
             
@@ -1168,7 +1315,7 @@
         document.getElementById("wsYieldVal").innerText = yieldVal.toFixed(5) + " ETH";
     }
 
-    // Workspace Navigation (Only used for Dev Hub now)
+    // Workspace Navigation
     function openWorkspace(id) {
         document.getElementById("ws-" + id).style.display = "block";
         document.body.style.overflow = "hidden"; // disable scrolling
@@ -1265,7 +1412,6 @@
                 const tokenAmtWei = ethers.utils.parseEther(amt.toString());
                 const tokenContract = new ethers.Contract(tokenAddr, ABIs.ERC20, signer);
                 
-                // Check allowance
                 const allowance = await tokenContract.allowance(userAddress, MEME_FACTORY_ADDRESS);
                 if (allowance.lt(tokenAmtWei)) {
                     logEvent("TRADE", `Approving MemeFactoryV2 to manage ${amt} tokens...`);
@@ -1279,7 +1425,6 @@
                 logEvent("TRADE", `✅ Sell swap completed successfully!`);
             }
             
-            // Fluctuates chart dynamically
             priceData.push(priceData[priceData.length-1] * (tradeMode === 'buy' ? 1.05 : 0.95));
             drawCandleChart();
         } catch (e) {
@@ -1308,7 +1453,6 @@
         
         ctx.clearRect(0, 0, w, h);
         
-        // Draw grid
         ctx.strokeStyle = "rgba(255,255,255,0.02)";
         ctx.lineWidth = 1;
         for(let i=0; i<w; i+=40) {
@@ -1318,7 +1462,6 @@
             ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(w, i); ctx.stroke();
         }
         
-        // Draw price curve
         const padding = 30;
         const maxPrice = Math.max(...priceData) + 2;
         const minPrice = Math.min(...priceData) - 2;
@@ -1340,7 +1483,6 @@
         });
         ctx.stroke();
         
-        // Draw grid candles (simulated OHLC)
         points.forEach((pt, idx) => {
             if(idx === 0) return;
             const prev = points[idx-1];
@@ -1379,7 +1521,6 @@
             logEvent("PAYOUT", "Execution successful! Tx Hash: 0xa5a1200df18d18471c08a901ff2a0d7831d102e3b2e5a40a45920a010dff9a9b", "devConsole");
             logEvent("PAYOUT", `Transferred 50,000 $ROBIN_MCP tokens to contributor: ${wallet}`, "devConsole");
             
-            // Add to webhook queue table
             const table = document.getElementById("prTableBody");
             const newRow = document.createElement("tr");
             newRow.innerHTML = `<td>#26</td><td>Manual Trigger</td><td>main</td><td>50,000 $ROBIN_MCP</td><td><span class="badge badge-success">Paid</span></td>`;
@@ -1424,7 +1565,6 @@
         const progress = document.getElementById("deployProgress");
         progress.style.display = "flex";
         
-        // Reset steps
         for(let i=0; i<4; i++) {
             const step = document.getElementById("step-" + i);
             step.className = "step-row";
@@ -1433,7 +1573,6 @@
         logEvent("AUTOPILOT", `Deploy request received for custom token: ${name} ($${ticker}). Supply: ${supply}.`);
         
         if (isMockMode) {
-            // Step-by-step visual workflow execution
             setTimeout(() => { document.getElementById("step-0").className = "step-row active"; }, 200);
             setTimeout(() => {
                 document.getElementById("step-0").className = "step-row done";
@@ -1451,13 +1590,11 @@
                 document.getElementById("step-3").className = "step-row done";
                 logEvent("AUTOPILOT", `[Sandbox] EVM Deployment complete for $${ticker}.`);
                 
-                // Add option dynamically to selects
                 const opt = document.createElement("option");
                 opt.value = `0x${ticker}`;
                 opt.innerText = `$${ticker} (${name})`;
                 document.getElementById("wsTokenSelect").appendChild(opt);
                 
-                // Bot replies in chat
                 const box = document.getElementById("wsChatBox");
                 const aDiv = document.createElement("div");
                 aDiv.className = "bubble b-agent";
@@ -1468,7 +1605,6 @@
             return;
         }
 
-        // On-chain deployment
         try {
             document.getElementById("step-0").className = "step-row active";
             const fee = await memeFactoryContract.deployFee();
@@ -1493,13 +1629,11 @@
             
             document.getElementById("step-3").className = "step-row done";
             
-            // Add option dynamically to select
             const opt = document.createElement("option");
             opt.value = tokenAddr;
             opt.innerText = `$${ticker} (${name})`;
             document.getElementById("wsTokenSelect").appendChild(opt);
             
-            // Bot replies in chat
             const box = document.getElementById("wsChatBox");
             const aDiv = document.createElement("div");
             aDiv.className = "bubble b-agent";
@@ -1632,9 +1766,7 @@
             return;
         }
 
-        // Since mock asset is deployed, we can use contract factory to deploy a new MockAsset on-chain
         try {
-            // Load MockAsset compilation artifact or deploy via server SDK/RPC
             logEvent("ASSET_FACTORY", "To deploy real assets on-chain, please use the python EVM MCP server CLI.");
         } catch (e) {
             logEvent("ERROR", e.message);
@@ -1833,7 +1965,6 @@
             document.getElementById("activeTrustBalance").innerText = parseFloat(balEth).toFixed(4) + " ETH";
             document.getElementById("userTrustShares").innerText = `${parseFloat(userSharesEth).toFixed(4)} ETH (${sharePct}%)`;
             
-            // Render on-chain proposals
             const pList = document.getElementById("trustProposalsList");
             pList.innerHTML = "No active proposals on-chain.";
         } catch (e) {
@@ -1896,7 +2027,7 @@
         updateActiveSections();
         switchSpecTab(0);
         initCandleChart();
-        setupMockState(); // Default to Sandbox state for clean visual demos without wallets connected
+        setupMockState();
     };
 </script>
 
