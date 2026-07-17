@@ -38,8 +38,14 @@ class Web3Helper:
         rpc_url = os.getenv("ROBINHOOD_CHAIN_RPC_URL", self.network_config["rpc_url"])
         self.w3 = Web3(Web3.HTTPProvider(rpc_url))
         
-        # Add Arbitrum L2 middleware if necessary (e.g., extra fee market fields)
-        # Note: Arbitrum Orbit is standard EVM compatible, standard HTTP provider works out-of-the-box.
+        if self.w3.is_connected():
+            try:
+                # Dynamically match chain ID to prevent signature mismatches
+                self.network_config = self.network_config.copy()
+                self.network_config["chain_id"] = self.w3.eth.chain_id
+            except Exception:
+                pass
+        
         return self.w3.is_connected()
 
     def switch_network(self, network_name):
