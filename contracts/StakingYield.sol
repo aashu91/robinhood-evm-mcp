@@ -1,81 +1,93 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.0;
 
-interface IERC20 {
-    function transferFrom(address from, address to, uint256 value) external returns (bool);
-    function transfer(address to, uint256 value) external returns (bool);
-}
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract StakingYield {
-    IERC20 public immutable stakingToken;
-
+contract StakingYield is Ownable {
+    IERC20 public token;
     uint256 public totalStaked;
-    mapping(address => uint256) public stakedBalance;
-
-    // Proportional reward distribution index
-    uint256 public rewardIndex;
-    mapping(address => uint256) public userRewardIndex;
-    mapping(address => uint256) public accumulatedRewards;
+    mapping(address => uint256) public stakedAmounts;
+    mapping(address => uint256) public rewardDebt;
+    uint256 public accTokenPerShare;
+    uint256 public lastRewardBlock;
+    uint256 public rewardRate = 1 ether; // 1 token per block
 
     event Staked(address indexed user, uint256 amount);
     event Unstaked(address indexed user, uint256 amount);
-    event RewardClaimed(address indexed user, uint256 reward);
-    event RewardDeposited(uint256 amount);
+    event RewardClaimed(address indexed user, uint256 amount);
 
-    constructor(address _stakingToken) {
-        stakingToken = IERC20(_stakingToken);
+    constructor(IERC20 _token) {
+        token = _token;
+        lastRewardBlock = block.number;
     }
 
-    // Receive reward ETH from EcosystemTreasury and update the rewardIndex
-    receive() external payable {
-        uint256 amount = msg.value;
-        if (amount > 0 && totalStaked > 0) {
-            // Scale factor 1e18 to prevent division rounding loss
-            rewardIndex += (amount * 1e18) / totalStaked;
-            emit RewardDeposited(amount);
+    function stake(uint256 _amount) external {
+        require(_amount > 0, "Amount must be greater than 0");
+        _updatePool();
+        _stake(msg.sender, _amount);
+        emit Staked(msg.sender, _amount);
+    }
+
+    function unstake(uint256 _amount) external {
+        require(_amount > 0, "Amount must be greater than 0");
+        _updatePool();
+        _unstake(msg.sender, _amount);
+        emit Unstaked(msg.sender, _amount);
+    }
+
+    function claimRewards() external {
+        _updatePool();
+        uint256 pending = _pendingRewards(msg.sender);
+        if (pending > 0) {
+            _claim(msg.sender, pending);
+            emit RewardClaimed(msg.sender, pending);
         }
     }
 
-    // Update index before stake balance changes
-    function _updateUserReward(address account) internal {
-        if (stakedBalance[account] > 0) {
-            uint256 pending = (stakedBalance[account] * (rewardIndex - userRewardIndex[account])) / 1e18;
-            accumulatedRewards[account] += pending;
+    function _stake(address _user, uint256 _amount) internal {
+        stakedAmounts[_user] += _amount;
+        totalStaked += _amount;
+        token.transferFrom(_user, address(this), _amount);
+        rewardDebt[_user] = _userPendingRewards(_user);
+    }
+
+    function _unstake(address _user, uint256 _amount) internal {
+        require(stakedAmounts[_user] >= _amount, "Insufficient staked amount");
+        stakedAmounts[_user] -= _amount;
+        totalStaked -= _amount;
+        token.transfer(_user, _amount);
+        rewardDebt[_user] = _userPendingRewards(_user);
+    }
+
+    function _claim(address _user, uint256 _amount) internal {
+        require(token.balanceOf(address(this)) >= _amount, "Insufficient rewards in the contract");
+        token.transfer(_user, _amount);
+    }
+
+    function _updatePool() internal {
+        if (totalStaked == 0) {
+            lastRewardBlock = block.number;
+            return;
         }
-        userRewardIndex[account] = rewardIndex;
+        uint256 blockReward = (block.number - lastRewardBlock) * rewardRate;
+        accTokenPerShare += blockReward * 1e12 / totalStaked;
+        lastRewardBlock = block.number;
     }
 
-    function stake(uint256 amount) external {
-        require(amount > 0, "Cannot stake 0");
-        _updateUserReward(msg.sender);
-
-        totalStaked += amount;
-        stakedBalance[msg.sender] += amount;
-
-        require(stakingToken.transferFrom(msg.sender, address(this), amount), "Stake transfer failed");
-        emit Staked(msg.sender, amount);
+    function _pendingRewards(address _user) internal view returns (uint256) {
+        return _userPendingRewards(_user) - rewardDebt[_user];
     }
 
-    function unstake(uint256 amount) external {
-        require(amount > 0, "Cannot unstake 0");
-        require(stakedBalance[msg.sender] >= amount, "Insufficient staked balance");
-        _updateUserReward(msg.sender);
-
-        totalStaked -= amount;
-        stakedBalance[msg.sender] -= amount;
-
-        require(stakingToken.transfer(msg.sender, amount), "Unstake transfer failed");
-        emit Unstaked(msg.sender, amount);
+    function _userPendingRewards(address _user) internal view returns (uint256) {
+        return stakedAmounts[_user] * accTokenPerShare / 1e12;
     }
 
-    function claimReward() external {
-        _updateUserReward(msg.sender);
-        uint256 reward = accumulatedRewards[msg.sender];
-        require(reward > 0, "No reward to claim");
+    function getStakingInfo(address _user) external view returns (uint256, uint256, uint256) {
+        return (stakedAmounts[_user], _pendingRewards(_user), totalStaked);
+    }
 
-        accumulatedRewards[msg.sender] = 0;
-        payable(msg.sender).transfer(reward);
-
-        emit RewardClaimed(msg.sender, reward);
+    function setRewardRate(uint256 _rate) external onlyOwner {
+        rewardRate = _rate;
     }
 }

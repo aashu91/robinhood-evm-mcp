@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Staking Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <h1>Staking Dashboard</h1>
+    <div id="staking-info">
+        <p>Total Staked: <span id="total-staked">0</span></p>
+        <p>Your Staked Amount: <span id="your-staked-amount">0</span></p>
+        <p>Pending Rewards: <span id="pending-rewards">0</span></p>
+    </div>
+    <form id="stake-form">
+        <label for="stake-amount">Stake Amount:</label>
+        <input type="number" id="stake-amount" min="1" required>
+        <button type="submit">Stake</button>
+    </form>
+    <form id="unstake-form">
+        <label for="unstake-amount">Unstake Amount:</label>
+        <input type="number" id="unstake-amount" min="1" required>
+        <button type="submit">Unstake</button>
+    </form>
+    <button id="claim-rewards">Claim Rewards</button>
+
+    <script src="https://cdn.jsdelivr.net/npm/web3@1.5.3/dist/web3.min.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
