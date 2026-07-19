@@ -5,9 +5,15 @@ Combines Pyth Network (low-latency) and Chainlink Oracles (high-reliability)
 """
 
 import asyncio
+import sys
+import os
 from typing import Dict, Optional, Any
-from pyth_oracle import PythOracle
-from chainlink_oracle import ChainlinkOracle
+
+# Add parent directory to path
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from oracles.pyth_oracle import PythOracle
+from oracles.chainlink_oracle import ChainlinkOracle
 import logging
 
 logging.basicConfig(level=logging.INFO)
