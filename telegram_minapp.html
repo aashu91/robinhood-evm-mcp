@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Robinhood Staking Dashboard</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #ffffff;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: bold;
+            background: linear-gradient(90deg, #00d4ff, #7c3aed);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #a0aec0;
+            font-size: 14px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #00d4ff;
+        }
+
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .stat-item {
+            background: rgba(0, 212, 255, 0.1);
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #00d4ff;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #a0aec0;
+            margin-top: 5px;
+        }
+
+        .price-display {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background: rgba(124, 58, 237, 0.1);
+            border-radius: 12px;
+            margin-bottom: 10px;
+        }
+
+        .price-info {
+            flex: 1;
+        }
+
+        .price-name {
+            font-size: 14px;
+            color: #a0aec0;
+        }
+
+        .price-value {
+            font-size: 20px;
+            font-weight: bold;
+            color: #00d4ff;
+        }
+
+        .price-change {
+            font-size: 12px;
+            color: #48bb78;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 10px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(90deg, #00d4ff, #7c3aed);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(0, 212, 255, 0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #a0aec0;
+            font-size: 14px;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 16px;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #00d4ff;
+        }
+
+        .spinner {
+            display: none;
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            border-top-color: #00d4ff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .chart-container {
+            height: 200px;
+            margin-top: 15px;
+        }
+
+        .notification {
+            display: none;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .notification.success {
+            background: rgba(72, 187, 120, 0.2);
+            border: 1px solid rgba(72, 187, 120, 0.4);
+            color: #48bb78;
+        }
+
+        .notification.error {
+            background: rgba(245, 101, 101, 0.2);
+            border: 1px solid rgba(245, 101, 101, 0.4);
+            color: #f56565;
+        }
+
+        .section {
+            margin-bottom: 30px;
+        }
+
+        .section-title {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #ffffff;
+        }
+
+        .price-chart {
+            height: 250px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 20px;
+        }
+
+        .chart-canvas {
+            max-height: 200px;
+        }
+
+        .price-ticker {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .ticker-item {
+            flex: 1;
+            background: rgba(124, 58, 237, 0.1);
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .ticker-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #00d4ff;
+        }
+
+        .ticker-label {
+            font-size: 12px;
+            color: #a0aec0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>🚀 Robinhood Staking</h1>
+            <p>Native Token Staking with Oracle-Based Yield</p>
+        </div>
+
+        <!-- Notification -->
+        <div id="notification" class="notification"></div>
+
+        <!-- Price Ticker -->
+        <div class="price-ticker">
+            <div class="ticker-item">
+                <div class="ticker-value" id="gold-price">--</div>
+                <div class="ticker-label">GOLD (oz)</div>
+            </div>
+            <div class="ticker-item">
+                <div class="ticker-value" id="silver-price">--</div>
+                <div class="ticker-label">SILVER (oz)</div>
+            </div>
+            <div class="ticker-item">
+                <div class="ticker-value" id="reward-rate">1%</div>
+                <div class="ticker-label">Daily Reward</div>
+            </div>
+        </div>
+
+        <!-- Staking Stats -->
+        <div class="card">
+            <div class="card-title">📊 Your Staking Stats</div>
+            <div class="stat-grid">
+                <div class="stat-item">
+                    <div class="stat-value" id="staked-amount">0.00</div>
+                    <div class="stat-label">Staked Amount</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="pending-rewards">0.00</div>
+                    <div class="stat-label">Pending Rewards</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="total-rewards">0.00</div>
+                    <div class="stat-label">Total Rewards</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="contract-balance">0.00</div>
+                    <div class="stat-label">Contract Balance</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Commodity Prices -->
+        <div class="card">
+            <div class="card-title">💰 Commodity Prices</div>
+
+            <div class="price-display">
+                <div class="price-info">
+                    <div class="price-name">🥇 Gold</div>
+                    <div class="price-value" id="gold-price-display">$0.00</div>
+                </div>
+                <div class="price-change" id="gold-change">+0.00%</div>
+            </div>
+
+            <div class="price-display">
+                <div class="price-info">
+                    <div class="price-name">🥈 Silver</div>
+                    <div class="price-value" id="silver-price-display">$0.00</div>
+                </div>
+                <div class="price-change" id="silver-change">+0.00%</div>
+            </div>
+
+            <div class="price-display">
+                <div class="price-info">
+                    <div class="price-name">📈 Apple (AAPL)</div>
+                    <div class="price-value" id="aapl-price-display">$0.00</div>
+                </div>
+                <div class="price-change" id="aapl-change">+0.00%</div>
+            </div>
+        </div>
+
+        <!-- Stake Form -->
+        <div class="card">
+            <div class="card-title">🏦 Stake Tokens</div>
+            <div class="input-group">
+                <label>Amount (ETH/USDG)</label>
+                <input type="number" id="stake-amount" placeholder="Enter amount..." step="0.001">
+            </div>
+            <button class="btn btn-primary" onclick="stakeTokens()">Stake Tokens</button>
+        </div>
+
+        <!-- Claim Rewards -->
+        <div class="card">
+            <div class="card-title">🎁 Claim Rewards</div>
+            <button class="btn btn-secondary" onclick="claimRewards()">Claim Rewards</button>
+        </div>
+
+        <!-- Unstake Form -->
+        <div class="card">
+            <div class="card-title">💸 Unstake Tokens</div>
+            <div class="input-group">
+                <label>Amount (ETH/USDG)</label>
+                <input type="number" id="unstake-amount" placeholder="Enter amount..." step="0.001">
+            </div>
+            <button class="btn btn-secondary" onclick="unstakeTokens()">Unstake Tokens</button>
+        </div>
+
+        <!-- Price Chart -->
+        <div class="card">
+            <div class="card-title">📈 Gold Price Chart</div>
+            <div class="price-chart">
+                <canvas id="goldChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="spinner" id="spinner"></div>
+
+    <script>
+        // Initialize Telegram WebApp
+        const tg = window.Telegram?.WebApp;
+
+        // API Base URL
+        const API_BASE_URL = 'http://localhost:8000';
+
+        // State
+        let userAddress = null;
+        let goldChart = null;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            if (tg) {
+                tg.expand();
+                userAddress = tg.initDataUnsafe?.user?.id?.toString();
+            }
+
+            loadPrices();
+            loadStakingStats();
+            initChart();
+        });
+
+        // Load Prices
+        async function loadPrices() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/prices`);
+                const data = await response.json();
+
+                updatePriceDisplays(data);
+            } catch (error) {
+                console.error('Error loading prices:', error);
+                showNotification('Failed to load prices', 'error');
+            }
+        }
+
+        // Update Price Displays
+        function updatePriceDisplays(data) {
+            document.getElementById('gold-price').textContent = data.gold?.price || '--';
+            document.getElementById('silver-price').textContent = data.silver?.price || '--';
+
+            document.getElementById('gold-price-display').textContent =
+                `$${(data.gold?.price || 0).toLocaleString()}`;
+            document.getElementById('gold-change').textContent =
+                `+${data.gold?.change || 0}%`;
+
+            document.getElementById('silver-price-display').textContent =
+                `$${(data.silver?.price || 0).toLocaleString()}`;
+            document.getElementById('silver-change').textContent =
+                `+${data.silver?.change || 0}%`;
+
+            document.getElementById('aapl-price-display').textContent =
+                `$${(data.aapl?.value || 0).toLocaleString()}`;
+            document.getElementById('aapl-change').textContent =
+                `+${data.aapl?.change || 0}%`;
+        }
+
+        // Load Staking Stats
+        async function loadStakingStats() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/staking/${userAddress}`);
+                const data = await response.json();
+
+                document.getElementById('staked-amount').textContent =
+                    (data.stakedAmount || 0).toFixed(4);
+                document.getElementById('pending-rewards').textContent =
+                    (data.pendingRewards || 0).toFixed(4);
+                document.getElementById('total-rewards').textContent =
+                    (data.totalRewards || 0).toFixed(4);
+                document.getElementById('reward-rate').textContent =
+                    `${data.rewardRate || 1}%`;
+            } catch (error) {
+                console.error('Error loading staking stats:', error);
+            }
+        }
+
+        // Initialize Chart
+        function initChart() {
+            const ctx = document.getElementById('goldChart').getContext('2d');
+            goldChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Gold Price (USD/oz)',
+                        data: [],
+                        borderColor: '#00d4ff',
+                        backgroundColor: 'rgba(0, 212, 255, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        x: {
+                            display: false
+                        },
+                        y: {
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            ticks: {
+                                color: '#a0aec0'
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Load chart data
+            loadChartData();
+        }
+
+        // Load Chart Data
+        async function loadChartData() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/prices/history`);
+                const data = await response.json();
+
+                goldChart.data.labels = data.labels || [];
+                goldChart.data.datasets[0].data = data.prices || [];
+                goldChart.update();
+            } catch (error) {
+                console.error('Error loading chart data:', error);
+            }
+        }
+
+        // Stake Tokens
+        async function stakeTokens() {
+            const amount = parseFloat(document.getElementById('stake-amount').value);
+
+            if (!amount || amount <= 0) {
+                showNotification('Please enter a valid amount', 'error');
+                return;
+            }
+
+            showSpinner(true);
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/stake`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        amount: amount * 10**18, // Convert to wei
+                        userAddress: userAddress
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showNotification(`Successfully staked ${amount} tokens!`, 'success');
+                    loadStakingStats();
+                    loadPrices();
+                } else {
+                    showNotification(data.error || 'Failed to stake tokens', 'error');
+                }
+            } catch (error) {
+                console.error('Error staking tokens:', error);
+                showNotification('Failed to stake tokens', 'error');
+            } finally {
+                showSpinner(false);
+            }
+        }
+
+        // Claim Rewards
+        async function claimRewards() {
+            showSpinner(true);
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/claim`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        userAddress: userAddress
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showNotification('Successfully claimed rewards!', 'success');
+                    loadStakingStats();
+                    loadPrices();
+                } else {
+                    showNotification(data.error || 'Failed to claim rewards', 'error');
+                }
+            } catch (error) {
+                console.error('Error claiming rewards:', error);
+                showNotification('Failed to claim rewards', 'error');
+            } finally {
+                showSpinner(false);
+            }
+        }
+
+        // Unstake Tokens
+        async function unstakeTokens() {
+            const amount = parseFloat(document.getElementById('unstake-amount').value);
+
+            if (!amount || amount <= 0) {
+                showNotification('Please enter a valid amount', 'error');
+                return;
+            }
+
+            showSpinner(true);
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/unstake`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        amount: amount * 10**18, // Convert to wei
+                        userAddress: userAddress
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showNotification(`Successfully unstaked ${amount} tokens!`, 'success');
+                    loadStakingStats();
+                    loadPrices();
+                } else {
+                    showNotification(data.error || 'Failed to unstake tokens', 'error');
+                }
+            } catch (error) {
+                console.error('Error unstaking tokens:', error);
+                showNotification('Failed to unstake tokens', 'error');
+            } finally {
+                showSpinner(false);
+            }
+        }
+
+        // Show Notification
+        function showNotification(message, type) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = `notification ${type}`;
+            notification.style.display = 'block';
+
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 3000);
+        }
+
+        // Show/Hide Spinner
+        function showSpinner(show) {
+            document.getElementById('spinner').style.display = show ? 'block' : 'none';
+        }
+    </script>
+</body>
+</html>
