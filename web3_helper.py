@@ -928,6 +928,283 @@ class Web3Helper:
             "tx_hash": tx_hash
         }
 
+    async def deploy_staking_yield(self, staking_token_address=None):
+        """Deploys a new StakingYield contract for the specified staking token."""
+        import json
+        json_path = os.path.join(os.path.dirname(__file__), "StakingYield.json")
+        if not os.path.exists(json_path):
+            raise FileNotFoundError("StakingYield.json not found. Run compileStaking.cjs first.")
+
+        if not staking_token_address:
+            staking_token_address = os.getenv("ROBIN_MCP_TOKEN_ADDRESS") or TICKER_MAPPINGS.get("ROBIN_MCP")
+            if not staking_token_address:
+                raise ValueError("No staking token address provided or found in environment/constants.")
+
+        staking_token_address = self.w3.to_checksum_address(staking_token_address)
+
+        with open(json_path, "r") as f:
+            artifact = json.load(f)
+
+        abi = artifact["abi"]
+        bytecode = artifact["bytecode"]
+
+        ContractFactory = self.w3.eth.contract(abi=abi, bytecode=bytecode)
+        account = self.get_account()
+
+        nonce = self.w3.eth.get_transaction_count(account.address)
+        gas_price = int(self.w3.eth.gas_price * 1.1)
+
+        construct_tx = ContractFactory.constructor(staking_token_address).build_transaction({
+            'from': account.address,
+            'nonce': nonce,
+            'gasPrice': gas_price,
+            'gas': 3000000,
+            'chainId': self.network_config["chain_id"]
+        })
+
+        tx_hash = await self.sign_and_send_transaction(construct_tx)
+        receipt = await self.wait_for_confirmation(tx_hash)
+
+        if receipt.get("status") == "SUCCESS":
+            raw_receipt = self.w3.eth.get_transaction_receipt(tx_hash)
+            contract_address = raw_receipt.contractAddress
+            os.environ["STAKING_YIELD_ADDRESS"] = contract_address
+
+            env_file_path = ".env" if os.path.exists(".env") else os.path.expanduser("~/.env")
+            if os.path.exists(env_file_path):
+                with open(env_file_path, "r") as f:
+                    lines = f.readlines()
+                new_lines = [l for l in lines if not l.strip().startswith("STAKING_YIELD_ADDRESS=")]
+                new_lines.append(f"\nSTAKING_YIELD_ADDRESS={contract_address}\n")
+                with open(env_file_path, "w") as f:
+                    f.writelines(new_lines)
+            return {
+                "status": "SUCCESS",
+                "contract_address": contract_address,
+                "staking_token": staking_token_address,
+                "tx_hash": tx_hash
+            }
+        return {
+            "status": "FAILED",
+            "tx_hash": tx_hash
+        }
+
+    async def stake_tokens(self, staking_contract_address=None, amount_tokens=None, amount_raw=None, token_address=None):
+        """Stakes native ROBIN_MCP (or specified token) into the StakingYield contract with auto-approval."""
+        staking_contract_address = staking_contract_address or os.getenv("STAKING_YIELD_ADDRESS")
+        if not staking_contract_address:
+            raise ValueError("staking_contract_address is required or STAKING_YIELD_ADDRESS must be set in env.")
+        staking_contract_address = self.w3.to_checksum_address(staking_contract_address)
+
+        if not token_address:
+            try:
+                token_address = await self.query_contract(staking_contract_address, "stakingToken", [], "StakingYield")
+            except Exception:
+                token_address = os.getenv("ROBIN_MCP_TOKEN_ADDRESS") or TICKER_MAPPINGS.get("ROBIN_MCP")
+        token_address = self.w3.to_checksum_address(token_address)
+
+        # Determine raw amount
+        if amount_raw is None:
+            if amount_tokens is None:
+                raise ValueError("Either amount_tokens or amount_raw must be provided.")
+            try:
+                decimals = await self.query_contract(token_address, "decimals", [], "ERC20")
+            except Exception:
+                decimals = 18
+            amount_raw = int(float(amount_tokens) * (10 ** decimals))
+        else:
+            amount_raw = int(amount_raw)
+
+        account = self.get_account()
+
+        # Check allowance and approve if needed
+        allowance = await self.query_contract(token_address, "allowance", [account.address, staking_contract_address], "ERC20")
+        if allowance < amount_raw:
+            approve_tx = await self.estimate_and_build_tx(
+                contract_address=token_address,
+                function_name="approve",
+                args=[staking_contract_address, amount_raw],
+                abi_type="ERC20",
+                value_wei=0
+            )
+            approve_hash = await self.sign_and_send_transaction(approve_tx)
+            await self.wait_for_confirmation(approve_hash)
+
+        # Build stake tx
+        tx = await self.estimate_and_build_tx(
+            contract_address=staking_contract_address,
+            function_name="stake",
+            args=[amount_raw],
+            abi_type="StakingYield",
+            value_wei=0
+        )
+        tx_hash = await self.sign_and_send_transaction(tx)
+        receipt = await self.wait_for_confirmation(tx_hash)
+        return receipt
+
+    async def unstake_tokens(self, staking_contract_address=None, amount_tokens=None, amount_raw=None):
+        """Unstakes tokens from the StakingYield contract."""
+        staking_contract_address = staking_contract_address or os.getenv("STAKING_YIELD_ADDRESS")
+        if not staking_contract_address:
+            raise ValueError("staking_contract_address is required or STAKING_YIELD_ADDRESS must be set in env.")
+        staking_contract_address = self.w3.to_checksum_address(staking_contract_address)
+
+        if amount_raw is None:
+            if amount_tokens is None:
+                raise ValueError("Either amount_tokens or amount_raw must be provided.")
+            try:
+                token_address = await self.query_contract(staking_contract_address, "stakingToken", [], "StakingYield")
+                decimals = await self.query_contract(token_address, "decimals", [], "ERC20")
+            except Exception:
+                decimals = 18
+            amount_raw = int(float(amount_tokens) * (10 ** decimals))
+        else:
+            amount_raw = int(amount_raw)
+
+        tx = await self.estimate_and_build_tx(
+            contract_address=staking_contract_address,
+            function_name="unstake",
+            args=[amount_raw],
+            abi_type="StakingYield",
+            value_wei=0
+        )
+        tx_hash = await self.sign_and_send_transaction(tx)
+        receipt = await self.wait_for_confirmation(tx_hash)
+        return receipt
+
+    async def claim_rewards(self, staking_contract_address=None):
+        """Claims accumulated ETH yield rewards from the StakingYield contract."""
+        staking_contract_address = staking_contract_address or os.getenv("STAKING_YIELD_ADDRESS")
+        if not staking_contract_address:
+            raise ValueError("staking_contract_address is required or STAKING_YIELD_ADDRESS must be set in env.")
+        staking_contract_address = self.w3.to_checksum_address(staking_contract_address)
+
+        tx = await self.estimate_and_build_tx(
+            contract_address=staking_contract_address,
+            function_name="claimRewards",
+            args=[],
+            abi_type="StakingYield",
+            value_wei=0
+        )
+        tx_hash = await self.sign_and_send_transaction(tx)
+        receipt = await self.wait_for_confirmation(tx_hash)
+        return receipt
+
+    async def emergency_unstake(self, staking_contract_address=None):
+        """Emergency unstakes all deposited tokens from StakingYield without reward calculation."""
+        staking_contract_address = staking_contract_address or os.getenv("STAKING_YIELD_ADDRESS")
+        if not staking_contract_address:
+            raise ValueError("staking_contract_address is required or STAKING_YIELD_ADDRESS must be set in env.")
+        staking_contract_address = self.w3.to_checksum_address(staking_contract_address)
+
+        tx = await self.estimate_and_build_tx(
+            contract_address=staking_contract_address,
+            function_name="emergencyUnstake",
+            args=[],
+            abi_type="StakingYield",
+            value_wei=0
+        )
+        tx_hash = await self.sign_and_send_transaction(tx)
+        receipt = await self.wait_for_confirmation(tx_hash)
+        return receipt
+
+    async def deposit_staking_rewards(self, staking_contract_address=None, eth_amount=None, value_wei=None):
+        """Deposits ETH rewards to the StakingYield pool to be distributed among stakers."""
+        staking_contract_address = staking_contract_address or os.getenv("STAKING_YIELD_ADDRESS")
+        if not staking_contract_address:
+            raise ValueError("staking_contract_address is required or STAKING_YIELD_ADDRESS must be set in env.")
+        staking_contract_address = self.w3.to_checksum_address(staking_contract_address)
+
+        if value_wei is None:
+            if eth_amount is None:
+                raise ValueError("Either eth_amount or value_wei must be provided.")
+            value_wei = self.w3.to_wei(eth_amount, 'ether')
+        else:
+            value_wei = int(value_wei)
+
+        tx = await self.estimate_and_build_tx(
+            contract_address=staking_contract_address,
+            function_name="depositRewards",
+            args=[],
+            abi_type="StakingYield",
+            value_wei=value_wei
+        )
+        tx_hash = await self.sign_and_send_transaction(tx)
+        receipt = await self.wait_for_confirmation(tx_hash)
+        return receipt
+
+    async def get_staking_info(self, staking_contract_address=None, user_address=None):
+        """Retrieves comprehensive staking pool and user account statistics."""
+        staking_contract_address = staking_contract_address or os.getenv("STAKING_YIELD_ADDRESS")
+        if not staking_contract_address:
+            raise ValueError("staking_contract_address is required or STAKING_YIELD_ADDRESS must be set in env.")
+        staking_contract_address = self.w3.to_checksum_address(staking_contract_address)
+
+        if not user_address:
+            try:
+                account = self.get_account()
+                user_address = account.address
+            except Exception:
+                user_address = "0x0000000000000000000000000000000000000000"
+        user_address = self.w3.to_checksum_address(user_address)
+
+        # Get token details
+        try:
+            token_address = await self.query_contract(staking_contract_address, "stakingToken", [], "StakingYield")
+            token_address = self.w3.to_checksum_address(token_address)
+        except Exception:
+            token_address = os.getenv("ROBIN_MCP_TOKEN_ADDRESS") or TICKER_MAPPINGS.get("ROBIN_MCP", "0xCFD635f82B75ab6c1a6725a54e9146FEe2c5A421")
+            token_address = self.w3.to_checksum_address(token_address)
+
+        try:
+            token_symbol = await self.query_contract(token_address, "symbol", [], "ERC20")
+            token_decimals = await self.query_contract(token_address, "decimals", [], "ERC20")
+        except Exception:
+            token_symbol = "ROBIN_MCP"
+            token_decimals = 18
+
+        # Query contract info
+        try:
+            info = await self.query_contract(staking_contract_address, "getStakingInfo", [user_address], "StakingYield")
+            user_staked = info[0]
+            user_pending = info[1]
+            total_staked = info[2]
+            total_rewards = info[3]
+        except Exception:
+            try:
+                user_staked = await self.query_contract(staking_contract_address, "stakedBalance", [user_address], "StakingYield")
+                user_pending = await self.query_contract(staking_contract_address, "getPendingReward", [user_address], "StakingYield")
+                total_staked = await self.query_contract(staking_contract_address, "totalStaked", [], "StakingYield")
+                total_rewards = await self.query_contract(staking_contract_address, "totalRewardsDeposited", [], "StakingYield")
+            except Exception:
+                user_staked = 0
+                user_pending = 0
+                total_staked = 0
+                total_rewards = 0
+
+        user_staked_tokens = user_staked / (10 ** token_decimals)
+        total_staked_tokens = total_staked / (10 ** token_decimals)
+        user_pending_eth = float(self.w3.from_wei(user_pending, 'ether'))
+        total_rewards_eth = float(self.w3.from_wei(total_rewards, 'ether'))
+        user_share = (user_staked / total_staked * 100.0) if total_staked > 0 else 0.0
+
+        return {
+            "staking_contract_address": staking_contract_address,
+            "staking_token_address": token_address,
+            "staking_token_symbol": token_symbol,
+            "user_address": user_address,
+            "user_staked_tokens": user_staked_tokens,
+            "user_staked_raw": user_staked,
+            "user_pending_rewards_eth": user_pending_eth,
+            "user_pending_rewards_wei": user_pending,
+            "total_staked_tokens": total_staked_tokens,
+            "total_staked_raw": total_staked,
+            "total_rewards_deposited_eth": total_rewards_eth,
+            "total_rewards_deposited_wei": total_rewards,
+            "user_pool_share_percent": round(user_share, 4)
+        }
+
+
 
 
 

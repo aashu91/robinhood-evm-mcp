@@ -13,3 +13,7 @@ abi_cache.db
 
 # Local tests/logs
 *.log
+
+# Node dependencies
+node_modules/
+package-lock.json

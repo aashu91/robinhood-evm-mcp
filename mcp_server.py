@@ -338,6 +338,78 @@ TOOLS = [
             },
             "required": ["name", "symbol"]
         }
+    },
+    {
+        "name": "deploy_staking_yield",
+        "description": "Deploys a new StakingYield contract on-chain for the native ROBIN_MCP token.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "staking_token_address": {"type": "string", "description": "Optional: ERC20 staking token address (defaults to ROBIN_MCP)."}
+            },
+            "required": []
+        }
+    },
+    {
+        "name": "stake_tokens",
+        "description": "Stakes native ROBIN_MCP tokens (or specified token) into the StakingYield contract to earn proportional fee rewards.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "amount_tokens": {"type": "number", "description": "The amount of tokens to stake (formatted, e.g. 500.0)."},
+                "amount_raw": {"type": "string", "description": "Optional: Raw token amount in base units (Wei)."},
+                "staking_contract_address": {"type": "string", "description": "Optional: StakingYield contract address (defaults to env STAKING_YIELD_ADDRESS)."},
+                "token_address": {"type": "string", "description": "Optional: Token address to stake (defaults to stakingToken from contract or ROBIN_MCP)."}
+            },
+            "required": []
+        }
+    },
+    {
+        "name": "unstake_tokens",
+        "description": "Unstakes tokens from the StakingYield contract.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "amount_tokens": {"type": "number", "description": "The amount of tokens to unstake (formatted, e.g. 250.0)."},
+                "amount_raw": {"type": "string", "description": "Optional: Raw token amount in base units (Wei)."},
+                "staking_contract_address": {"type": "string", "description": "Optional: StakingYield contract address (defaults to env STAKING_YIELD_ADDRESS)."}
+            },
+            "required": []
+        }
+    },
+    {
+        "name": "claim_rewards",
+        "description": "Claims accumulated ETH yield rewards from the StakingYield contract.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "staking_contract_address": {"type": "string", "description": "Optional: StakingYield contract address (defaults to env STAKING_YIELD_ADDRESS)."}
+            },
+            "required": []
+        }
+    },
+    {
+        "name": "emergency_unstake",
+        "description": "Emergency unstakes all deposited tokens from StakingYield contract without calculating rewards.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "staking_contract_address": {"type": "string", "description": "Optional: StakingYield contract address (defaults to env STAKING_YIELD_ADDRESS)."}
+            },
+            "required": []
+        }
+    },
+    {
+        "name": "get_staking_info",
+        "description": "Queries StakingYield contract for user's staked balance, pending rewards, total staked tokens, and pool yield stats.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "staking_contract_address": {"type": "string", "description": "Optional: StakingYield contract address (defaults to env STAKING_YIELD_ADDRESS)."},
+                "user_address": {"type": "string", "description": "Optional: User wallet address to query (defaults to deployer address)."}
+            },
+            "required": []
+        }
     }
 ]
 
@@ -357,8 +429,8 @@ async def dispatch_tool(name, arguments):
             pass
 
     # Resolve ticker shortcuts in addresses
-    for key in ["contract_address", "token_address"]:
-        if key in arguments:
+    for key in ["contract_address", "token_address", "staking_contract_address", "staking_token_address"]:
+        if key in arguments and arguments[key]:
             resolved = await resolve_ticker_to_address(arguments[key])
             if resolved:
                 arguments[key] = resolved
@@ -557,6 +629,42 @@ async def dispatch_tool(name, arguments):
         a_name = arguments["name"]
         a_sym = arguments["symbol"]
         res = await helper.deploy_mock_asset(a_name, a_sym)
+        return json.dumps(res, indent=2)
+
+    elif name == "deploy_staking_yield":
+        s_token = arguments.get("staking_token_address")
+        res = await helper.deploy_staking_yield(s_token)
+        return json.dumps(res, indent=2)
+
+    elif name == "stake_tokens":
+        s_addr = arguments.get("staking_contract_address")
+        amt_tok = arguments.get("amount_tokens")
+        amt_raw = arguments.get("amount_raw")
+        t_addr = arguments.get("token_address")
+        res = await helper.stake_tokens(s_addr, amt_tok, amt_raw, t_addr)
+        return json.dumps(res, indent=2)
+
+    elif name == "unstake_tokens":
+        s_addr = arguments.get("staking_contract_address")
+        amt_tok = arguments.get("amount_tokens")
+        amt_raw = arguments.get("amount_raw")
+        res = await helper.unstake_tokens(s_addr, amt_tok, amt_raw)
+        return json.dumps(res, indent=2)
+
+    elif name == "claim_rewards":
+        s_addr = arguments.get("staking_contract_address")
+        res = await helper.claim_rewards(s_addr)
+        return json.dumps(res, indent=2)
+
+    elif name == "emergency_unstake":
+        s_addr = arguments.get("staking_contract_address")
+        res = await helper.emergency_unstake(s_addr)
+        return json.dumps(res, indent=2)
+
+    elif name == "get_staking_info":
+        s_addr = arguments.get("staking_contract_address")
+        u_addr = arguments.get("user_address")
+        res = await helper.get_staking_info(s_addr, u_addr)
         return json.dumps(res, indent=2)
 
     else:
