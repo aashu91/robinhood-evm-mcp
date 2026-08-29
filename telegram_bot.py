@@ -1,48 +1,113 @@
-#!/usr/bin/env python3
-# telegram_bot.py
-# Zero-dependency Telegram Bot backend using stdlib urllib.request
-# ponytail: simple, self-contained polling loop, no third-party package dependencies.
 
-import os
-import sys
+"""Telegram Bot & Mini-App for Robinhood EVM MCP.
+
+Commands:
+    /launch <name> <symbol> <supply> - deploy a meme token via mcp_server
+    /trust <beneficiary>            - create a community trust
+    /reserves                       - show gold/silver reserve stats
+    /app                            - open the Mini-App UI
+"""
+
+import asyncio
 import json
+import logging
+import os
+from pathlib import Path
+
+from telegram import Update, WebAppInfo, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
+# ponytail: simple, self-contained polling loop, no third-party package dependencies.
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+import os
+BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN")
+MINI_APP_URL = os.environ.get("MINI_APP_URL", "https://robin-mcp.example.com/app")
 import urllib.request
-import urllib.error
+# ---------------------------------------------------------------------------
+# Helpers to call into mcp_server (imported lazily so tests can stub it)
+# ---------------------------------------------------------------------------
 
-# Load environment
-def load_all_envs():
-    for path in [os.path.expanduser("~/.env"), ".env"]:
-        if os.path.exists(path):
-            with open(path, "r") as f:
-                for line in f:
+def _get_mcp():
+    """Return the mcp_server module; imported here to allow monkey-patching."""
+    import mcp_server  # local import keeps test isolation simple
+    return mcp_server
                     line = line.strip()
-                    if line and not line.startswith("#") and "=" in line:
-                        k, v = line.split("=", 1)
-                        os.environ[k.strip()] = v.strip().strip('"').strip("'")
 
-load_all_envs()
+# ---------------------------------------------------------------------------
+# Command handlers
+# ---------------------------------------------------------------------------
 
-TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
-API_URL = f"https://api.telegram.org/bot{TOKEN}"
+async def cmd_launch(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Deploy a new meme token."""
+    args = context.args
+    if len(args) < 3:
+        await update.message.reply_text(
+            "Usage: /launch <name> <symbol> <initial_supply>\n"
+            "Example: /launch DogeCoin DOGE 1000000"
+        )
+        return
+    name, symbol = args[0], args[1]
+    try:
+        supply = float(args[2])
+    except ValueError:
+        await update.message.reply_text("Supply must be a number.")
+        return
+
+    loop = asyncio.get_running_loop()
+    result = await loop.run_in_executor(None, _get_mcp().launch_token, name, symbol, supply)
+    await update.message.reply_text(f"🚀 Token launched:\n<pre>{json.dumps(result, indent=2)}</pre>", parse_mode="HTML")
 WEBAPP_URL = "https://robinhood-evm-mcp.vercel.app" # Replace with user's vercel deploy url
 
-def send_api_request(method, payload):
-    if not TOKEN:
-        print("❌ Error: TELEGRAM_BOT_TOKEN not found in environment.")
+async def cmd_trust(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Create a community trust for a beneficiary address."""
+    args = context.args
+    if not args:
+        await update.message.reply_text("Usage: /trust <beneficiary_address>")
+        return
+    beneficiary = args[0]
+    loop = asyncio.get_running_loop()
+    result = await loop.run_in_executor(None, _get_mcp().create_trust, beneficiary)
+    await update.message.reply_text(f"🤝 Trust created:\n<pre>{json.dumps(result, indent=2)}</pre>", parse_mode="HTML")
         return None
-        
-    url = f"{API_URL}/{method}"
-    data = json.dumps(payload).encode('utf-8')
-    req = urllib.request.Request(
+
+async def cmd_reserves(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Display current gold/silver reserve statistics."""
+    loop = asyncio.get_running_loop()
+    stats = await loop.run_in_executor(None, _get_mcp().get_reserves)
+    lines = [f"• {k}: {v}" for k, v in stats.items()]
+    await update.message.reply_text("📊 Reserves:\n" + "\n".join(lines))
         url,
-        data=data,
-        headers={"Content-Type": "application/json"}
+
+async def cmd_app(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Send an inline button that opens the Mini-App."""
+    button = InlineKeyboardButton(
+        "📱 Open Mini-App",
+        web_app=WebAppInfo(url=MINI_APP_URL),
     )
-    try:
-        with urllib.request.urlopen(req) as response:
-            return json.loads(response.read().decode('utf-8'))
-    except urllib.error.HTTPError as e:
-        print(f"HTTP Error calling {method}: {e.code} - {e.read().decode('utf-8')}")
+    markup = InlineKeyboardMarkup([[button]])
+    await update.message.reply_text(
+        "Manage launches, trusts & portfolio inside Telegram:",
+        reply_markup=markup,
+    )
+
+
+# ---------------------------------------------------------------------------
+# Entry-point
+# ---------------------------------------------------------------------------
+
+def main():
+    if not BOT_TOKEN:
+        raise RuntimeError("TELEGRAM_BOT_TOKEN environment variable is required")
+
+    application = ApplicationBuilder().token(BOT_TOKEN).build()
+
+    application.add_handler(CommandHandler("launch", cmd_launch))
+    application.add_handler(CommandHandler("trust", cmd_trust))
+    application.add_handler(CommandHandler("reserves", cmd_reserves))
+    application.add_handler(CommandHandler("app", cmd_app))
+
+    logger.info("Starting Telegram bot…")
+    application.run_polling(drop_pending_updates=True)
     except Exception as e:
         print(f"Generic error calling {method}: {str(e)}")
     return None

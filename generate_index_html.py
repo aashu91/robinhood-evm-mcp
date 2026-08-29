@@ -1,9 +1,135 @@
-# generate_index_html.py
-# generate_index_html.py - Upgraded Web3 Sovereign Launchpad Terminal
-# ponytail: clean, zero-boilerplate codebase utilizing local ethers.js and Three.js.
-# ceiling: Client-side RPC queries can hit public node rate-limits; upgrade path: Goldsky/The Graph indexer.
+"""Generate a lightweight Telegram Mini-App index.html.
 
-import os
+The page uses the Telegram WebApp SDK, a finance-friendly teal palette,
+and calls the MCP server through the bot's backend proxy (/api/*).
+Run `python generate_index_html.py` to regenerate `index.html`.
+"""
+
+from pathlib import Path
+
+OUTPUT = Path(__file__).with_name("index.html")
+
+HTML = r"""<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>Robin MCP Mini-App</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+  :root {
+    --bg: #0b1416;
+    --card: #122023;
+    --accent: #00c896;
+    --text: #e6f1ef;
+    --muted: #8fa3a0;
+    --danger: #ff6b6b;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', system-ui, sans-serif; }
+  body { background: var(--bg); color: var(--text); padding: 16px; }
+  h1 { font-size: 1.4rem; margin-bottom: 12px; }
+  .card { background: var(--card); border-radius: 12px; padding: 16px; margin-bottom: 14px; }
+  label { display: block; color: var(--muted); font-size: 0.85rem; margin-bottom: 4px; }
+  input { width: 100%; padding: 10px; border-radius: 8px; border: none; background: #0f1a1c; color: var(--text); margin-bottom: 10px; }
+  button { width: 100%; padding: 12px; border: none; border-radius: 8px; background: var(--accent); color: #041410; font-weight: 600; cursor: pointer; }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  pre { white-space: pre-wrap; word-break: break-all; font-size: 0.8rem; color: var(--muted); margin-top: 8px; }
+  .tabs { display: flex; gap: 8px; margin-bottom: 12px; }
+  .tab { flex: 1; text-align: center; padding: 10px; border-radius: 8px; background: var(--card); cursor: pointer; color: var(--muted); }
+  .tab.active { background: var(--accent); color: #041410; }
+</style>
+</head>
+<body>
+<h1>🚀 Robin MCP</h1>
+<div class="tabs">
+  <div class="tab active" data-tab="launch">Launch</div>
+  <div class="tab" data-tab="trust">Trust</div>
+  <div class="tab" data-tab="reserves">Reserves</div>
+</div>
+
+<!-- LAUNCH -->
+<div id="launch" class="card section">
+  <label>Token Name</label><input id="lname" placeholder="DogeCoin" />
+  <label>Symbol</label><input id="lsym" placeholder="DOGE" />
+  <label>Initial Supply</label><input id="lsup" type="number" placeholder="1000000" />
+  <button id="btnLaunch">Launch Token</button>
+  <pre id="outLaunch"></pre>
+</div>
+
+<!-- TRUST -->
+<div id="trust" class="card section" style="display:none">
+  <label>Beneficiary Address</label><input id="tben" placeholder="0x..." />
+  <button id="btnTrust">Create Trust</button>
+  <pre id="outTrust"></pre>
+</div>
+
+<!-- RESERVES -->
+<div id="reserves" class="card section" style="display:none">
+  <button id="btnReserves">Refresh Reserves</button>
+  <pre id="outReserves"></pre>
+</div>
+
+<script>
+const tg = window.Telegram.WebApp;
+
+// Tabs
+document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => {
+  document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+  document.querySelectorAll('.section').forEach(s => s.style.display = 'none');
+  t.classList.add('active');
+  document.getElementById(t.dataset.tab).style.display = 'block';
+}));
+
+async function post(path, body){
+  const res = await fetch(`/api${path}`, {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify(body)
+  });
+  return res.json();
+}
+
+document.getElementById('btnLaunch').onclick = async () => {
+  const out = document.getElementById('outLaunch');
+  out.textContent = 'Deploying…';
+  try {
+    const r = await post('/launch', {
+      name: document.getElementById('lname').value,
+      symbol: document.getElementById('lsym').value,
+      supply: parseFloat(document.getElementById('lsup').value)
+    });
+    out.textContent = JSON.stringify(r, null, 2);
+  } catch(e){ out.textContent = 'Error: ' + e.message; }
+};
+
+document.getElementById('btnTrust').onclick = async () => {
+  const out = document.getElementById('outTrust');
+  out.textContent = 'Creating…';
+  try {
+    const r = await post('/trust', { beneficiary: document.getElementById('tben').value });
+    out.textContent = JSON.stringify(r, null, 2);
+  } catch(e){ out.textContent = 'Error: ' + e.message; }
+};
+
+document.getElementById('btnReserves').onclick = async () => {
+  const out = document.getElementById('outReserves');
+  out.textContent = 'Loading…';
+  try {
+    const r = await fetch('/api/reserves').then(res => res.json());
+    out.textContent = JSON.stringify(r, null, 2);
+  } catch(e){ out.textContent = 'Error: ' + e.message; }
+};
+</script>
+</body>
+</html>
+"""
+
+def main():
+    OUTPUT.write_text(HTML.strip() + "\n", encoding="utf-8")
+    print(f"Wrote {OUTPUT.resolve()}")
+# generate_index_html.py
+if __name__ == "__main__":
+    main()
 
 def load_all_envs():
     for path in [os.path.expanduser("~/.env"), ".env"]:
