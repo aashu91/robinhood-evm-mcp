@@ -13,3 +13,6 @@ abi_cache.db
 
 # Local tests/logs
 *.log
+.pytest_cache/
+node_modules/
+

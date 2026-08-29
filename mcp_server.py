@@ -338,6 +338,83 @@ TOOLS = [
             },
             "required": ["name", "symbol"]
         }
+    },
+    {
+        "name": "deploy_staking_contract",
+        "description": "Deploys a new StakingYield contract for the native launchpad token ($ROBIN_MCP) to distribute platform fees.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "staking_token_address": {"type": "string", "description": "Optional: Address of the token to stake (defaults to ROBIN_MCP)."}
+            }
+        }
+    },
+    {
+        "name": "get_staking_info",
+        "description": "Fetches staking pool total staked, user staked balance, APY metrics, pool share, and pending ETH rewards.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "staking_contract_address": {"type": "string", "description": "Optional: Address of the StakingYield contract (defaults to .env STAKING_YIELD_ADDRESS)."},
+                "user_address": {"type": "string", "description": "Optional: User wallet address to query (defaults to active account)."}
+            }
+        }
+    },
+    {
+        "name": "stake_tokens",
+        "description": "Stakes native $ROBIN_MCP tokens into the StakingYield contract to earn proportional ETH yield.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "amount": {"type": "number", "description": "The amount of tokens to stake (e.g. 5000)."},
+                "staking_contract_address": {"type": "string", "description": "Optional: Address of the StakingYield contract."}
+            },
+            "required": ["amount"]
+        }
+    },
+    {
+        "name": "unstake_tokens",
+        "description": "Unstakes staked tokens from the StakingYield contract.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "amount": {"type": "number", "description": "The amount of tokens to unstake (e.g. 5000)."},
+                "staking_contract_address": {"type": "string", "description": "Optional: Address of the StakingYield contract."}
+            },
+            "required": ["amount"]
+        }
+    },
+    {
+        "name": "claim_rewards",
+        "description": "Claims accumulated ETH rewards from the StakingYield contract.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "staking_contract_address": {"type": "string", "description": "Optional: Address of the StakingYield contract."}
+            }
+        }
+    },
+    {
+        "name": "emergency_unstake",
+        "description": "Emergency unstakes all staked tokens from the StakingYield contract without reward claims.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "staking_contract_address": {"type": "string", "description": "Optional: Address of the StakingYield contract."}
+            }
+        }
+    },
+    {
+        "name": "deposit_staking_reward",
+        "description": "Deposits ETH yield to the StakingYield contract to distribute to all current stakers.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "eth_amount": {"type": "number", "description": "Amount of ETH to deposit into the reward pool (e.g. 0.05)."},
+                "staking_contract_address": {"type": "string", "description": "Optional: Address of the StakingYield contract."}
+            },
+            "required": ["eth_amount"]
+        }
     }
 ]
 
@@ -357,7 +434,7 @@ async def dispatch_tool(name, arguments):
             pass
 
     # Resolve ticker shortcuts in addresses
-    for key in ["contract_address", "token_address"]:
+    for key in ["contract_address", "token_address", "staking_contract_address", "staking_token_address"]:
         if key in arguments:
             resolved = await resolve_ticker_to_address(arguments[key])
             if resolved:
@@ -558,6 +635,45 @@ async def dispatch_tool(name, arguments):
         a_sym = arguments["symbol"]
         res = await helper.deploy_mock_asset(a_name, a_sym)
         return json.dumps(res, indent=2)
+
+    elif name == "deploy_staking_contract":
+        tok_addr = arguments.get("staking_token_address")
+        res = await helper.deploy_staking_contract(tok_addr)
+        return json.dumps(res, indent=2)
+
+    elif name == "get_staking_info":
+        s_addr = arguments.get("staking_contract_address")
+        u_addr = arguments.get("user_address")
+        res = await helper.get_staking_info(s_addr, u_addr)
+        return json.dumps(res, indent=2)
+
+    elif name == "stake_tokens":
+        amt = arguments["amount"]
+        s_addr = arguments.get("staking_contract_address")
+        receipt = await helper.stake_tokens(amt, s_addr)
+        return f"Tokens staked successfully!\nReceipt:\n{json.dumps(receipt, indent=2)}"
+
+    elif name == "unstake_tokens":
+        amt = arguments["amount"]
+        s_addr = arguments.get("staking_contract_address")
+        receipt = await helper.unstake_tokens(amt, s_addr)
+        return f"Tokens unstaked successfully!\nReceipt:\n{json.dumps(receipt, indent=2)}"
+
+    elif name == "claim_rewards":
+        s_addr = arguments.get("staking_contract_address")
+        receipt = await helper.claim_rewards(s_addr)
+        return f"Rewards claimed successfully!\nReceipt:\n{json.dumps(receipt, indent=2)}"
+
+    elif name == "emergency_unstake":
+        s_addr = arguments.get("staking_contract_address")
+        receipt = await helper.emergency_unstake(s_addr)
+        return f"Emergency unstake executed successfully!\nReceipt:\n{json.dumps(receipt, indent=2)}"
+
+    elif name == "deposit_staking_reward":
+        eth_amt = arguments["eth_amount"]
+        s_addr = arguments.get("staking_contract_address")
+        receipt = await helper.deposit_staking_reward(eth_amt, s_addr)
+        return f"Staking reward ETH deposited successfully!\nReceipt:\n{json.dumps(receipt, indent=2)}"
 
     else:
         raise ValueError(f"Unknown tool: {name}")
