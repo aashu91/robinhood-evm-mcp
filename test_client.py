@@ -215,6 +215,22 @@ async def run_mcp_test():
     send_request(chart_request)
     await asyncio.sleep(0.5)
 
+    # Step 12: Query Staking Info tool
+    staking_request = {
+        "jsonrpc": "2.0",
+        "id": 12,
+        "method": "tools/call",
+        "params": {
+            "name": "get_staking_info",
+            "arguments": {
+                "staking_contract_address": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+                "user_address": "0x0000000000000000000000000000000000000000"
+            }
+        }
+    }
+    send_request(staking_request)
+    await asyncio.sleep(0.5)
+
     # Clean up subprocess
     process.terminate()
     process.wait()

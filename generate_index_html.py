@@ -19,7 +19,8 @@ load_all_envs()
 
 def generate():
     meme_factory = os.getenv("MEME_FACTORY_ADDRESS", "0xAb783574A8B12d580659e86F01dEA310Fb300113")
-    robin_mcp = os.getenv("ROBIN_MCP_TOKEN_ADDRESS", "0xB6579E6489afC53Cd3eEb14eEF0EF039c65914bd")
+    robin_mcp = os.getenv("ROBIN_MCP_TOKEN_ADDRESS", "0xCFD635f82B75ab6c1a6725a54e9146FEe2c5A421")
+    staking_yield = os.getenv("STAKING_YIELD_ADDRESS", "0x5FbDB2315678afecb367f032d93F642f64180aa3")
 
     html_content = f"""<!DOCTYPE html>
 <html lang="en">
@@ -606,43 +607,71 @@ def generate():
 <!-- SECTION 3: STAKING PORTAL -->
 <div class="scroll-section" id="sec-3">
     <div class="container">
-        <div class="card">
-            <div class="grid">
+        <div class="card" style="padding: 28px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 16px; margin-bottom: 22px;">
                 <div>
-                    <h2 style="font-size: 22px; margin-bottom: 10px; font-weight: 700; color: var(--gold);">💎 Yield Vault Staking</h2>
-                    <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 25px; line-height: 1.5;">
-                        Stake your native `$ROBIN_MCP` tokens to earn a share of platform deployment and swap fees. Rewards are distributed dynamically in real-time.
+                    <h2 style="font-size: 22px; font-weight: 700; color: var(--gold);">💎 Native $ROBIN_MCP Staking & Yield Vault</h2>
+                    <p style="color: var(--text-muted); font-size: 13px; margin-top: 4px;">
+                        Stake $ROBIN_MCP to earn dynamic ETH dividend yields from platform trading fees (40% pool allocation).
                     </p>
-                    
-                    <div class="form-group">
-                        <label>Staked $ROBIN_MCP Amount</label>
-                        <input type="number" id="wsStakeAmt" class="input" value="5000" oninput="calcWsYield()">
-                    </div>
-                    <div style="font-size: 15px; color: var(--text-muted); margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center;">
-                        <span>Estimated Daily Yield:</span>
-                        <span id="wsYieldVal" style="color: var(--success); font-weight: 800; font-size: 18px;">0.025 ETH</span>
-                    </div>
-                    <button class="btn" onclick="connect()">Stake Tokens</button>
                 </div>
-                <div>
-                    <h3 style="font-size: 16px; margin-bottom: 15px; font-weight: 600; color: var(--gold);">Ecosystem Fee Split</h3>
-                    <div style="background: rgba(3, 7, 18, 0.4); border-radius: 16px; border: 1px solid rgba(255,255,255,0.03); padding: 20px; display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px;">
-                        <div style="display: flex; justify-content: space-between; font-size: 14px;">
-                            <span>Stakers Reward Pool</span>
-                            <span style="color: var(--success); font-weight: 700;">40%</span>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; font-size: 14px;">
-                            <span>Developer Buyback Pool</span>
-                            <span style="color: var(--success); font-weight: 700;">20%</span>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; font-size: 14px;">
-                            <span>Creator Treasury</span>
-                            <span style="color: var(--success); font-weight: 700;">40%</span>
+                <div style="display: flex; gap: 12px;">
+                    <div style="background: rgba(251, 191, 36, 0.08); border: 1px solid var(--border); border-radius: 12px; padding: 8px 16px; text-align: right;">
+                        <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Vault APY</div>
+                        <div id="stakingAPY" style="font-size: 18px; font-weight: 800; color: var(--gold);">48.5%</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pool Metrics Row -->
+            <div class="grid" style="grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px;">
+                <div style="background: rgba(3, 7, 18, 0.4); border: 1px solid rgba(255,255,255,0.05); border-radius: 14px; padding: 16px;">
+                    <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; margin-bottom: 6px;">Total Staked Pool</div>
+                    <div id="stakingTotalStaked" style="font-size: 18px; font-weight: 700; color: var(--text);">1,250,000 $ROBIN_MCP</div>
+                </div>
+                <div style="background: rgba(3, 7, 18, 0.4); border: 1px solid rgba(255,255,255,0.05); border-radius: 14px; padding: 16px;">
+                    <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; margin-bottom: 6px;">Your Staked Balance</div>
+                    <div id="userStakedBal" style="font-size: 18px; font-weight: 700; color: var(--success);">0.00 $ROBIN_MCP</div>
+                    <div id="userSharePercent" style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">0.00% pool share</div>
+                </div>
+                <div style="background: rgba(3, 7, 18, 0.4); border: 1px solid rgba(255,255,255,0.05); border-radius: 14px; padding: 16px; display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; margin-bottom: 6px;">Unclaimed ETH Yield</div>
+                        <div id="userPendingRewards" style="font-size: 18px; font-weight: 800; color: var(--gold);">0.0000 ETH</div>
+                    </div>
+                    <button class="btn" style="width: auto; padding: 8px 16px; font-size: 12px; margin-top: 0;" onclick="executeClaimRewards()">Claim</button>
+                </div>
+            </div>
+
+            <!-- Staking / Unstaking Interactive Forms -->
+            <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 24px;">
+                <!-- Stake Card -->
+                <div style="background: rgba(6, 10, 24, 0.5); border: 1px solid rgba(255,255,255,0.05); border-radius: 16px; padding: 20px;">
+                    <h3 style="font-size: 15px; font-weight: 600; color: var(--gold); margin-bottom: 14px; text-transform: uppercase;">📥 Stake Tokens</h3>
+                    <div class="form-group">
+                        <label>Stake Amount ($ROBIN_MCP)</label>
+                        <div style="position: relative;">
+                            <input type="number" id="wsStakeAmt" class="input" value="5000" oninput="calcWsYield()" placeholder="0.0">
                         </div>
                     </div>
-                    <p style="font-size: 12px; color: var(--text-muted); line-height: 1.5;">
-                        All on-chain swaps on the virtual curve contribute 0.5% in trading fees. Staking rewards accumulate in the StakingYield vault and can be claimed at any time.
-                    </p>
+                    <div style="font-size: 13px; color: var(--text-muted); margin-bottom: 18px; display: flex; justify-content: space-between; align-items: center;">
+                        <span>Est. Daily Yield:</span>
+                        <span id="wsYieldVal" style="color: var(--success); font-weight: 700;">0.025 ETH</span>
+                    </div>
+                    <button class="btn" onclick="executeStake()">Stake $ROBIN_MCP</button>
+                </div>
+
+                <!-- Unstake & Emergency Card -->
+                <div style="background: rgba(6, 10, 24, 0.5); border: 1px solid rgba(255,255,255,0.05); border-radius: 16px; padding: 20px;">
+                    <h3 style="font-size: 15px; font-weight: 600; color: var(--gold); margin-bottom: 14px; text-transform: uppercase;">📤 Unstake & Exit</h3>
+                    <div class="form-group">
+                        <label>Unstake Amount ($ROBIN_MCP)</label>
+                        <input type="number" id="wsUnstakeAmt" class="input" value="2500" placeholder="0.0">
+                    </div>
+                    <div style="display: flex; gap: 10px; margin-top: 15px;">
+                        <button class="btn" style="flex: 1; background: rgba(239, 68, 68, 0.2); border-color: var(--error); color: var(--error);" onclick="executeUnstake()">Unstake</button>
+                        <button class="btn btn-outline" style="flex: 1; margin-top: 0; font-size: 12px;" onclick="executeEmergencyUnstake()" title="Withdraw principal without waiting for rewards">Emergency Exit</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -918,6 +947,7 @@ def generate():
     const MEME_FACTORY_ADDRESS = "{meme_factory}";
     const ROBIN_MCP_TOKEN_ADDRESS = "{robin_mcp}";
     let TRUST_FACTORY_ADDRESS = "0x6E4C2DB5F3D1b236843925949FE5BD8A3836FCcB"; // Configurable/Fallback
+    let STAKING_YIELD_ADDRESS = "{staking_yield}";
 
     const ABIs = {{
         MemeFactory: [
@@ -954,6 +984,20 @@ def generate():
             "function decimals() view returns (uint8)",
             "function symbol() view returns (string)",
             "function name() view returns (string)"
+        ],
+        StakingYield: [
+            "function stake(uint256 amount)",
+            "function unstake(uint256 amount)",
+            "function claimRewards()",
+            "function claimReward()",
+            "function emergencyUnstake()",
+            "function depositRewards() payable",
+            "function getPendingReward(address account) view returns (uint256)",
+            "function getStakingInfo(address account) view returns (uint256 userStaked, uint256 userPendingReward, uint256 poolTotalStaked, uint256 totalPoolRewards)",
+            "function totalStaked() view returns (uint256)",
+            "function stakedBalance(address account) view returns (uint256)",
+            "function totalRewardsDeposited() view returns (uint256)",
+            "function stakingToken() view returns (address)"
         ]
     }};
 
@@ -1278,6 +1322,7 @@ def generate():
             
             memeFactoryContract = new ethers.Contract(MEME_FACTORY_ADDRESS, ABIs.MemeFactory, signer);
             trustFactoryContract = new ethers.Contract(TRUST_FACTORY_ADDRESS, ABIs.CommunityTrustFactory, signer);
+            stakingYieldContract = new ethers.Contract(STAKING_YIELD_ADDRESS, ABIs.StakingYield, signer);
             
             const shortened = userAddress.substring(0, 6) + "..." + userAddress.substring(userAddress.length - 4);
             const connBtn = document.getElementById("connBtn");
@@ -1292,6 +1337,7 @@ def generate():
 
             await loadTokenPools();
             await loadActiveTrustDetails();
+            await refreshStakingData();
             
         }} catch (e) {{
             console.error(e);
@@ -1310,6 +1356,7 @@ def generate():
             connBtn.style.borderColor = "var(--gold)";
         }}
         logEvent("System", "Sovereign Sandbox environment loaded successfully.");
+        refreshStakingData();
     }}
 
     // Event log helper
@@ -1331,11 +1378,176 @@ def generate():
         }});
     }}
 
-    // Quick Yield Calculator
+    // Staking logic & Yield Calculator
+    let stakingTotalStakedAmount = 1250000;
+    let userStakedAmount = 0;
+    let userPendingRewardsEth = 0.0;
+    let stakingYieldContract = null;
+
     function calcWsYield() {{
         const staked = parseFloat(document.getElementById("wsStakeAmt").value) || 0;
-        const yieldVal = (staked / 100000) * 0.5;
+        const total = stakingTotalStakedAmount > 0 ? stakingTotalStakedAmount : 1000000;
+        const dailyPoolEth = 0.5; // Example 0.5 ETH daily fee allocation
+        const yieldVal = (staked / total) * dailyPoolEth;
+        const apy = total > 0 ? ((dailyPoolEth * 365) / (total * 0.00001)) * 100 : 48.5;
         document.getElementById("wsYieldVal").innerText = yieldVal.toFixed(5) + " ETH";
+        const apyEl = document.getElementById("stakingAPY");
+        if (apyEl) apyEl.innerText = Math.min(Math.max(apy, 12.5), 180.0).toFixed(1) + "%";
+    }}
+
+    async function refreshStakingData() {{
+        if (!isMockMode && stakingYieldContract && userAddress) {{
+            try {{
+                const info = await stakingYieldContract.getStakingInfo(userAddress);
+                const userStaked = parseFloat(ethers.utils.formatUnits(info[0], 18));
+                const userPending = parseFloat(ethers.utils.formatEther(info[1]));
+                const poolTotal = parseFloat(ethers.utils.formatUnits(info[2], 18));
+                const totalRewards = parseFloat(ethers.utils.formatEther(info[3]));
+
+                stakingTotalStakedAmount = poolTotal;
+                userStakedAmount = userStaked;
+                userPendingRewardsEth = userPending;
+
+                document.getElementById("stakingTotalStaked").innerText = poolTotal.toLocaleString() + " $ROBIN_MCP";
+                document.getElementById("userStakedBal").innerText = userStaked.toLocaleString() + " $ROBIN_MCP";
+                document.getElementById("userPendingRewards").innerText = userPending.toFixed(4) + " ETH";
+                const share = poolTotal > 0 ? (userStaked / poolTotal * 100) : 0;
+                document.getElementById("userSharePercent").innerText = share.toFixed(2) + "% pool share";
+                calcWsYield();
+            }} catch (e) {{
+                console.error("Error refreshing staking data:", e);
+            }}
+        }} else {{
+            // Mock mode UI updates
+            document.getElementById("stakingTotalStaked").innerText = stakingTotalStakedAmount.toLocaleString() + " $ROBIN_MCP";
+            document.getElementById("userStakedBal").innerText = userStakedAmount.toLocaleString() + " $ROBIN_MCP";
+            document.getElementById("userPendingRewards").innerText = userPendingRewardsEth.toFixed(4) + " ETH";
+            const share = stakingTotalStakedAmount > 0 ? (userStakedAmount / stakingTotalStakedAmount * 100) : 0;
+            document.getElementById("userSharePercent").innerText = share.toFixed(2) + "% pool share";
+            calcWsYield();
+        }}
+    }}
+
+    async function executeStake() {{
+        const amt = parseFloat(document.getElementById("wsStakeAmt").value) || 0;
+        if (amt <= 0) {{
+            alert("Please enter a valid stake amount.");
+            return;
+        }}
+
+        if (isMockMode || !stakingYieldContract) {{
+            userStakedAmount += amt;
+            stakingTotalStakedAmount += amt;
+            userPendingRewardsEth += 0.005;
+            logEvent("STAKING", `[Sandbox] Staked ${{amt.toLocaleString()}} $ROBIN_MCP into Yield Vault.`);
+            refreshStakingData();
+            return;
+        }}
+
+        try {{
+            logEvent("STAKING", `Approving & Staking ${{amt}} $ROBIN_MCP...`);
+            const amtWei = ethers.utils.parseUnits(amt.toString(), 18);
+            const tokenContract = new ethers.Contract(ROBIN_MCP_TOKEN_ADDRESS, ABIs.ERC20, signer);
+            const allowance = await tokenContract.allowance(userAddress, STAKING_YIELD_ADDRESS);
+            if (allowance.lt(amtWei)) {{
+                logEvent("STAKING", "Approving StakingYield vault to spend $ROBIN_MCP...");
+                const appTx = await tokenContract.approve(STAKING_YIELD_ADDRESS, amtWei);
+                await appTx.wait();
+                logEvent("STAKING", "Approval confirmed.");
+            }}
+
+            const tx = await stakingYieldContract.stake(amtWei);
+            logEvent("STAKING", `Stake tx sent: ${{tx.hash.substring(0, 10)}}... Waiting confirmation.`);
+            await tx.wait();
+            logEvent("STAKING", `✅ Successfully staked ${{amt}} $ROBIN_MCP!`);
+            await refreshStakingData();
+        }} catch (e) {{
+            console.error(e);
+            logEvent("ERROR", `Staking failed: ${{e.message}}`);
+        }}
+    }}
+
+    async function executeUnstake() {{
+        const amt = parseFloat(document.getElementById("wsUnstakeAmt").value) || 0;
+        if (amt <= 0) {{
+            alert("Please enter a valid unstake amount.");
+            return;
+        }}
+
+        if (isMockMode || !stakingYieldContract) {{
+            if (amt > userStakedAmount) {{
+                alert("Cannot unstake more than your staked balance.");
+                return;
+            }}
+            userStakedAmount -= amt;
+            stakingTotalStakedAmount -= amt;
+            logEvent("STAKING", `[Sandbox] Unstaked ${{amt.toLocaleString()}} $ROBIN_MCP from Yield Vault.`);
+            refreshStakingData();
+            return;
+        }}
+
+        try {{
+            logEvent("STAKING", `Unstaking ${{amt}} $ROBIN_MCP...`);
+            const amtWei = ethers.utils.parseUnits(amt.toString(), 18);
+            const tx = await stakingYieldContract.unstake(amtWei);
+            logEvent("STAKING", `Unstake tx sent: ${{tx.hash.substring(0, 10)}}... Waiting confirmation.`);
+            await tx.wait();
+            logEvent("STAKING", `✅ Successfully unstaked ${{amt}} $ROBIN_MCP!`);
+            await refreshStakingData();
+        }} catch (e) {{
+            console.error(e);
+            logEvent("ERROR", `Unstake failed: ${{e.message}}`);
+        }}
+    }}
+
+    async function executeClaimRewards() {{
+        if (isMockMode || !stakingYieldContract) {{
+            const claimed = userPendingRewardsEth;
+            if (claimed <= 0) {{
+                alert("No pending ETH yield to claim.");
+                return;
+            }}
+            userPendingRewardsEth = 0;
+            logEvent("STAKING", `[Sandbox] Claimed ${{claimed.toFixed(4)}} ETH in staking rewards!`);
+            refreshStakingData();
+            return;
+        }}
+
+        try {{
+            logEvent("STAKING", "Claiming accumulated ETH yield...");
+            const tx = await stakingYieldContract.claimRewards();
+            logEvent("STAKING", `Claim tx sent: ${{tx.hash.substring(0, 10)}}... Waiting confirmation.`);
+            await tx.wait();
+            logEvent("STAKING", `✅ Successfully claimed yield rewards!`);
+            await refreshStakingData();
+        }} catch (e) {{
+            console.error(e);
+            logEvent("ERROR", `Claim rewards failed: ${{e.message}}`);
+        }}
+    }}
+
+    async function executeEmergencyUnstake() {{
+        if (isMockMode || !stakingYieldContract) {{
+            const amt = userStakedAmount;
+            userStakedAmount = 0;
+            userPendingRewardsEth = 0;
+            stakingTotalStakedAmount -= amt;
+            logEvent("STAKING", `[Sandbox] Emergency unstaked ${{amt.toLocaleString()}} $ROBIN_MCP.`);
+            refreshStakingData();
+            return;
+        }}
+
+        try {{
+            logEvent("STAKING", "Executing emergency unstake...");
+            const tx = await stakingYieldContract.emergencyUnstake();
+            logEvent("STAKING", `Emergency unstake tx sent: ${{tx.hash.substring(0, 10)}}... Waiting confirmation.`);
+            await tx.wait();
+            logEvent("STAKING", `✅ Successfully executed emergency unstake.`);
+            await refreshStakingData();
+        }} catch (e) {{
+            console.error(e);
+            logEvent("ERROR", `Emergency unstake failed: ${{e.message}}`);
+        }}
     }}
 
     // Workspace Navigation
@@ -2057,7 +2269,7 @@ def generate():
 </body>
 </html>
 """
-    output_path = "/data/data/com.termux/files/home/robinhood-evm-mcp/index.html"
+    output_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "index.html")
     with open(output_path, "w", encoding="utf-8") as f:
         f.write(html_content)
     print(f"✅ Generated upgraded, diorama-powered index.html at {output_path}")
