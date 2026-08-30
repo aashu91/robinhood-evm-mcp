@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Robin MCP Mini App</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+  :root {
+    --bg: #0f172a;
+    --card: #1e293b;
+    --accent: #22c55e;
+    --text: #f1f5f9;
+    --muted: #94a3b8;
+  }
+  body {
+    margin: 0;
+    padding: 16px;
+    font-family: system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+  }
+  h1 { font-size: 1.4rem; margin-bottom: 12px; }
+  .card {
+    background: var(--card);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 12px;
+  }
+  button {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    background: var(--accent);
+    color: #000;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 8px;
+  }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  pre { white-space: pre-wrap; word-break: break-word; font-size: 0.85rem; color: var(--muted); }
+</style>
+</head>
+<body>
+<h1>🏆 Robin MCP</h1>
+<div class="card">
+  <div>Launch Meme Coin</div>
+  <button id="btn-launch">Launch Token</button>
+  <pre id="out-launch"></pre>
+</div>
+<div class="card">
+  <div>Deploy Community Trust</div>
+  <button id="btn-trust">Deploy Trust</button>
+  <pre id="out-trust"></pre>
+</div>
+<div class="card">
+  <div>View Gold/Silver Reserves</div>
+  <button id="btn-reserves">Get Reserves</button>
+  <pre id="out-reserves"></pre>
+</div>
+<script>
+const tg = window.Telegram.WebApp;
+tg.expand();
+
+async function callBot(action) {
+  const out = document.getElementById(`out-${action}`);
+  const btn = document.getElementById(`btn-${action}`);
+  btn.disabled = true;
+  out.textContent = 'Processing...';
+  try {
+    // In production, replace with actual MCP server endpoint
+    const res = await fetch(`/api/${action}`, { method: 'POST' });
+    const data = await res.json();
+    out.textContent = JSON.stringify(data, null, 2);
+  } catch (e) {
+    out.textContent = `Error: ${e.message}`;
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+document.getElementById('btn-launch').onclick = () => callBot('launch');
+document.getElementById('btn-trust').onclick = () => callBot('trust');
+document.getElementById('btn-reserves').onclick = () => callBot('reserves');
+</script>
+</body>
+</html>
