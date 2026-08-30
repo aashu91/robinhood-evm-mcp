@@ -1,44 +1,92 @@
-#!/usr/bin/env python3
-# telegram_bot.py
-# Zero-dependency Telegram Bot backend using stdlib urllib.request
-# ponytail: simple, self-contained polling loop, no third-party package dependencies.
 
 import os
-import sys
 import json
+import asyncio
+from typing import Optional
+
+from telegram import Update, WebAppInfo, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes, MessageHandler, filters
+# ponytail: simple, self-contained polling loop, no third-party package dependencies.
+try:
+    from mcp_server import deploy_token, get_trust_status, get_reserves
+except ImportError:
+    # Fallback stubs if mcp_server is not in path during testing
+    async def deploy_token(name: str, symbol: str, creator: str) -> dict:
+        return {"status": "error", "message": "mcp_server not available"}
+    async def get_trust_status(address: str) -> dict:
+        return {"trust_score": 0, "verified": False}
+    async def get_reserves() -> dict:
+        return {"gold": 0, "silver": 0}
+import sys
+BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+WEBAPP_URL = os.getenv("MINI_APP_URL", "https://robin-mcp-mini-app.vercel.app")
 import urllib.request
 import urllib.error
-
-# Load environment
-def load_all_envs():
-    for path in [os.path.expanduser("~/.env"), ".env"]:
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    keyboard = [
+        [InlineKeyboardButton("🚀 Open Mini-App", web_app=WebAppInfo(url=WEBAPP_URL))]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    await update.message.reply_text(
+        "Welcome to Robinhood EVM MCP Bot!\n"
+        "Use the button below or commands:\n"
+        "/launch <name> <symbol> - Deploy a meme coin\n"
+        "/trust <address> - Check community trust\n"
+        "/reserves - View gold/silver stats",
+        reply_markup=reply_markup
+    )
         if os.path.exists(path):
             with open(path, "r") as f:
-                for line in f:
-                    line = line.strip()
-                    if line and not line.startswith("#") and "=" in line:
-                        k, v = line.split("=", 1)
+async def launch(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if len(context.args) < 2:
+        await update.message.reply_text("Usage: /launch <token_name> <symbol>")
+        return
+    name, symbol = context.args[0], context.args[1]
+    user_addr = str(update.effective_user.id)  # Placeholder for wallet binding
+    await update.message.reply_text(f"🚀 Deploying {name} ({symbol})...")
+    try:
+        result = await deploy_token(name=name, symbol=symbol, creator=user_addr)
+        await update.message.reply_text(f"✅ Launch Result:\n```json\n{json.dumps(result, indent=2)}\n```")
+    except Exception as e:
+        await update.message.reply_text(f"❌ Error: {str(e)}")
                         os.environ[k.strip()] = v.strip().strip('"').strip("'")
 
-load_all_envs()
-
-TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
-API_URL = f"https://api.telegram.org/bot{TOKEN}"
+async def trust(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if len(context.args) < 1:
+        await update.message.reply_text("Usage: /trust <contract_address>")
+        return
+    address = context.args[0]
+    await update.message.reply_text(f"🛡️ Checking trust for {address}...")
+    try:
+        result = await get_trust_status(address=address)
+        await update.message.reply_text(f"📊 Trust Status:\n```json\n{json.dumps(result, indent=2)}\n```")
+    except Exception as e:
+        await update.message.reply_text(f"❌ Error: {str(e)}")
 WEBAPP_URL = "https://robinhood-evm-mcp.vercel.app" # Replace with user's vercel deploy url
 
-def send_api_request(method, payload):
-    if not TOKEN:
-        print("❌ Error: TELEGRAM_BOT_TOKEN not found in environment.")
-        return None
+async def reserves(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("💰 Fetching reserve stats...")
+    try:
+        result = await get_reserves()
+        await update.message.reply_text(f"🏦 Reserves:\n```json\n{json.dumps(result, indent=2)}\n```")
+    except Exception as e:
+        await update.message.reply_text(f"❌ Error: {str(e)}")
         
-    url = f"{API_URL}/{method}"
     data = json.dumps(payload).encode('utf-8')
+def main():
+    if not BOT_TOKEN:
+        raise ValueError("TELEGRAM_BOT_TOKEN environment variable is required")
+    
+    application = ApplicationBuilder().token(BOT_TOKEN).build()
+    
+    application.add_handler(CommandHandler("start", start))
     req = urllib.request.Request(
         url,
         data=data,
+    
+    print("🤖 Robinhood MCP Bot started...")
+    application.run_polling(allowed_updates=Update.ALL_TYPES)
         headers={"Content-Type": "application/json"}
-    )
-    try:
         with urllib.request.urlopen(req) as response:
             return json.loads(response.read().decode('utf-8'))
     except urllib.error.HTTPError as e:
