@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Robinhood MCP</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        :root {
+            --bg-color: #0d1117;
+            --card-bg: #161b22;
+            --text-primary: #f0f6fc;
+            --text-secondary: #8b949e;
+            --accent-green: #2ea043;
+            --accent-gold: #d29922;
+            --border: #30363d;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+        body { background-color: var(--bg-color); color: var(--text-primary); padding: 16px; padding-bottom: 80px; }
+        .header { text-align: center; margin-bottom: 24px; padding-top: 12px; }
+        .header h1 { font-size: 20px; font-weight: 700; letter-spacing: -0.5px; }
+        .header p { color: var(--text-secondary); font-size: 13px; margin-top: 4px; }
+        .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+        .card h2 { font-size: 15px; margin-bottom: 12px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
+        .stat-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); }
+        .stat-row:last-child { border-bottom: none; }
+        .stat-label { color: var(--text-secondary); font-size: 14px; }
+        .stat-value { font-weight: 600; font-size: 14px; }
+        .btn { width: 100%; padding: 14px; border: none; border-radius: 8px; font-weight: 600; font-size: 15px; cursor: pointer; transition: opacity 0.2s; margin-top: 8px; }
+        .btn-primary { background-color: var(--accent-green); color: white; }
+        .btn-secondary { background-color: transparent; border: 1px solid var(--border); color: var(--text-primary); }
+        .btn:active { opacity: 0.8; }
+        input { width: 100%; padding: 12px; background: var(--bg-color); border: 1px solid var(--border); border-radius: 8px; color: white; font-size: 14px; margin-bottom: 8px; outline: none; }
+        input:focus { border-color: var(--text-secondary); }
+        #status { margin-top: 12px; font-size: 12px; color: var(--text-secondary); min-height: 18px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>ROBINHOOD MCP</h1>
+        <p>Meme Coin Launchpad & Trust Tracker</p>
+    </div>
+
+    <div class="card">
+        <h2>Launch Token</h2>
+        <input type="text" id="tokenName" placeholder="Token Name (e.g. DogeMoon)">
+        <input type="text" id="tokenSymbol" placeholder="Symbol (e.g. DGMN)">
+        <button class="btn btn-primary" onclick="launchToken()">Deploy Contract</button>
+    </div>
+
+    <div class="card">
+        <h2>Community Trust</h2>
+        <input type="text" id="trustAddress" placeholder="Contract Address">
+        <button class="btn btn-secondary" onclick="checkTrust()">Verify Trust Score</button>
+    </div>
+
+    <div class="card">
+        <h2>Vault Reserves</h2>
+        <div class="stat-row">
+            <span class="stat-label">Gold Backing</span>
+            <span class="stat-value" id="goldVal">Loading...</span>
+        </div>
+        <div class="stat-row">
+            <span class="stat-label">Silver Backing</span>
+            <span class="stat-value" id="silverVal">Loading...</span>
+        </div>
+        <button class="btn btn-secondary" onclick="refreshReserves()" style="margin-top:12px">Refresh</button>
+    </div>
+
+    <div id="status"></div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+
+        // In production, this would call your MCP backend via fetch()
+        // For now, we simulate responses to demonstrate UI functionality
+        const MCP_API = 'http://localhost:8000'; 
+
+        function setStatus(msg, isError = false) {
+            const el = document.getElementById('status');
+            el.textContent = msg;
+            el.style.color = isError ? '#f85149' : 'var(--text-secondary)';
+        }
+
+        async function launchToken() {
+            const name = document.getElementById('tokenName').value.trim();
+            const symbol = document.getElementById('tokenSymbol').value.trim();
+            if (!name || !symbol) return setStatus('Please fill in both fields', true);
+            
+            setStatus(`Deploying ${name}...`);
+            try {
+                // Real implementation: await fetch(`${MCP_API}/deploy`, ...)
+                await new Promise(r => setTimeout(r, 1500));
+                setStatus(`✅ ${symbol} deployed successfully!`);
+                tg.HapticFeedback.notificationOccurred('success');
+            } catch (e) {
+                setStatus('Deployment failed', true);
+                tg.HapticFeedback.notificationOccurred('error');
+            }
+        }
+
+        async function checkTrust() {
+            const addr = document.getElementById('trustAddress').value.trim();
+            if (!addr) return setStatus('Enter a valid address', true);
+            setStatus('Verifying on-chain reputation...');
+            try {
+                await new Promise(r => setTimeout(r, 1000));
+                setStatus(`✅ Trust Score: 87/100 (Verified)`);
+                tg.HapticFeedback.notificationOccurred('success');
+            } catch (e) {
+                setStatus('Verification failed', true);
+            }
+        }
+
+        async function refreshReserves() {
+            setStatus('Syncing with vault...');
+            try {
+                await new Promise(r => setTimeout(r, 800));
+                document.getElementById('goldVal').textContent = '1,240 OZ';
+                document.getElementById('silverVal').textContent = '8,500 OZ';
+                setStatus('');
+                tg.HapticFeedback.selectionChanged();
+            } catch (e) {
+                setStatus('Sync failed', true);
+            }
+        }
+
+        // Initial load
+        refreshReserves();
+    </script>
+</body>
+</html>
