@@ -1,0 +1,70 @@
+name: Strix AI Penetration Test
+
+on:
+  workflow_dispatch:
+    inputs:
+      scan_mode:
+        description: 'Scan mode (quick or deep)'
+        required: true
+        default: 'quick'
+        type: choice
+        options:
+          - quick
+          - deep
+      model:
+        description: 'LLM model to power Strix agents'
+        required: true
+        default: 'gemini/gemini-2.5-pro'
+      instruction:
+        description: 'Custom audit instruction'
+        required: false
+        default: 'Audit Robinhood EVM MCP server, smart contracts, private key management, web3 transactions, and API endpoints for vulnerabilities and attack vectors.'
+
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  strix-scan:
+    name: Strix Penetration Scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Verify Docker is running
+        run: |
+          docker info > /dev/null 2>&1 || (echo "Docker is required" && exit 1)
+          echo "Docker is running."
+
+      - name: Install Strix CLI
+        run: |
+          curl -sSL https://strix.ai/install | bash
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+          export PATH="$HOME/.local/bin:$PATH"
+          which strix || true
+
+      - name: Run Strix Security Scan
+        env:
+          LLM_API_KEY: ${{ secrets.STRIX_LLM_API_KEY || secrets.GEMINI_API_KEY || secrets.OPENAI_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY || secrets.STRIX_LLM_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY || secrets.STRIX_LLM_API_KEY }}
+          STRIX_LLM: ${{ github.event.inputs.model || vars.STRIX_LLM || 'gemini/gemini-2.5-pro' }}
+        run: |
+          export PATH="$HOME/.local/bin:$PATH"
+          SCAN_MODE="${{ github.event.inputs.scan_mode || 'quick' }}"
+          INSTRUCTION="${{ github.event.inputs.instruction || 'Audit Robinhood EVM MCP server, smart contracts, private key management, web3 transactions, and API endpoints for vulnerabilities and attack vectors.' }}"
+          
+          echo "Starting Strix scan in $SCAN_MODE mode with model $STRIX_LLM..."
+          strix -t ./ -n -m "$SCAN_MODE" --instruction "$INSTRUCTION"
+
+      - name: Upload Scan Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: strix-pentest-report
+          path: |
+            strix_runs/
+            *.json
+          if-no-files-found: ignore
