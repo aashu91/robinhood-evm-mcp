@@ -952,7 +952,11 @@ function showToast(message, type = 'info') {
     toast.innerHTML = `<span style="font-family: var(--font-mono); font-size: 11px; font-weight: 700; color: ${tagColor};">${tag}</span> <div>${message}</div>`;
     container.appendChild(toast);
     setTimeout(() => {
-        toast.remove();
+        if (toast.remove) {
+            toast.remove();
+        } else if (toast.parentNode) {
+            toast.parentNode.removeChild(toast);
+        }
     }, 3800);
 }
 
