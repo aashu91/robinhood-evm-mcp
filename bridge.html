@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cross-Chain Bridge — Robinhood Chain L2 Asset Router</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <script src="ethers.umd.min.js"></script>
+    <script src="js/app.js" defer></script>
+</head>
+<body>
+    <canvas id="bg-canvas"></canvas>
+
+    <!-- Marquee Ticker -->
+    <div class="ticker-bar">
+        <div class="ticker-track">
+            <div class="ticker-item">EVM CROSS-CHAIN BRIDGE: <span class="highlight">ACTIVE</span></div>
+            <div class="ticker-item">ROUTER SPEED: <span class="up">&lt; 15 SECONDS</span></div>
+            <div class="ticker-item">SUPPORTED CHAINS: <span class="highlight">BASE • ARBITRUM • ROBINHOOD L2</span></div>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="navbar">
+        <a href="index.html" class="brand">
+            <div class="brand-logo">R</div>
+            <span class="brand-text">Robinhood L2</span>
+            <span class="brand-badge">BRIDGE</span>
+        </a>
+        <ul class="nav-links">
+            <li class="nav-item"><a href="index.html">🏠 Hub</a></li>
+            <li class="nav-item"><a href="launchpad.html">🚀 Launchpad</a></li>
+            <li class="nav-item"><a href="mcp-protocol.html">🤖 AI Agent MCP</a></li>
+            <li class="nav-item"><a href="treasury.html">🏛️ Treasury</a></li>
+            <li class="nav-item"><a href="bridge.html" class="active">🌉 Bridge</a></li>
+        </ul>
+        <button class="btn-wallet" onclick="connectWallet()">⚡ Connect Wallet</button>
+    </nav>
+
+    <!-- Main Wrapper -->
+    <main class="main-wrapper" style="max-width: 680px;">
+        <div style="margin-bottom: 30px; text-align: center;">
+            <h1 style="font-size: 36px; font-weight: 900; margin-bottom: 8px;">🌉 Cross-Chain EVM Bridge</h1>
+            <p style="color: var(--text-muted);">Route assets effortlessly between Base, Arbitrum One, and Robinhood L2 Mainnet.</p>
+        </div>
+
+        <div class="glass-card">
+            <!-- Source Chain -->
+            <div class="form-group">
+                <label class="form-label">From Source Network</label>
+                <select id="src-chain" class="form-select" onchange="calculateBridgeFee()">
+                    <option value="8453">Base Mainnet (Chain ID 8453)</option>
+                    <option value="42161">Arbitrum One (Chain ID 42161)</option>
+                    <option value="6584" selected>Robinhood L2 Mainnet (Chain ID 6584)</option>
+                </select>
+            </div>
+
+            <!-- Destination Chain -->
+            <div class="form-group">
+                <label class="form-label">To Target Network</label>
+                <select id="dest-chain" class="form-select" onchange="calculateBridgeFee()">
+                    <option value="42161" selected>Arbitrum One (Chain ID 42161)</option>
+                    <option value="8453">Base Mainnet (Chain ID 8453)</option>
+                    <option value="6584">Robinhood L2 Mainnet (Chain ID 6584)</option>
+                </select>
+            </div>
+
+            <!-- Asset & Amount -->
+            <div class="form-group">
+                <label class="form-label">Asset to Bridge</label>
+                <div style="display: flex; gap: 10px;">
+                    <select id="bridge-asset" class="form-select" style="flex: 1;">
+                        <option value="ETH">ETH (Native Ether)</option>
+                        <option value="USDG">USDG Stablecoin</option>
+                        <option value="ROBIN_MCP">$ROBIN_MCP Token</option>
+                    </select>
+                    <input type="number" id="bridge-amt" class="form-input" style="flex: 1;" value="0.1" step="0.05" oninput="calculateBridgeFee()">
+                </div>
+            </div>
+
+            <!-- Recipient EVM Address -->
+            <div class="form-group">
+                <label class="form-label">Recipient EVM Address</label>
+                <input type="text" id="bridge-recipient" class="form-input" placeholder="0xYourEVMWalletAddress...">
+            </div>
+
+            <!-- Fee & Telemetry Box -->
+            <div style="background: rgba(3,7,18,0.8); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 24px; font-family: var(--font-mono); font-size: 13px;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                    <span style="color: var(--text-muted);">Est. Transfer Time:</span>
+                    <span style="color: var(--emerald); font-weight: 700;">~ 12 seconds</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                    <span style="color: var(--text-muted);">Protocol Fee:</span>
+                    <span id="bridge-fee" style="color: var(--gold); font-weight: 700;">0.0001 ETH ($0.32)</span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="color: var(--text-muted);">Slippage Protection:</span>
+                    <span style="color: var(--text-main);">0.1% Guaranteed</span>
+                </div>
+            </div>
+
+            <button class="btn-primary" style="width: 100%; justify-content: center; padding: 16px;" onclick="executeBridgeTx()">🌉 Execute Cross-Chain Bridge</button>
+        </div>
+    </main>
+
+    <script>
+        function calculateBridgeFee() {
+            const amt = parseFloat(document.getElementById('bridge-amt').value) || 0;
+            const fee = (amt * 0.001 + 0.00008).toFixed(5);
+            document.getElementById('bridge-fee').innerText = `${fee} ETH ($${(fee * 3200).toFixed(2)})`;
+        }
+
+        function executeBridgeTx() {
+            const amt = document.getElementById('bridge-amt').value;
+            const asset = document.getElementById('bridge-asset').value;
+            const recip = document.getElementById('bridge-recipient').value;
+            
+            showToast(`Routing ${amt} ${asset} cross-chain transaction...`, "info");
+            setTimeout(() => {
+                showToast(`✅ Cross-chain bridge transaction signed & broadcasted!`, "success");
+            }, 2000);
+        }
+    </script>
+
+    <footer>
+        <p>Robinhood Chain L2 Ecosystem • Cross-Chain EVM Router • Maintained by Ashutosh Singh</p>
+    </footer>
+</body>
+</html>

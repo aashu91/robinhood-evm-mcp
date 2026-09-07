@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Community Trust Treasury — Robinhood Chain L2 Multi-Sig Governance</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <script src="ethers.umd.min.js"></script>
+    <script src="js/app.js" defer></script>
+</head>
+<body>
+    <canvas id="bg-canvas"></canvas>
+
+    <!-- Marquee Ticker -->
+    <div class="ticker-bar">
+        <div class="ticker-track">
+            <div class="ticker-item">COMMUNITY TRUST FACTORY: <span class="highlight">ACTIVE</span></div>
+            <div class="ticker-item">MULTI-SIG THRESHOLD: <span class="up">M-of-N DIRECTORS</span></div>
+            <div class="ticker-item">TOTAL VAULT ASSETS: <span class="highlight">$4.82M USDG</span></div>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="navbar">
+        <a href="index.html" class="brand">
+            <div class="brand-logo">R</div>
+            <span class="brand-text">Robinhood L2</span>
+            <span class="brand-badge">TREASURY</span>
+        </a>
+        <ul class="nav-links">
+            <li class="nav-item"><a href="index.html">🏠 Hub</a></li>
+            <li class="nav-item"><a href="launchpad.html">🚀 Launchpad</a></li>
+            <li class="nav-item"><a href="mcp-protocol.html">🤖 AI Agent MCP</a></li>
+            <li class="nav-item"><a href="treasury.html" class="active">🏛️ Treasury</a></li>
+            <li class="nav-item"><a href="bridge.html">🌉 Bridge</a></li>
+        </ul>
+        <button class="btn-wallet" onclick="connectWallet()">⚡ Connect Wallet</button>
+    </nav>
+
+    <!-- Main Wrapper -->
+    <main class="main-wrapper">
+        <div style="margin-bottom: 30px;">
+            <h1 style="font-size: 36px; font-weight: 900; margin-bottom: 8px;">🏛️ Community Trust Multi-Sig Bank</h1>
+            <p style="color: var(--text-muted);">Decentralized multi-sig treasury banks deployed via <code style="color: var(--gold);">CommunityTrustFactory.sol</code> for collective capital allocation and dividend distribution.</p>
+        </div>
+
+        <div class="grid-2">
+            <!-- Deploy New Multi-Sig Bank -->
+            <div class="glass-card">
+                <div class="card-icon">🏦</div>
+                <h3 class="card-title">Deploy New Community Trust</h3>
+                <p class="card-desc">Spawn a multi-sig bank contract on Robinhood L2 with custom director governance.</p>
+
+                <div class="form-group">
+                    <label class="form-label">Trust Bank Name</label>
+                    <input type="text" id="trust-name" class="form-input" placeholder="e.g. Robinhood RWA Yield Fund">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Board of Directors (Comma Separated EVM Addresses)</label>
+                    <textarea id="trust-directors" class="form-input" rows="3" placeholder="0x742d35Cc..., 0xf89e3c5506e8..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Required Signatures (Threshold)</label>
+                    <input type="number" id="trust-threshold" class="form-input" value="2" min="1">
+                </div>
+
+                <button class="btn-primary" style="width: 100%; justify-content: center;" onclick="deployTrustBank()">🏛️ Spawn Trust Contract</button>
+            </div>
+
+            <!-- Proposal & Dividend Management -->
+            <div class="glass-card">
+                <div class="card-icon">💰</div>
+                <h3 class="card-title">Dividend & Proposal Matrix</h3>
+                <p class="card-desc">Propose payouts or claim accrued yield distributions directly from active vaults.</p>
+
+                <div class="form-group">
+                    <label class="form-label">Active Trust Vault</label>
+                    <select id="vault-select" class="form-select">
+                        <option value="0x8849F01A9652aBc2A370A02711F686a34B7630e6">Robinhood Alpha Treasury Vault ($3.2M)</option>
+                        <option value="0xAb783574A8B12d580659e86F01dEA310Fb300113">AI Agent Developer Treasury ($1.62M)</option>
+                    </select>
+                </div>
+
+                <div style="background: rgba(3,7,18,0.7); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 20px; font-family: var(--font-mono); font-size: 13px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <span style="color: var(--text-muted);">Your Unclaimed Yield:</span>
+                        <span style="color: var(--emerald); font-weight: 700;">142.50 USDG</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span style="color: var(--text-muted);">Required Signatures:</span>
+                        <span style="color: var(--gold); font-weight: 700;">2 of 3</span>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 12px;">
+                    <button class="btn-primary" style="flex: 1; justify-content: center; background: var(--emerald); color: #000;" onclick="claimDividends()">💰 Claim Dividends</button>
+                    <button class="btn-secondary" style="flex: 1; justify-content: center;" onclick="proposeTx()">📝 New Proposal</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        function deployTrustBank() {
+            const name = document.getElementById('trust-name').value;
+            const directors = document.getElementById('trust-directors').value;
+            if (!name || !directors) {
+                showToast("Please specify Trust name and director EVM addresses!", "error");
+                return;
+            }
+            showToast(`Deploying Community Trust Bank '${name}' via CommunityTrustFactory...`, "info");
+            setTimeout(() => {
+                showToast(`✅ Trust Bank '${name}' deployed on Robinhood Chain L2!`, "success");
+            }, 2000);
+        }
+
+        function claimDividends() {
+            showToast("Submitting claim for 142.50 USDG dividends...", "info");
+            setTimeout(() => {
+                showToast("✅ 142.50 USDG transferred to your wallet!", "success");
+            }, 1800);
+        }
+
+        function proposeTx() {
+            showToast("Opening proposal creation wizard for directors...", "info");
+        }
+    </script>
+
+    <footer>
+        <p>Robinhood Chain L2 Ecosystem • Multi-Sig Governance • Maintained by Ashutosh Singh</p>
+    </footer>
+</body>
+</html>

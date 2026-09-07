@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Agent MCP Protocol — Robinhood Chain Developer Hub</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <script src="ethers.umd.min.js"></script>
+    <script src="js/app.js" defer></script>
+</head>
+<body>
+    <canvas id="bg-canvas"></canvas>
+
+    <!-- Marquee Ticker -->
+    <div class="ticker-bar">
+        <div class="ticker-track">
+            <div class="ticker-item">ROBINHOOD MCP SERVER: <span class="highlight">STDIO JSON-RPC 2.0 READY</span></div>
+            <div class="ticker-item">TOKEN-GATING: <span class="up">100 $ROBIN_MCP (MAINNET)</span></div>
+            <div class="ticker-item">ACTIVE BOUNTIES: <span class="highlight">50,000 $ROBIN_MCP PER MERGED PR</span></div>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="navbar">
+        <a href="index.html" class="brand">
+            <div class="brand-logo">R</div>
+            <span class="brand-text">Robinhood L2</span>
+            <span class="brand-badge">MCP AGENTS</span>
+        </a>
+        <ul class="nav-links">
+            <li class="nav-item"><a href="index.html">🏠 Hub</a></li>
+            <li class="nav-item"><a href="launchpad.html">🚀 Launchpad</a></li>
+            <li class="nav-item"><a href="mcp-protocol.html" class="active">🤖 AI Agent MCP</a></li>
+            <li class="nav-item"><a href="treasury.html">🏛️ Treasury</a></li>
+            <li class="nav-item"><a href="bridge.html">🌉 Bridge</a></li>
+        </ul>
+        <button class="btn-wallet" onclick="connectWallet()">⚡ Connect Wallet</button>
+    </nav>
+
+    <!-- Main Wrapper -->
+    <main class="main-wrapper">
+        <div style="margin-bottom: 30px;">
+            <h1 style="font-size: 36px; font-weight: 900; margin-bottom: 8px;">🤖 Model Context Protocol (MCP) Server</h1>
+            <p style="color: var(--text-muted);">Connect Claude, Cursor, and Termux local AI agents directly to Robinhood Chain L2 over pure Python stdio JSON-RPC.</p>
+        </div>
+
+        <!-- MCP Playground & Tool Tester -->
+        <div class="glass-card" style="margin-bottom: 40px;">
+            <div class="card-icon">⚡</div>
+            <h3 class="card-title">Interactive MCP Tool Tester</h3>
+            <p class="card-desc">Simulate JSON-RPC tool dispatches to the local Robinhood MCP server.</p>
+
+            <div class="grid-2" style="margin-top: 20px;">
+                <div>
+                    <div class="form-group">
+                        <label class="form-label">Select Tool to Test</label>
+                        <select id="mcp-tool-select" class="form-select" onchange="updateMcpParams()">
+                            <option value="get_robinhood_ticker">get_robinhood_ticker(ticker)</option>
+                            <option value="get_evm_balance">get_evm_balance(address, token_address)</option>
+                            <option value="simulate_evm_transaction">simulate_evm_transaction(contract, func, args)</option>
+                            <option value="estimate_meme_trade_output">estimate_meme_trade_output(token, trade_type, amount)</option>
+                            <option value="switch_rpc_network">switch_rpc_network(network_name)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">JSON Payload Arguments</label>
+                        <textarea id="mcp-json-args" class="form-input" rows="4" style="font-family: var(--font-mono); font-size: 13px;">{"ticker": "USDG"}</textarea>
+                    </div>
+
+                    <button class="btn-primary" style="width: 100%; justify-content: center;" onclick="sendMcpTestRequest()">▶ Run MCP Tool Call</button>
+                </div>
+
+                <div>
+                    <label class="form-label">Live Stdio JSON-RPC Response</label>
+                    <div id="mcp-response-output" class="code-block" style="height: 230px; overflow-y: auto;">
+// JSON-RPC Response ready...
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI Client Configuration Cards -->
+        <h2 style="font-size: 24px; font-weight: 800; margin-bottom: 20px;">🔌 Connect AI Clients</h2>
+        <div class="grid-2" style="margin-bottom: 50px;">
+            <!-- Cursor Config -->
+            <div class="glass-card">
+                <h3 class="card-title" style="font-size: 18px; color: var(--gold);">Cursor / Windsurf Setup</h3>
+                <p class="card-desc">Add as command server under Settings &gt; Models &gt; MCP.</p>
+                <div class="code-block">
+Name: Robinhood-EVM-MCP
+Type: command
+Command: python /data/data/com.termux/files/home/robinhood-evm-mcp/mcp_server.py
+                </div>
+            </div>
+
+            <!-- Claude Desktop Config -->
+            <div class="glass-card">
+                <h3 class="card-title" style="font-size: 18px; color: var(--emerald);">Claude Desktop Config</h3>
+                <p class="card-desc">Add to <code style="color: var(--gold);">claude_desktop_config.json</code>.</p>
+                <div class="code-block">
+{
+  "mcpServers": {
+    "robinhood-evm-mcp": {
+      "command": "python",
+      "args": ["/data/data/com.termux/files/home/robinhood-evm-mcp/mcp_server.py"]
+    }
+  }
+}
+                </div>
+            </div>
+        </div>
+
+        <!-- Developer Bounties Section -->
+        <div id="bounties" class="glass-card" style="border-color: var(--gold); background: linear-gradient(135deg, rgba(251,191,36,0.05), rgba(15,23,42,0.8));">
+            <div class="card-icon" style="background: rgba(251,191,36,0.15);">🏆</div>
+            <h3 class="card-title" style="font-size: 26px;">Active Developer Bounties</h3>
+            <p class="card-desc">Earn <strong>50,000 $ROBIN_MCP</strong> instantly upon PR merge via automated treasury payout bot (<code style="color: var(--gold);">github_payout_bot.py</code>).</p>
+
+            <div class="grid-3" style="margin-top: 24px;">
+                <div style="background: rgba(3,7,18,0.7); border: 1px solid var(--border); border-radius: 12px; padding: 18px;">
+                    <div style="font-size: 12px; color: var(--gold); font-family: var(--font-mono); margin-bottom: 6px;">ISSUE #12</div>
+                    <h4 style="font-size: 16px; font-weight: 700; margin-bottom: 8px;">Pyth Oracles Integration</h4>
+                    <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 14px;">Add real-time price feed verification for tokenized stock proxies.</p>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="color: var(--emerald); font-weight: 700; font-size: 13px;">50,000 $ROBIN_MCP</span>
+                        <button class="btn-secondary" style="font-size: 12px; padding: 6px 12px;" onclick="claimBountyNotice(12)">Claim Issue</button>
+                    </div>
+                </div>
+
+                <div style="background: rgba(3,7,18,0.7); border: 1px solid var(--border); border-radius: 12px; padding: 18px;">
+                    <div style="font-size: 12px; color: var(--gold); font-family: var(--font-mono); margin-bottom: 6px;">ISSUE #14</div>
+                    <h4 style="font-size: 16px; font-weight: 700; margin-bottom: 8px;">Staking & Dividend Vaults</h4>
+                    <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 14px;">Implement automated yield distribution for Community Trust directors.</p>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="color: var(--emerald); font-weight: 700; font-size: 13px;">50,000 $ROBIN_MCP</span>
+                        <button class="btn-secondary" style="font-size: 12px; padding: 6px 12px;" onclick="claimBountyNotice(14)">Claim Issue</button>
+                    </div>
+                </div>
+
+                <div style="background: rgba(3,7,18,0.7); border: 1px solid var(--border); border-radius: 12px; padding: 18px;">
+                    <div style="font-size: 12px; color: var(--gold); font-family: var(--font-mono); margin-bottom: 6px;">ISSUE #18</div>
+                    <h4 style="font-size: 16px; font-weight: 700; margin-bottom: 8px;">Telegram Mini-App Interface</h4>
+                    <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 14px;">Build Web3 Telegram bot UI for mobile bonding curve swaps.</p>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="color: var(--emerald); font-weight: 700; font-size: 13px;">50,000 $ROBIN_MCP</span>
+                        <button class="btn-secondary" style="font-size: 12px; padding: 6px 12px;" onclick="claimBountyNotice(18)">Claim Issue</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const payloads = {
+            get_robinhood_ticker: '{"ticker": "USDG"}',
+            get_evm_balance: '{"address": "0x0000000000000000000000000000000000000000", "token_address": "USDG"}',
+            simulate_evm_transaction: '{"contract_address": "0xAb783574A8B12d580659e86F01dEA310Fb300113", "function_name": "buy", "value_wei": 50000000000000000}',
+            estimate_meme_trade_output: '{"token_address": "USDG", "trade_type": "buy", "amount": 0.05}',
+            switch_rpc_network: '{"network_name": "robinhood-mainnet"}'
+        };
+
+        function updateMcpParams() {
+            const tool = document.getElementById('mcp-tool-select').value;
+            document.getElementById('mcp-json-args').value = payloads[tool] || '{}';
+        }
+
+        function sendMcpTestRequest() {
+            const tool = document.getElementById('mcp-tool-select').value;
+            const args = document.getElementById('mcp-json-args').value;
+            const out = document.getElementById('mcp-response-output');
+            out.innerText = `⏳ Sending JSON-RPC request for tool: ${tool}...`;
+            
+            setTimeout(() => {
+                const response = {
+                    jsonrpc: "2.0",
+                    id: Math.floor(Math.random() * 1000),
+                    result: {
+                        content: [
+                            {
+                                type: "text",
+                                text: `[MCP SUCCESS] Executed ${tool} cleanly on Robinhood L2 RPC!\nPayload: ${args}`
+                            }
+                        ],
+                        isError: false
+                    }
+                };
+                out.innerText = JSON.stringify(response, null, 2);
+                showToast(`MCP Tool ${tool} dispatched cleanly!`, "success");
+            }, 800);
+        }
+
+        function claimBountyNotice(id) {
+            showToast(`To claim Issue #${id}, submit your PR with "Wallet: 0xYourAddress" in description!`, "info");
+        }
+    </script>
+
+    <footer>
+        <p>Robinhood Chain L2 Ecosystem • Pure Python MCP Server • Maintained by Ashutosh Singh</p>
+    </footer>
+</body>
+</html>

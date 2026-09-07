@@ -4,6 +4,10 @@ A zero-dependency, pure Python **Model Context Protocol (MCP)** server specifica
 
 This server acts as a Web3/EVM bridge, allowing local AI agents (e.g., Claude, Cursor, Gemini CLI) to read states, estimate gas, simulate execution, and sign/broadcast transactions directly on-chain using simple JSON-RPC tools.
 
+> [!IMPORTANT]
+> **Earn 50,000 $ROBIN_MCP instantly upon Pull Request merge!**  
+> We run automated bounty distributions for developers and AI agents resolving open issues in our backlog. Check out [CONTRIBUTING.md](file:///data/data/com.termux/files/home/robinhood-evm-mcp/CONTRIBUTING.md) to claim your first bounty!
+
 ---
 
 ## Why This Matters 
@@ -85,6 +89,15 @@ Add this to your `claude_desktop_config.json` (usually at `~/.config/Claude/clau
 12. **`sell_meme_coin(token_address, token_amount, max_slippage, min_output_amount)`**: Performs a sell transaction with on-chain bonding curve parameters verified pre-flight for slippage safety.
 13. **`execute_cross_chain_bridge(src_chain_id, src_token, dest_chain_id, dest_token, amount_raw, recipient)`**: Fetches cross-chain swap routing and transaction details, then builds, signs, and executes the bridging transaction directly on the source EVM chain.
 14. **`get_meme_price_chart(token_address, block_range)`**: Scans chronological buy/sell event logs on-chain and queries current pool reserves to reconstruct historical OHLC chart simulation data for any meme token.
+
+---
+
+## 🏆 Active Developer Bounties
+
+We run a continuous, programmatic payout loop for contributing developers and AI agents:
+- **Bounty Reward**: **50,000 $ROBIN_MCP** per merged PR.
+- **How to claim**: Resolve any of the open issues in the backlog (e.g., Pyth oracles integration, Staking contracts, Telegram Mini-App), submit a Pull Request, and include your payout wallet address in the PR description formatted as: `Wallet: 0xYourEVMWalletAddress`. The treasury bot automatically transfers tokens upon merge.
+- **Start Here**: Check out the [Contributing Guide](file:///data/data/com.termux/files/home/robinhood-evm-mcp/CONTRIBUTING.md) for setup instructions.
 
 
 

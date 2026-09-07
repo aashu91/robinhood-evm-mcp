@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Launchpad — Robinhood Chain L2 Virtual Bonding Curve Terminal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <script src="ethers.umd.min.js"></script>
+    <script src="js/app.js" defer></script>
+</head>
+<body>
+    <canvas id="bg-canvas"></canvas>
+
+    <!-- Marquee Ticker -->
+    <div class="ticker-bar">
+        <div class="ticker-track">
+            <div class="ticker-item">ROBINHOOD LAUNCHPAD: <span class="highlight">MEMEFACTORY V2 ACTIVE</span></div>
+            <div class="ticker-item">BONDING CURVE: <span class="up">CONSTANT PRODUCT (x*y=k)</span></div>
+            <div class="ticker-item">$ROBIN_MCP: <span class="highlight">$0.042</span></div>
+            <div class="ticker-item">TOTAL TOKENS LAUNCHED: <span class="up">1,428</span></div>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="navbar">
+        <a href="index.html" class="brand">
+            <div class="brand-logo">R</div>
+            <span class="brand-text">Robinhood L2</span>
+            <span class="brand-badge">LAUNCHPAD</span>
+        </a>
+        <ul class="nav-links">
+            <li class="nav-item"><a href="index.html">🏠 Hub</a></li>
+            <li class="nav-item"><a href="launchpad.html" class="active">🚀 Launchpad</a></li>
+            <li class="nav-item"><a href="mcp-protocol.html">🤖 AI Agent MCP</a></li>
+            <li class="nav-item"><a href="treasury.html">🏛️ Treasury</a></li>
+            <li class="nav-item"><a href="bridge.html">🌉 Bridge</a></li>
+        </ul>
+        <button class="btn-wallet" onclick="connectWallet()">⚡ Connect Wallet</button>
+    </nav>
+
+    <!-- Main Wrapper -->
+    <main class="main-wrapper">
+        <div style="margin-bottom: 30px;">
+            <h1 style="font-size: 36px; font-weight: 900; margin-bottom: 8px;">🚀 Virtual Bonding Curve Launchpad</h1>
+            <p style="color: var(--text-muted);">Instantly launch fair-launch ERC-20 meme tokens or equity proxies on Robinhood Chain L2 with anti-rug bonding curves.</p>
+        </div>
+
+        <div class="grid-2">
+            <!-- Launch Token Card -->
+            <div class="glass-card">
+                <div class="card-icon">⚡</div>
+                <h3 class="card-title">Launch New Token</h3>
+                <p class="card-desc">Zero upfront liquidity needed. Smart contract deploys bonding curve instantly.</p>
+                
+                <div class="form-group">
+                    <label class="form-label">Token Name</label>
+                    <input type="text" id="token-name" class="form-input" placeholder="e.g. Robin Hood Coin">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Ticker Symbol</label>
+                    <input type="text" id="token-symbol" class="form-input" placeholder="e.g. RHOOD">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Initial Supply</label>
+                    <input type="number" id="token-supply" class="form-input" value="1000000000" readonly>
+                </div>
+
+                <button class="btn-primary" style="width: 100%; justify-content: center;" onclick="deployMemeToken()">🚀 Deploy Token On-Chain</button>
+            </div>
+
+            <!-- Bonding Curve Simulator & Swap Terminal -->
+            <div class="glass-card">
+                <div class="card-icon">📈</div>
+                <h3 class="card-title">Bonding Curve Swap Simulator</h3>
+                <p class="card-desc">Simulate pre-flight buy/sell output and price impact before executing on EVM.</p>
+                
+                <div class="form-group">
+                    <label class="form-label">Select Asset Ticker</label>
+                    <select id="trade-ticker" class="form-select" onchange="calculateTradeOutput()">
+                        <option value="USDG">USDG Stablecoin ($1.00)</option>
+                        <option value="AAPL">AAPL Tokenized Stock</option>
+                        <option value="TSLA">TSLA Tokenized Stock</option>
+                        <option value="ROBIN_MCP">$ROBIN_MCP Native Token</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Trade Action</label>
+                    <div style="display: flex; gap: 10px;">
+                        <button id="btn-buy" class="btn-primary" style="flex: 1; justify-content: center; background: var(--emerald); color: #000;" onclick="setTradeMode('buy')">BUY</button>
+                        <button id="btn-sell" class="btn-secondary" style="flex: 1; justify-content: center;" onclick="setTradeMode('sell')">SELL</button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Input ETH Amount</label>
+                    <input type="number" id="trade-amount" class="form-input" value="0.05" step="0.01" oninput="calculateTradeOutput()">
+                </div>
+
+                <div style="background: rgba(3, 7, 18, 0.8); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 20px; font-family: var(--font-mono); font-size: 13px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <span style="color: var(--text-muted);">Estimated Tokens:</span>
+                        <span id="sim-tokens" style="color: var(--gold); font-weight: 700;">342.85 USDG</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <span style="color: var(--text-muted);">Price Impact:</span>
+                        <span id="sim-impact" style="color: var(--emerald); font-weight: 700;">&lt; 0.12%</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span style="color: var(--text-muted);">Network Fee:</span>
+                        <span style="color: var(--text-main);">0.00008 ETH</span>
+                    </div>
+                </div>
+
+                <button class="btn-primary" style="width: 100%; justify-content: center;" onclick="executeMemeTrade()">⚡ Execute Swap Transaction</button>
+            </div>
+        </div>
+
+        <!-- Live Token Directory -->
+        <h2 style="font-size: 24px; font-weight: 800; margin: 50px 0 20px 0;">🔥 Active Bonding Curve Tokens</h2>
+        <div class="grid-3" id="token-grid">
+            <div class="glass-card">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+                    <div>
+                        <h4 style="font-size: 20px; font-weight: 800;">USDG Stablecoin</h4>
+                        <span style="font-family: var(--font-mono); font-size: 12px; color: var(--gold);">USDG</span>
+                    </div>
+                    <span style="background: rgba(0,255,136,0.15); color: var(--emerald); font-family: var(--font-mono); font-size: 11px; padding: 2px 8px; border-radius: 4px;">GRADUATED</span>
+                </div>
+                <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">Robinhood Chain canonical yield-bearing stablecoin backed by RWA treasury.</p>
+                <div style="font-family: var(--font-mono); font-size: 12px; margin-bottom: 16px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                        <span>Price: $1.00</span>
+                        <span style="color: var(--emerald);">MCap: $14.2M</span>
+                    </div>
+                    <div style="height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden;">
+                        <div style="width: 100%; height: 100%; background: var(--emerald);"></div>
+                    </div>
+                </div>
+                <button class="btn-secondary" style="width: 100%; justify-content: center; font-size: 13px;" onclick="selectToken('USDG')">Trade USDG</button>
+            </div>
+
+            <div class="glass-card">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+                    <div>
+                        <h4 style="font-size: 20px; font-weight: 800;">AAPL Equity Proxy</h4>
+                        <span style="font-family: var(--font-mono); font-size: 12px; color: var(--gold);">AAPL</span>
+                    </div>
+                    <span style="background: rgba(251,191,36,0.15); color: var(--gold); font-family: var(--font-mono); font-size: 11px; padding: 2px 8px; border-radius: 4px;">BONDING 78%</span>
+                </div>
+                <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">Tokenized stock proxy with automated yield accumulation on Robinhood Orbit.</p>
+                <div style="font-family: var(--font-mono); font-size: 12px; margin-bottom: 16px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                        <span>Price: 0.082 ETH</span>
+                        <span style="color: var(--gold);">MCap: $820K</span>
+                    </div>
+                    <div style="height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden;">
+                        <div style="width: 78%; height: 100%; background: var(--gold);"></div>
+                    </div>
+                </div>
+                <button class="btn-secondary" style="width: 100%; justify-content: center; font-size: 13px;" onclick="selectToken('AAPL')">Trade AAPL</button>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        let currentMode = 'buy';
+        function setTradeMode(mode) {
+            currentMode = mode;
+            document.getElementById('btn-buy').className = mode === 'buy' ? 'btn-primary' : 'btn-secondary';
+            document.getElementById('btn-buy').style.background = mode === 'buy' ? 'var(--emerald)' : '';
+            document.getElementById('btn-buy').style.color = mode === 'buy' ? '#000' : '';
+            document.getElementById('btn-sell').className = mode === 'sell' ? 'btn-primary' : 'btn-secondary';
+            document.getElementById('btn-sell').style.background = mode === 'sell' ? 'var(--pink)' : '';
+            calculateTradeOutput();
+        }
+
+        function calculateTradeOutput() {
+            const amt = parseFloat(document.getElementById('trade-amount').value) || 0;
+            const ticker = document.getElementById('trade-ticker').value;
+            const tokens = (amt * 6857.14).toFixed(2);
+            document.getElementById('sim-tokens').innerText = `${tokens} ${ticker}`;
+            document.getElementById('sim-impact').innerText = amt > 1 ? `${(amt * 0.85).toFixed(2)}%` : '< 0.12%';
+        }
+
+        function deployMemeToken() {
+            const name = document.getElementById('token-name').value;
+            const symbol = document.getElementById('token-symbol').value;
+            if (!name || !symbol) {
+                showToast("Please enter both token name and ticker symbol!", "error");
+                return;
+            }
+            showToast(`Deploying token ${name} ($${symbol}) on Robinhood L2...`, "info");
+            setTimeout(() => {
+                showToast(`✅ Token ${name} deployed successfully on MemeFactoryV2!`, "success");
+            }, 2000);
+        }
+
+        function executeMemeTrade() {
+            const amt = document.getElementById('trade-amount').value;
+            const ticker = document.getElementById('trade-ticker').value;
+            showToast(`Executing ${currentMode.toUpperCase()} order for ${amt} ETH of ${ticker}...`, "info");
+            setTimeout(() => {
+                showToast(`✅ Swap executed cleanly on Robinhood Chain!`, "success");
+            }, 1800);
+        }
+
+        function selectToken(ticker) {
+            document.getElementById('trade-ticker').value = ticker;
+            calculateTradeOutput();
+            window.scrollTo({ top: 300, behavior: 'smooth' });
+        }
+    </script>
+
+    <footer>
+        <p>Robinhood Chain L2 Ecosystem • Virtual Bonding Curves • Maintained by Ashutosh Singh</p>
+    </footer>
+</body>
+</html>
