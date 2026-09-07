@@ -1,17 +1,5 @@
 {
-  "framework": null,
-  "cleanUrls": true,
-  "builds": [
-    { "src": "index.html", "use": "@vercel/static" },
-    { "src": "launchpad.html", "use": "@vercel/static" },
-    { "src": "mcp-protocol.html", "use": "@vercel/static" },
-    { "src": "treasury.html", "use": "@vercel/static" },
-    { "src": "bridge.html", "use": "@vercel/static" },
-    { "src": "deploy_app.html", "use": "@vercel/static" },
-    { "src": "css/style.css", "use": "@vercel/static" },
-    { "src": "js/app.js", "use": "@vercel/static" },
-    { "src": "ethers.umd.min.js", "use": "@vercel/static" }
-  ],
+  "version": 2,
   "routes": [
     { "src": "/launchpad", "dest": "/launchpad.html" },
     { "src": "/mcp-protocol", "dest": "/mcp-protocol.html" },
@@ -28,14 +16,19 @@
       "source": "/(.*)",
       "headers": [
         {
-          "key": "Content-Security-Policy",
-          "value": "default-src 'self' https: data: 'unsafe-inline' 'unsafe-eval'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://rpc.mainnet.chain.robinhood.com https://rpc.testnet.chain.robinhood.com wss://rpc.mainnet.chain.robinhood.com wss://rpc.testnet.chain.robinhood.com wss://*.walletconnect.com wss://*.walletlink.org wss://*.bridge.walletconnect.org;"
+          "key": "Content-Type",
+          "value": "text/html; charset=utf-8"
         },
         {
           "key": "Access-Control-Allow-Origin",
           "value": "*"
+        },
+        {
+          "key": "Content-Security-Policy",
+          "value": "default-src * 'unsafe-inline' 'unsafe-eval' data: blob:; script-src * 'unsafe-inline' 'unsafe-eval'; style-src * 'unsafe-inline'; font-src * data:; connect-src * wss: https:;"
         }
       ]
     }
   ]
 }
+
