@@ -503,3 +503,123 @@ footer a {
     from { transform: translateX(100%); opacity: 0; }
     to { transform: translateX(0); opacity: 1; }
 }
+
+/* KOTH King of the Hill Card */
+.koth-card {
+    background: linear-gradient(135deg, rgba(251, 191, 36, 0.15), rgba(15, 23, 42, 0.95));
+    border: 2px solid var(--gold);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+    margin-bottom: 30px;
+    box-shadow: 0 0 35px rgba(251, 191, 36, 0.25);
+    position: relative;
+    overflow: hidden;
+    animation: kothGlow 3s infinite alternate;
+}
+
+@keyframes kothGlow {
+    0% { box-shadow: 0 0 20px rgba(251, 191, 36, 0.2); }
+    100% { box-shadow: 0 0 45px rgba(251, 191, 36, 0.5); }
+}
+
+.koth-crown-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: linear-gradient(90deg, #fbbf24, #d97706);
+    color: #000;
+    font-weight: 900;
+    font-size: 13px;
+    padding: 4px 14px;
+    border-radius: var(--radius-full);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 12px;
+}
+
+/* Bonding Curve Progress Bar */
+.bonding-progress-track {
+    width: 100%;
+    height: 10px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 5px;
+    overflow: hidden;
+    position: relative;
+    margin: 8px 0;
+}
+
+.bonding-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--gold), var(--emerald));
+    border-radius: 5px;
+    transition: width 0.6s ease;
+    box-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+}
+
+/* Live Trade Feed Stream */
+.live-feed-box {
+    background: rgba(3, 7, 18, 0.9);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 16px;
+    max-height: 220px;
+    overflow-y: auto;
+    font-family: var(--font-mono);
+    font-size: 12px;
+}
+
+.live-feed-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    animation: fadeIn 0.4s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* RWA Stock Token Selector Badges */
+.rwa-badge {
+    background: rgba(0, 240, 255, 0.15);
+    color: var(--cyan);
+    border: 1px solid rgba(0, 240, 255, 0.4);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 700;
+}
+
+.tab-selector {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    background: rgba(3, 7, 18, 0.8);
+    padding: 4px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border);
+}
+
+.tab-btn {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    font-weight: 700;
+    font-size: 13px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.tab-btn.active {
+    background: rgba(251, 191, 36, 0.2);
+    color: var(--gold);
+    border: 1px solid var(--gold);
+}
+
