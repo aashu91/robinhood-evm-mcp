@@ -1,5 +1,17 @@
 {
+  "framework": null,
   "cleanUrls": true,
+  "builds": [
+    { "src": "index.html", "use": "@vercel/static" },
+    { "src": "launchpad.html", "use": "@vercel/static" },
+    { "src": "mcp-protocol.html", "use": "@vercel/static" },
+    { "src": "treasury.html", "use": "@vercel/static" },
+    { "src": "bridge.html", "use": "@vercel/static" },
+    { "src": "deploy_app.html", "use": "@vercel/static" },
+    { "src": "css/style.css", "use": "@vercel/static" },
+    { "src": "js/app.js", "use": "@vercel/static" },
+    { "src": "ethers.umd.min.js", "use": "@vercel/static" }
+  ],
   "routes": [
     { "src": "/launchpad", "dest": "/launchpad.html" },
     { "src": "/mcp-protocol", "dest": "/mcp-protocol.html" },
