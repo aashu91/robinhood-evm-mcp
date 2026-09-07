@@ -2,7 +2,7 @@
 
 const ROBINHOOD_CONFIG = {
     chainName: 'Robinhood L2 Mainnet',
-    chainId: '0x19B8', // 6584 in hex (example Robinhood Orbit ID)
+    chainId: '0x19B8',
     rpcUrl: 'https://rpc.mainnet.chain.robinhood.com',
     symbol: 'ETH',
     contracts: {
@@ -100,7 +100,7 @@ async function checkWalletConnection() {
 
 async function connectWallet() {
     if (typeof window.ethereum === 'undefined') {
-        showToast("No Web3 wallet detected! Install MetaMask or OKX Wallet.", "error");
+        showToast("No Web3 wallet detected. Install MetaMask or OKX Wallet.", "error");
         return;
     }
     try {
@@ -118,7 +118,7 @@ async function connectWallet() {
 function updateWalletUI() {
     const walletBtns = document.querySelectorAll('.btn-wallet');
     walletBtns.forEach(btn => {
-        btn.innerHTML = `🟢 ${userAccount.substring(0, 6)}...${userAccount.substring(38)}`;
+        btn.innerHTML = `[ONLINE] ${userAccount.substring(0, 6)}...${userAccount.substring(38)}`;
         btn.style.background = 'rgba(0, 255, 136, 0.15)';
         btn.style.border = '1px solid #00ff88';
         btn.style.color = '#00ff88';
@@ -135,8 +135,8 @@ function showToast(message, type = 'info') {
     }
     const toast = document.createElement('div');
     toast.className = 'toast';
-    const icon = type === 'error' ? '❌' : type === 'success' ? '✅' : 'ℹ️';
-    toast.innerHTML = `<span>${icon}</span> <div>${message}</div>`;
+    const tag = type === 'error' ? '[ERROR]' : type === 'success' ? '[SUCCESS]' : '[INFO]';
+    toast.innerHTML = `<span style="font-family: var(--font-mono); font-size: 11px; font-weight: 700; color: var(--gold);">${tag}</span> <div>${message}</div>`;
     container.appendChild(toast);
     setTimeout(() => {
         toast.remove();

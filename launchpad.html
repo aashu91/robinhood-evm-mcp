@@ -30,26 +30,26 @@
             <span class="brand-badge">LAUNCHPAD</span>
         </a>
         <ul class="nav-links">
-            <li class="nav-item"><a href="index.html">🏠 Hub</a></li>
-            <li class="nav-item"><a href="launchpad.html" class="active">🚀 Launchpad</a></li>
-            <li class="nav-item"><a href="mcp-protocol.html">🤖 AI Agent MCP</a></li>
-            <li class="nav-item"><a href="treasury.html">🏛️ Treasury</a></li>
-            <li class="nav-item"><a href="bridge.html">🌉 Bridge</a></li>
+            <li class="nav-item"><a href="index.html">Hub</a></li>
+            <li class="nav-item"><a href="launchpad.html" class="active">Launchpad</a></li>
+            <li class="nav-item"><a href="mcp-protocol.html">AI Agent MCP</a></li>
+            <li class="nav-item"><a href="treasury.html">Treasury</a></li>
+            <li class="nav-item"><a href="bridge.html">Bridge</a></li>
         </ul>
-        <button class="btn-wallet" onclick="connectWallet()">⚡ Connect Wallet</button>
+        <button class="btn-wallet" onclick="connectWallet()">Connect Wallet</button>
     </nav>
 
     <!-- Main Wrapper -->
     <main class="main-wrapper">
         <div style="margin-bottom: 30px;">
-            <h1 style="font-size: 36px; font-weight: 900; margin-bottom: 8px;">🚀 Virtual Bonding Curve Launchpad</h1>
+            <h1 style="font-size: 36px; font-weight: 900; margin-bottom: 8px;">Virtual Bonding Curve Launchpad</h1>
             <p style="color: var(--text-muted);">Instantly launch fair-launch ERC-20 meme tokens or equity proxies on Robinhood Chain L2 with anti-rug bonding curves.</p>
         </div>
 
         <div class="grid-2">
             <!-- Launch Token Card -->
             <div class="glass-card">
-                <div class="card-icon">⚡</div>
+                <div class="card-icon">GEN</div>
                 <h3 class="card-title">Launch New Token</h3>
                 <p class="card-desc">Zero upfront liquidity needed. Smart contract deploys bonding curve instantly.</p>
                 
@@ -68,12 +68,12 @@
                     <input type="number" id="token-supply" class="form-input" value="1000000000" readonly>
                 </div>
 
-                <button class="btn-primary" style="width: 100%; justify-content: center;" onclick="deployMemeToken()">🚀 Deploy Token On-Chain</button>
+                <button class="btn-primary" style="width: 100%; justify-content: center;" onclick="deployMemeToken()">Deploy Token On-Chain &rarr;</button>
             </div>
 
             <!-- Bonding Curve Simulator & Swap Terminal -->
             <div class="glass-card">
-                <div class="card-icon">📈</div>
+                <div class="card-icon">AMM</div>
                 <h3 class="card-title">Bonding Curve Swap Simulator</h3>
                 <p class="card-desc">Simulate pre-flight buy/sell output and price impact before executing on EVM.</p>
                 
@@ -115,12 +115,12 @@
                     </div>
                 </div>
 
-                <button class="btn-primary" style="width: 100%; justify-content: center;" onclick="executeMemeTrade()">⚡ Execute Swap Transaction</button>
+                <button class="btn-primary" style="width: 100%; justify-content: center;" onclick="executeMemeTrade()">Execute Swap Transaction &rarr;</button>
             </div>
         </div>
 
         <!-- Live Token Directory -->
-        <h2 style="font-size: 24px; font-weight: 800; margin: 50px 0 20px 0;">🔥 Active Bonding Curve Tokens</h2>
+        <h2 style="font-size: 24px; font-weight: 800; margin: 50px 0 20px 0;">Active Bonding Curve Tokens</h2>
         <div class="grid-3" id="token-grid">
             <div class="glass-card">
                 <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
@@ -195,7 +195,7 @@
             }
             showToast(`Deploying token ${name} ($${symbol}) on Robinhood L2...`, "info");
             setTimeout(() => {
-                showToast(`✅ Token ${name} deployed successfully on MemeFactoryV2!`, "success");
+                showToast(`Token ${name} deployed successfully on MemeFactoryV2!`, "success");
             }, 2000);
         }
 
@@ -204,7 +204,7 @@
             const ticker = document.getElementById('trade-ticker').value;
             showToast(`Executing ${currentMode.toUpperCase()} order for ${amt} ETH of ${ticker}...`, "info");
             setTimeout(() => {
-                showToast(`✅ Swap executed cleanly on Robinhood Chain!`, "success");
+                showToast(`Swap executed cleanly on Robinhood Chain!`, "success");
             }, 1800);
         }
 

@@ -29,26 +29,26 @@
             <span class="brand-badge">TREASURY</span>
         </a>
         <ul class="nav-links">
-            <li class="nav-item"><a href="index.html">🏠 Hub</a></li>
-            <li class="nav-item"><a href="launchpad.html">🚀 Launchpad</a></li>
-            <li class="nav-item"><a href="mcp-protocol.html">🤖 AI Agent MCP</a></li>
-            <li class="nav-item"><a href="treasury.html" class="active">🏛️ Treasury</a></li>
-            <li class="nav-item"><a href="bridge.html">🌉 Bridge</a></li>
+            <li class="nav-item"><a href="index.html">Hub</a></li>
+            <li class="nav-item"><a href="launchpad.html">Launchpad</a></li>
+            <li class="nav-item"><a href="mcp-protocol.html">AI Agent MCP</a></li>
+            <li class="nav-item"><a href="treasury.html" class="active">Treasury</a></li>
+            <li class="nav-item"><a href="bridge.html">Bridge</a></li>
         </ul>
-        <button class="btn-wallet" onclick="connectWallet()">⚡ Connect Wallet</button>
+        <button class="btn-wallet" onclick="connectWallet()">Connect Wallet</button>
     </nav>
 
     <!-- Main Wrapper -->
     <main class="main-wrapper">
         <div style="margin-bottom: 30px;">
-            <h1 style="font-size: 36px; font-weight: 900; margin-bottom: 8px;">🏛️ Community Trust Multi-Sig Bank</h1>
+            <h1 style="font-size: 36px; font-weight: 900; margin-bottom: 8px;">Community Trust Multi-Sig Bank</h1>
             <p style="color: var(--text-muted);">Decentralized multi-sig treasury banks deployed via <code style="color: var(--gold);">CommunityTrustFactory.sol</code> for collective capital allocation and dividend distribution.</p>
         </div>
 
         <div class="grid-2">
             <!-- Deploy New Multi-Sig Bank -->
             <div class="glass-card">
-                <div class="card-icon">🏦</div>
+                <div class="card-icon">BANK</div>
                 <h3 class="card-title">Deploy New Community Trust</h3>
                 <p class="card-desc">Spawn a multi-sig bank contract on Robinhood L2 with custom director governance.</p>
 
@@ -67,12 +67,12 @@
                     <input type="number" id="trust-threshold" class="form-input" value="2" min="1">
                 </div>
 
-                <button class="btn-primary" style="width: 100%; justify-content: center;" onclick="deployTrustBank()">🏛️ Spawn Trust Contract</button>
+                <button class="btn-primary" style="width: 100%; justify-content: center;" onclick="deployTrustBank()">Spawn Trust Contract &rarr;</button>
             </div>
 
             <!-- Proposal & Dividend Management -->
             <div class="glass-card">
-                <div class="card-icon">💰</div>
+                <div class="card-icon">VAULT</div>
                 <h3 class="card-title">Dividend & Proposal Matrix</h3>
                 <p class="card-desc">Propose payouts or claim accrued yield distributions directly from active vaults.</p>
 
@@ -96,8 +96,8 @@
                 </div>
 
                 <div style="display: flex; gap: 12px;">
-                    <button class="btn-primary" style="flex: 1; justify-content: center; background: var(--emerald); color: #000;" onclick="claimDividends()">💰 Claim Dividends</button>
-                    <button class="btn-secondary" style="flex: 1; justify-content: center;" onclick="proposeTx()">📝 New Proposal</button>
+                    <button class="btn-primary" style="flex: 1; justify-content: center; background: var(--emerald); color: #000;" onclick="claimDividends()">Claim Dividends</button>
+                    <button class="btn-secondary" style="flex: 1; justify-content: center;" onclick="proposeTx()">New Proposal</button>
                 </div>
             </div>
         </div>
@@ -113,14 +113,14 @@
             }
             showToast(`Deploying Community Trust Bank '${name}' via CommunityTrustFactory...`, "info");
             setTimeout(() => {
-                showToast(`✅ Trust Bank '${name}' deployed on Robinhood Chain L2!`, "success");
+                showToast(`Trust Bank '${name}' deployed on Robinhood Chain L2!`, "success");
             }, 2000);
         }
 
         function claimDividends() {
             showToast("Submitting claim for 142.50 USDG dividends...", "info");
             setTimeout(() => {
-                showToast("✅ 142.50 USDG transferred to your wallet!", "success");
+                showToast("142.50 USDG transferred to your wallet!", "success");
             }, 1800);
         }
 

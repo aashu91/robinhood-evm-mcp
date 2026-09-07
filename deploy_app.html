@@ -338,7 +338,7 @@
             
             await contract.deployed();
             
-            showStatus("Success 🎉", `MemeFactory deployed successfully!\nContract Address: ${contract.address}\n\nCopy this address and configure it as MEME_FACTORY_ADDRESS in your .env file.`, "success");
+            showStatus("Success ", `MemeFactory deployed successfully!\nContract Address: ${contract.address}\n\nCopy this address and configure it as MEME_FACTORY_ADDRESS in your .env file.`, "success");
         } catch (err) {
             deployBtn.disabled = false;
             showStatus("Deployment Failed", err.message, "error");

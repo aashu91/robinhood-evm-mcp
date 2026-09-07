@@ -13,3 +13,5 @@ abi_cache.db
 
 # Local tests/logs
 *.log
+.vercel
+.env*

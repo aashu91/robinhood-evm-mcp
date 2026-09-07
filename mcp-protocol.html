@@ -29,25 +29,25 @@
             <span class="brand-badge">MCP AGENTS</span>
         </a>
         <ul class="nav-links">
-            <li class="nav-item"><a href="index.html">🏠 Hub</a></li>
-            <li class="nav-item"><a href="launchpad.html">🚀 Launchpad</a></li>
-            <li class="nav-item"><a href="mcp-protocol.html" class="active">🤖 AI Agent MCP</a></li>
-            <li class="nav-item"><a href="treasury.html">🏛️ Treasury</a></li>
-            <li class="nav-item"><a href="bridge.html">🌉 Bridge</a></li>
+            <li class="nav-item"><a href="index.html">Hub</a></li>
+            <li class="nav-item"><a href="launchpad.html">Launchpad</a></li>
+            <li class="nav-item"><a href="mcp-protocol.html" class="active">AI Agent MCP</a></li>
+            <li class="nav-item"><a href="treasury.html">Treasury</a></li>
+            <li class="nav-item"><a href="bridge.html">Bridge</a></li>
         </ul>
-        <button class="btn-wallet" onclick="connectWallet()">⚡ Connect Wallet</button>
+        <button class="btn-wallet" onclick="connectWallet()">Connect Wallet</button>
     </nav>
 
     <!-- Main Wrapper -->
     <main class="main-wrapper">
         <div style="margin-bottom: 30px;">
-            <h1 style="font-size: 36px; font-weight: 900; margin-bottom: 8px;">🤖 Model Context Protocol (MCP) Server</h1>
+            <h1 style="font-size: 36px; font-weight: 900; margin-bottom: 8px;">Model Context Protocol (MCP) Server</h1>
             <p style="color: var(--text-muted);">Connect Claude, Cursor, and Termux local AI agents directly to Robinhood Chain L2 over pure Python stdio JSON-RPC.</p>
         </div>
 
         <!-- MCP Playground & Tool Tester -->
         <div class="glass-card" style="margin-bottom: 40px;">
-            <div class="card-icon">⚡</div>
+            <div class="card-icon">RUN</div>
             <h3 class="card-title">Interactive MCP Tool Tester</h3>
             <p class="card-desc">Simulate JSON-RPC tool dispatches to the local Robinhood MCP server.</p>
 
@@ -69,7 +69,7 @@
                         <textarea id="mcp-json-args" class="form-input" rows="4" style="font-family: var(--font-mono); font-size: 13px;">{"ticker": "USDG"}</textarea>
                     </div>
 
-                    <button class="btn-primary" style="width: 100%; justify-content: center;" onclick="sendMcpTestRequest()">▶ Run MCP Tool Call</button>
+                    <button class="btn-primary" style="width: 100%; justify-content: center;" onclick="sendMcpTestRequest()">Run MCP Tool Call &rarr;</button>
                 </div>
 
                 <div>
@@ -82,7 +82,7 @@
         </div>
 
         <!-- AI Client Configuration Cards -->
-        <h2 style="font-size: 24px; font-weight: 800; margin-bottom: 20px;">🔌 Connect AI Clients</h2>
+        <h2 style="font-size: 24px; font-weight: 800; margin-bottom: 20px;">Connect AI Clients</h2>
         <div class="grid-2" style="margin-bottom: 50px;">
             <!-- Cursor Config -->
             <div class="glass-card">
@@ -114,7 +114,7 @@ Command: python /data/data/com.termux/files/home/robinhood-evm-mcp/mcp_server.py
 
         <!-- Developer Bounties Section -->
         <div id="bounties" class="glass-card" style="border-color: var(--gold); background: linear-gradient(135deg, rgba(251,191,36,0.05), rgba(15,23,42,0.8));">
-            <div class="card-icon" style="background: rgba(251,191,36,0.15);">🏆</div>
+            <div class="card-icon" style="background: rgba(251,191,36,0.15);">PR</div>
             <h3 class="card-title" style="font-size: 26px;">Active Developer Bounties</h3>
             <p class="card-desc">Earn <strong>50,000 $ROBIN_MCP</strong> instantly upon PR merge via automated treasury payout bot (<code style="color: var(--gold);">github_payout_bot.py</code>).</p>
 
@@ -170,7 +170,7 @@ Command: python /data/data/com.termux/files/home/robinhood-evm-mcp/mcp_server.py
             const tool = document.getElementById('mcp-tool-select').value;
             const args = document.getElementById('mcp-json-args').value;
             const out = document.getElementById('mcp-response-output');
-            out.innerText = `⏳ Sending JSON-RPC request for tool: ${tool}...`;
+            out.innerText = `Sending JSON-RPC request for tool: ${tool}...`;
             
             setTimeout(() => {
                 const response = {
