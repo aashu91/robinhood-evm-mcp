@@ -35,7 +35,13 @@
             <li class="nav-item"><a href="treasury.html">Treasury</a></li>
             <li class="nav-item"><a href="bridge.html" class="active">Bridge</a></li>
         </ul>
-        <button class="btn-wallet" onclick="connectWallet()">Connect Wallet</button>
+        <div class="nav-controls" id="mode-switch-container">
+            <div class="mode-switch-pill" onclick="toggleModeSwitch()" title="Toggle Web3 Testnet vs Paper Trading Simulator">
+                <span id="badge-web3" class="mode-badge">🌐 Web3</span>
+                <span id="badge-paper" class="mode-badge">🎮 Simulator</span>
+            </div>
+            <button class="btn-wallet" onclick="openWalletDrawer()">Connect Wallet</button>
+        </div>
     </nav>
 
     <!-- Main Wrapper -->
@@ -93,7 +99,7 @@
                 </div>
                 <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
                     <span style="color: var(--text-muted);">Protocol Fee:</span>
-                    <span id="bridge-fee" style="color: var(--gold); font-weight: 700;">0.0001 ETH ($0.32)</span>
+                    <span id="bridge-fee" style="color: var(--gold); font-weight: 700;">0.00018 ETH ($0.58)</span>
                 </div>
                 <div style="display: flex; justify-content: space-between;">
                     <span style="color: var(--text-muted);">Slippage Protection:</span>
@@ -115,12 +121,21 @@
         function executeBridgeTx() {
             const amt = document.getElementById('bridge-amt').value;
             const asset = document.getElementById('bridge-asset').value;
-            const recip = document.getElementById('bridge-recipient').value;
-            
-            showToast(`Routing ${amt} ${asset} cross-chain transaction...`, "info");
+            let recip = document.getElementById('bridge-recipient').value.trim();
+            if (!recip) {
+                recip = userAccount || '0x71C735Cc06e8a571618a3f228bde719eac01ef11';
+                document.getElementById('bridge-recipient').value = recip;
+            }
+
+            const srcChain = document.getElementById('src-chain').options[document.getElementById('src-chain').selectedIndex].text;
+            const destChain = document.getElementById('dest-chain').options[document.getElementById('dest-chain').selectedIndex].text;
+
+            showToast(`Routing ${amt} ${asset} cross-chain transfer from ${srcChain.split(' ')[0]} to ${destChain.split(' ')[0]}...`, "info");
+            if (typeof playAudioChime === 'function') playAudioChime('chime');
+
             setTimeout(() => {
-                showToast(`Cross-chain bridge transaction signed & broadcasted!`, "success");
-            }, 2000);
+                showToast(`Cross-chain bridge transaction signed & broadcasted! Recipient: ${recip.substring(0,6)}...`, "success");
+            }, 1800);
         }
     </script>
 

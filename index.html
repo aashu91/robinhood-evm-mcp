@@ -7,7 +7,7 @@
     <!-- Fonts & CSS -->
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
-    <!-- Local & CDN Ethers.js -->
+    <!-- Ethers.js & Sovereign Client Engine -->
     <script src="ethers.umd.min.js"></script>
     <script src="js/app.js" defer></script>
 </head>
@@ -17,7 +17,7 @@
     <!-- Marquee Ticker -->
     <div class="ticker-bar">
         <div class="ticker-track">
-            <div class="ticker-item">ROBINHOOD L2: <span class="highlight">ACTIVE (MAINNET)</span></div>
+            <div class="ticker-item">ROBINHOOD L2: <span class="highlight">ACTIVE (MAINNET &amp; TESTNET)</span></div>
             <div class="ticker-item">BLOCK TIME: <span class="up">320ms</span></div>
             <div class="ticker-item">$ROBIN_MCP: <span class="highlight">$0.042</span> <span class="up">+14.2%</span></div>
             <div class="ticker-item">USDG STABLECOIN: <span class="highlight">$1.000</span></div>
@@ -40,7 +40,13 @@
             <li class="nav-item"><a href="treasury.html">Treasury</a></li>
             <li class="nav-item"><a href="bridge.html">Bridge</a></li>
         </ul>
-        <button class="btn-wallet" onclick="connectWallet()">Connect Wallet</button>
+        <div class="nav-controls" id="mode-switch-container">
+            <div class="mode-switch-pill" onclick="toggleModeSwitch()" title="Toggle Web3 Testnet vs Paper Trading Simulator">
+                <span id="badge-web3" class="mode-badge">🌐 Web3</span>
+                <span id="badge-paper" class="mode-badge">🎮 Simulator</span>
+            </div>
+            <button class="btn-wallet" onclick="openWalletDrawer()">Connect Wallet</button>
+        </div>
     </nav>
 
     <!-- Main Content Wrapper -->
@@ -48,8 +54,8 @@
         <!-- Hero Section -->
         <section class="hero">
             <div class="hero-tag">Robinhood Chain L2 Ecosystem • Arbitrum Orbit Sub-Second Layer-2</div>
-            <h1 class="hero-title">Sovereign Code, Bonding Curves & AI Agents</h1>
-            <p class="hero-subtitle">The native Web3 platform bridging tokenized equity, meme launchpads, community multi-sig banks, and autonomous AI model context protocol (MCP) servers.</p>
+            <h1 class="hero-title">Sovereign Code, Bonding Curves &amp; AI Agents</h1>
+            <p class="hero-subtitle">The native Web3 platform bridging tokenized stock proxies (TSLAx, AAPL, NVDAx), virtual bonding curve launchpads, community multi-sig treasuries, and autonomous AI model context protocol (MCP) servers.</p>
             <div class="hero-actions">
                 <a href="launchpad.html" class="btn-primary">Enter Launchpad &rarr;</a>
                 <a href="mcp-protocol.html" class="btn-secondary">Explore AI MCP Tools</a>
@@ -84,7 +90,7 @@
             <div class="glass-card">
                 <div class="card-icon">L2</div>
                 <h3 class="card-title">Virtual Bonding Curve Launchpad</h3>
-                <p class="card-desc">Deploy ERC-20 meme tokens and tokenized stock proxies instantly with zero initial liquidity. Automated constant-product pricing curves protect against rug-pulls.</p>
+                <p class="card-desc">Deploy ERC-20 meme tokens and stock-backed RWA equity proxies instantly with zero initial liquidity. Automated constant-product pricing curves protect against rug-pulls.</p>
                 <a href="launchpad.html" class="btn-primary" style="font-size: 14px; padding: 10px 20px;">Launch Token &rarr;</a>
             </div>
 
@@ -120,13 +126,13 @@
                     <h3 style="font-size: 24px; font-weight: 800; color: var(--gold); margin-bottom: 8px;">$1M Arbitrum Open House Grant Target</h3>
                     <p style="color: var(--text-muted); font-size: 15px; max-width: 800px;">Contribute to open issues or build custom AI agents on Robinhood Chain to claim <strong>50,000 $ROBIN_MCP</strong> automated payouts upon PR merge!</p>
                 </div>
-                <a href="mcp-protocol.html#bounties" class="btn-primary">View Backlog & Claim Bounties &rarr;</a>
+                <a href="mcp-protocol.html#bounties" class="btn-primary">View Backlog &amp; Claim Bounties &rarr;</a>
             </div>
         </div>
     </main>
 
     <footer>
-        <p>Robinhood Chain L2 Ecosystem • Built with Pure Python MCP & Ethers.js • Maintained by <a href="https://github.com/salvationfinder" target="_blank">Ashutosh Singh (salvationfinder)</a></p>
+        <p>Robinhood Chain L2 Ecosystem • Built with Pure Python MCP &amp; Ethers.js • Maintained by <a href="https://github.com/salvationfinder" target="_blank">Ashutosh Singh (salvationfinder)</a></p>
     </footer>
 </body>
 </html>

@@ -35,7 +35,13 @@
             <li class="nav-item"><a href="treasury.html" class="active">Treasury</a></li>
             <li class="nav-item"><a href="bridge.html">Bridge</a></li>
         </ul>
-        <button class="btn-wallet" onclick="connectWallet()">Connect Wallet</button>
+        <div class="nav-controls" id="mode-switch-container">
+            <div class="mode-switch-pill" onclick="toggleModeSwitch()" title="Toggle Web3 Testnet vs Paper Trading Simulator">
+                <span id="badge-web3" class="mode-badge">🌐 Web3</span>
+                <span id="badge-paper" class="mode-badge">🎮 Simulator</span>
+            </div>
+            <button class="btn-wallet" onclick="openWalletDrawer()">Connect Wallet</button>
+        </div>
     </nav>
 
     <!-- Main Wrapper -->
@@ -59,7 +65,7 @@
 
                 <div class="form-group">
                     <label class="form-label">Board of Directors (Comma Separated EVM Addresses)</label>
-                    <textarea id="trust-directors" class="form-input" rows="3" placeholder="0x742d35Cc..., 0xf89e3c5506e8..."></textarea>
+                    <textarea id="trust-directors" class="form-input" rows="3" placeholder="0x742d35Cc06e..., 0xf89e3c5506e..."></textarea>
                 </div>
 
                 <div class="form-group">
@@ -73,25 +79,25 @@
             <!-- Proposal & Dividend Management -->
             <div class="glass-card">
                 <div class="card-icon">VAULT</div>
-                <h3 class="card-title">Dividend & Proposal Matrix</h3>
+                <h3 class="card-title">Dividend &amp; Proposal Matrix</h3>
                 <p class="card-desc">Propose payouts or claim accrued yield distributions directly from active vaults.</p>
 
                 <div class="form-group">
                     <label class="form-label">Active Trust Vault</label>
-                    <select id="vault-select" class="form-select">
-                        <option value="0x8849F01A9652aBc2A370A02711F686a34B7630e6">Robinhood Alpha Treasury Vault ($3.2M)</option>
-                        <option value="0xAb783574A8B12d580659e86F01dEA310Fb300113">AI Agent Developer Treasury ($1.62M)</option>
+                    <select id="vault-select" class="form-select" onchange="updateVaultInfo()">
+                        <option value="0x8849F01A9652aBc2A370A02711F686a34B7630e6">Robinhood Alpha Treasury Vault ($3.2M USDG)</option>
+                        <option value="0xAb783574A8B12d580659e86F01dEA310Fb300113">AI Agent Developer Treasury ($1.62M USDG)</option>
                     </select>
                 </div>
 
                 <div style="background: rgba(3,7,18,0.7); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 20px; font-family: var(--font-mono); font-size: 13px;">
                     <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
                         <span style="color: var(--text-muted);">Your Unclaimed Yield:</span>
-                        <span style="color: var(--emerald); font-weight: 700;">142.50 USDG</span>
+                        <span id="unclaimed-yield-val" style="color: var(--emerald); font-weight: 700;">142.50 USDG</span>
                     </div>
                     <div style="display: flex; justify-content: space-between;">
                         <span style="color: var(--text-muted);">Required Signatures:</span>
-                        <span style="color: var(--gold); font-weight: 700;">2 of 3</span>
+                        <span style="color: var(--gold); font-weight: 700;">2 of 3 Directors</span>
                     </div>
                 </div>
 
@@ -107,25 +113,55 @@
         function deployTrustBank() {
             const name = document.getElementById('trust-name').value;
             const directors = document.getElementById('trust-directors').value;
+            const threshold = document.getElementById('trust-threshold').value;
+
             if (!name || !directors) {
                 showToast("Please specify Trust name and director EVM addresses!", "error");
                 return;
             }
             showToast(`Deploying Community Trust Bank '${name}' via CommunityTrustFactory...`, "info");
+            if (typeof playAudioChime === 'function') playAudioChime('launch');
+
             setTimeout(() => {
-                showToast(`Trust Bank '${name}' deployed on Robinhood Chain L2!`, "success");
-            }, 2000);
+                const mockVault = '0x' + Array.from({length: 40}, () => Math.floor(Math.random()*16).toString(16)).join('');
+                showToast(`Trust Bank '${name}' deployed on Robinhood Chain L2!\nVault: ${mockVault.substring(0,10)}...`, "success");
+            }, 1600);
         }
 
         function claimDividends() {
+            const yieldEl = document.getElementById('unclaimed-yield-val');
             showToast("Submitting claim for 142.50 USDG dividends...", "info");
+            if (typeof playAudioChime === 'function') playAudioChime('chime');
+
             setTimeout(() => {
-                showToast("142.50 USDG transferred to your wallet!", "success");
-            }, 1800);
+                if (yieldEl) yieldEl.innerText = '0.00 USDG (Claimed)';
+                // Add USDG to holdings
+                const holdings = Storage.getHoldings();
+                holdings['USDG'] = (holdings['USDG'] || 0) + 142.50;
+                Storage.saveHoldings(holdings);
+
+                showToast("142.50 USDG transferred to your wallet profile holdings!", "success");
+            }, 1400);
         }
 
         function proposeTx() {
-            showToast("Opening proposal creation wizard for directors...", "info");
+            const recipient = prompt("Enter Recipient Address for Multi-Sig Proposal:", "0x71C735Cc06e8a571618a3f228bde719eac01ef11");
+            if (!recipient) return;
+            const amount = prompt("Enter Amount (USDG):", "500.0");
+            if (!amount) return;
+
+            showToast(`Multi-sig proposal created: Transfer ${amount} USDG to ${recipient.substring(0,8)}... (1/2 Signatures Signed)`, "success");
+            if (typeof playAudioChime === 'function') playAudioChime('chime');
+        }
+
+        function updateVaultInfo() {
+            const vault = document.getElementById('vault-select').value;
+            const yieldEl = document.getElementById('unclaimed-yield-val');
+            if (vault.includes('0x8849')) {
+                if (yieldEl) yieldEl.innerText = '142.50 USDG';
+            } else {
+                if (yieldEl) yieldEl.innerText = '85.00 USDG';
+            }
         }
     </script>
 
