@@ -1,17 +1,61 @@
-#!/usr/bin/env python3
-# telegram_bot.py
-# Zero-dependency Telegram Bot backend using stdlib urllib.request
-# ponytail: simple, self-contained polling loop, no third-party package dependencies.
-
+# Telegram Mini-App Bot for Robinhood EVM MCP
 import os
-import sys
 import json
-import urllib.request
-import urllib.error
+import logging
+from telegram import Update, WebAppInfo, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
+from mcp_server import launch_token, deploy_trust, get_reserves
 
-# Load environment
-def load_all_envs():
-    for path in [os.path.expanduser("~/.env"), ".env"]:
+logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+MINI_APP_URL = os.getenv("MINI_APP_URL", "https://robin-mcp-miniapp.example.com")
+
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    keyboard = [[InlineKeyboardButton("Open Mini App", web_app=WebAppInfo(url=MINI_APP_URL))]]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    await update.message.reply_text(
+        "Welcome to Robin MCP Bot!\nUse commands below or open the Mini App.",
+        reply_markup=reply_markup
+    )
+
+async def launch(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    try:
+        result = launch_token()
+        await update.message.reply_text(f"🚀 Token launched!\n{json.dumps(result, indent=2)}")
+    except Exception as e:
+        logger.error(f"Launch failed: {e}")
+        await update.message.reply_text(f"❌ Launch failed: {str(e)}")
+
+async def trust(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    try:
+        result = deploy_trust()
+        await update.message.reply_text(f"🤝 Trust deployed!\n{json.dumps(result, indent=2)}")
+    except Exception as e:
+        logger.error(f"Trust deploy failed: {e}")
+        await update.message.reply_text(f"❌ Trust deploy failed: {str(e)}")
+
+async def reserves(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    try:
+        stats = get_reserves()
+        msg = "📊 Reserves:\n"
+        for k, v in stats.items():
+            msg += f"• {k}: {v}\n"
+        await update.message.reply_text(msg)
+    except Exception as e:
+        logger.error(f"Reserves fetch failed: {e}")
+        await update.message.reply_text(f"❌ Failed to fetch reserves: {str(e)}")
+
+if __name__ == '__main__':
+    token = os.getenv("TELEGRAM_BOT_TOKEN")
+    if not token:
+        raise RuntimeError("TELEGRAM_BOT_TOKEN environment variable not set")
+    app = ApplicationBuilder().token(token).build()
+    app.add_handler(CommandHandler('start', start))
+    app.add_handler(CommandHandler('launch', launch))
+    app.add_handler(CommandHandler('trust', trust))
+    app.add_handler(CommandHandler('reserves', reserves))
+    app.run_polling()
         if os.path.exists(path):
             with open(path, "r") as f:
                 for line in f:
