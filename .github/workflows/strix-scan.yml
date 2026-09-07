@@ -14,7 +14,7 @@ on:
       model:
         description: 'LLM model to power Strix agents'
         required: true
-        default: 'gemini/gemini-2.5-pro'
+        default: 'gemini/gemini-3.7-flash'
       instruction:
         description: 'Custom audit instruction'
         required: false
@@ -50,7 +50,7 @@ jobs:
           LLM_API_KEY: ${{ secrets.STRIX_LLM_API_KEY || secrets.GEMINI_API_KEY || secrets.OPENAI_API_KEY }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY || secrets.STRIX_LLM_API_KEY }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY || secrets.STRIX_LLM_API_KEY }}
-          STRIX_LLM: ${{ github.event.inputs.model || vars.STRIX_LLM || 'gemini/gemini-2.5-pro' }}
+          STRIX_LLM: ${{ github.event.inputs.model || vars.STRIX_LLM || 'gemini/gemini-3.7-flash' }}
         run: |
           export PATH="$HOME/.local/bin:$PATH"
           SCAN_MODE="${{ github.event.inputs.scan_mode || 'quick' }}"
