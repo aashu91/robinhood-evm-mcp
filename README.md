@@ -56,16 +56,16 @@ ROBINHOOD_CHAIN_PRIVATE_KEY="0x..."
 Go to **Settings > Models > MCP** and add a new server:
 - **Name:** `Robinhood-EVM-MCP`
 - **Type:** `command`
-- **Command:** `python /data/data/com.termux/files/home/robinhood-evm-mcp/mcp_server.py`
+- **Command:** `python mcp_server.py` (or full path to `mcp_server.py`)
 
 ### 2. Claude Desktop
-Add this to your `claude_desktop_config.json` (usually at `~/.config/Claude/claude_desktop_config.json`):
+Add this to your `claude_desktop_config.json`:
 ```json
 {
   "mcpServers": {
     "robinhood-evm-mcp": {
       "command": "python",
-      "args": ["/data/data/com.termux/files/home/robinhood-evm-mcp/mcp_server.py"]
+      "args": ["/path/to/robinhood-evm-mcp/mcp_server.py"]
     }
   }
 }
@@ -97,7 +97,7 @@ Add this to your `claude_desktop_config.json` (usually at `~/.config/Claude/clau
 We run a continuous, programmatic payout loop for contributing developers and AI agents:
 - **Bounty Reward**: **50,000 $ROBIN_MCP** per merged PR.
 - **How to claim**: Resolve any of the open issues in the backlog (e.g., Pyth oracles integration, Staking contracts, Telegram Mini-App), submit a Pull Request, and include your payout wallet address in the PR description formatted as: `Wallet: 0xYourEVMWalletAddress`. The treasury bot automatically transfers tokens upon merge.
-- **Start Here**: Check out the [Contributing Guide](file:///data/data/com.termux/files/home/robinhood-evm-mcp/CONTRIBUTING.md) for setup instructions.
+- **Start Here**: Check out the [Contributing Guide](CONTRIBUTING.md) for setup instructions.
 
 
 

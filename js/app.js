@@ -2,11 +2,14 @@
 /* ponytail: Client engine relies on native localStorage & Web Audio with zero external UI dependencies */
 
 const ROBINHOOD_CONFIG = {
-    chainName: 'Robinhood L2 Testnet',
-    chainId: '0x19B8', // 6584 decimal
+    chainName: 'Robinhood Chain Mainnet',
+    chainId: '0x1237', // 4663 decimal
+    chainIdDec: 4663,
+    rpcUrl: 'https://rpc.mainnet.chain.robinhood.com',
     rpcMainnet: 'https://rpc.mainnet.chain.robinhood.com',
     rpcTestnet: 'https://rpc.testnet.chain.robinhood.com',
     symbol: 'ETH',
+    blockExplorerUrls: ['https://robinhoodchain.blockscout.com'],
     contracts: {
         memeFactoryV2: '0xAb783574A8B12d580659e86F01dEA310Fb300113',
         robinMcp: '0xB6579E6489afC53Cd3eEb14eEF0EF039c65914bd',
@@ -49,8 +52,23 @@ const Storage = {
         const data = localStorage.getItem('rh_tokens');
         if (data) return JSON.parse(data);
 
-        // Default pre-loaded Robinhood Chain ecosystem tokens
+        // Default pre-loaded Robinhood Chain ecosystem tokens (including verified on-chain $ROBIN_MCP)
         const defaults = [
+            {
+                address: '0xB6579E6489afC53Cd3eEb14eEF0EF039c65914bd',
+                name: 'Robinhood MCP Token',
+                symbol: 'ROBIN_MCP',
+                type: 'Utility',
+                priceEth: 0.00000375,
+                ethReserves: 3.0,
+                targetEth: 6.0,
+                tokenReserves: 800000000,
+                totalSupply: 1000000000,
+                progress: 50.0,
+                koth: true,
+                royalty: 0.50,
+                creator: '0xf89...f11'
+            },
             {
                 address: '0x1111111111111111111111111111111111111111',
                 name: 'TSLAx Tesla Proxy',
@@ -306,6 +324,38 @@ async function checkWalletConnection() {
     updateWalletUI();
 }
 
+async function ensureRobinhoodNetwork() {
+    if (typeof window.ethereum === 'undefined') return false;
+    try {
+        await window.ethereum.request({
+            method: 'wallet_switchEthereumChain',
+            params: [{ chainId: ROBINHOOD_CONFIG.chainId }]
+        });
+        return true;
+    } catch (switchError) {
+        if (switchError.code === 4902 || (switchError.message && switchError.message.includes('4902'))) {
+            try {
+                await window.ethereum.request({
+                    method: 'wallet_addEthereumChain',
+                    params: [{
+                        chainId: ROBINHOOD_CONFIG.chainId,
+                        chainName: ROBINHOOD_CONFIG.chainName,
+                        nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
+                        rpcUrls: [ROBINHOOD_CONFIG.rpcUrl],
+                        blockExplorerUrls: ROBINHOOD_CONFIG.blockExplorerUrls
+                    }]
+                });
+                return true;
+            } catch (addError) {
+                console.error("Failed to add network:", addError);
+                return false;
+            }
+        }
+        console.error("Failed to switch network:", switchError);
+        return false;
+    }
+}
+
 async function connectWallet() {
     if (isWeb3Mode) {
         if (typeof window.ethereum === 'undefined') {
@@ -317,6 +367,7 @@ async function connectWallet() {
             return;
         }
         try {
+            await ensureRobinhoodNetwork();
             provider = new ethers.providers.Web3Provider(window.ethereum);
             const accounts = await provider.send("eth_requestAccounts", []);
             userAccount = accounts[0];
