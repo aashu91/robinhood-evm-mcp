@@ -3,18 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Robinhood Chain L2 — Sovereign Web3 & AI Protocol Hub</title>
+    <title>Robinhood Chain L2 • Sovereign Web3 &amp; AI Protocol Hub</title>
     <!-- Fonts & CSS -->
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
-    <!-- Ethers.js & Sovereign Client Engine -->
+    <!-- 3D Three.js Telemetry Engine & Web3 Ethers -->
     <script src="ethers.umd.min.js"></script>
+    <script src="js/three.min.js"></script>
+    <script src="js/three_chain.js" defer></script>
     <script src="js/app.js" defer></script>
 </head>
 <body>
     <canvas id="bg-canvas"></canvas>
 
-    <!-- Marquee Ticker -->
+    <!-- Telemetry Ticker -->
     <div class="ticker-bar">
         <div class="ticker-track">
             <div class="ticker-item">ROBINHOOD L2: <span class="highlight">ACTIVE (MAINNET &amp; TESTNET)</span></div>
@@ -42,8 +44,8 @@
         </ul>
         <div class="nav-controls" id="mode-switch-container">
             <div class="mode-switch-pill" onclick="toggleModeSwitch()" title="Toggle Web3 Testnet vs Paper Trading Simulator">
-                <span id="badge-web3" class="mode-badge">🌐 Web3</span>
-                <span id="badge-paper" class="mode-badge">🎮 Simulator</span>
+                <span id="badge-web3" class="mode-badge">Web3 Mode</span>
+                <span id="badge-paper" class="mode-badge">Simulator</span>
             </div>
             <button class="btn-wallet" onclick="openWalletDrawer()">Connect Wallet</button>
         </div>
@@ -53,7 +55,6 @@
     <main class="main-wrapper">
         <!-- Hero Section -->
         <section class="hero">
-            <div class="hero-tag">Robinhood Chain L2 Ecosystem • Arbitrum Orbit Sub-Second Layer-2</div>
             <h1 class="hero-title">Sovereign Code, Bonding Curves &amp; AI Agents</h1>
             <p class="hero-subtitle">The native Web3 platform bridging tokenized stock proxies (TSLAx, AAPL, NVDAx), virtual bonding curve launchpads, community multi-sig treasuries, and autonomous AI model context protocol (MCP) servers.</p>
             <div class="hero-actions">
@@ -84,35 +85,35 @@
         </div>
 
         <!-- Ecosystem Modular Slices Grid -->
-        <h2 style="font-size: 28px; font-weight: 800; margin: 40px 0 20px 0; text-align: center;">Ecosystem Pillars</h2>
+        <h2 style="font-size: 28px; font-weight: 800; margin: 48px 0 24px 0; text-align: center;">Ecosystem Pillars</h2>
         <div class="grid-2">
             <!-- Slice 1: Token Launchpad -->
-            <div class="glass-card">
-                <div class="card-icon">L2</div>
+            <div class="card-surface">
+                <div class="card-badge">LAUNCHPAD</div>
                 <h3 class="card-title">Virtual Bonding Curve Launchpad</h3>
                 <p class="card-desc">Deploy ERC-20 meme tokens and stock-backed RWA equity proxies instantly with zero initial liquidity. Automated constant-product pricing curves protect against rug-pulls.</p>
                 <a href="launchpad.html" class="btn-primary" style="font-size: 14px; padding: 10px 20px;">Launch Token &rarr;</a>
             </div>
 
             <!-- Slice 2: AI Agent MCP Protocol -->
-            <div class="glass-card">
-                <div class="card-icon">MCP</div>
+            <div class="card-surface">
+                <div class="card-badge">AI PROTOCOL</div>
                 <h3 class="card-title">AI Agent Model Context Protocol</h3>
                 <p class="card-desc">Zero-dependency stdio server letting Claude, Cursor, and Gemini CLI query balances, dry-run gas, and execute EVM transactions autonomously.</p>
                 <a href="mcp-protocol.html" class="btn-primary" style="font-size: 14px; padding: 10px 20px;">Connect Agent &rarr;</a>
             </div>
 
             <!-- Slice 3: Community Trust Multi-Sig Bank -->
-            <div class="glass-card">
-                <div class="card-icon">DAO</div>
+            <div class="card-surface">
+                <div class="card-badge">GOVERNANCE</div>
                 <h3 class="card-title">Community Multi-Sig Treasury</h3>
                 <p class="card-desc">Spawn director-managed multi-sig banks for tokenized treasuries, proposal voting, and automated dividend distribution to stake holders.</p>
                 <a href="treasury.html" class="btn-primary" style="font-size: 14px; padding: 10px 20px;">Open Treasury &rarr;</a>
             </div>
 
             <!-- Slice 4: Cross-Chain EVM Bridge -->
-            <div class="glass-card">
-                <div class="card-icon">EVM</div>
+            <div class="card-surface">
+                <div class="card-badge">BRIDGE</div>
                 <h3 class="card-title">Cross-Chain Asset Router</h3>
                 <p class="card-desc">Seamlessly route liquidity between Base, Arbitrum, and Robinhood L2 with pre-flight slippage verification and gas optimization.</p>
                 <a href="bridge.html" class="btn-primary" style="font-size: 14px; padding: 10px 20px;">Bridge Assets &rarr;</a>
@@ -120,11 +121,11 @@
         </div>
 
         <!-- Grant Pitch Banner -->
-        <div class="glass-card" style="margin-top: 40px; background: linear-gradient(135deg, rgba(251, 191, 36, 0.1), rgba(0, 255, 136, 0.1)); border-color: var(--gold);">
-            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px;">
+        <div class="card-surface" style="margin-top: 48px; border-color: var(--border-gold);">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 24px;">
                 <div>
                     <h3 style="font-size: 24px; font-weight: 800; color: var(--gold); margin-bottom: 8px;">$1M Arbitrum Open House Grant Target</h3>
-                    <p style="color: var(--text-muted); font-size: 15px; max-width: 800px;">Contribute to open issues or build custom AI agents on Robinhood Chain to claim <strong>50,000 $ROBIN_MCP</strong> automated payouts upon PR merge!</p>
+                    <p style="color: var(--text-muted); font-size: 15px; max-width: 800px;">Contribute to open issues or build custom AI agents on Robinhood Chain to claim <strong>50,000 $ROBIN_MCP</strong> automated payouts upon PR merge.</p>
                 </div>
                 <a href="mcp-protocol.html#bounties" class="btn-primary">View Backlog &amp; Claim Bounties &rarr;</a>
             </div>
