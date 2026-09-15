@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Robinhood Launchpad</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,system-ui,sans-serif;background:#0f172a;color:#e2e8f0;padding:16px;max-width:480px;margin:auto}
+h1{font-size:24px;margin:16px 0 8px;background:linear-gradient(135deg,#60a5fa,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.sub{color:#94a3b8;font-size:14px;margin-bottom:16px}
+.card{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:16px;margin-bottom:12px}
+.card h3{font-size:16px;margin-bottom:8px;color:#e2e8f0}
+.card p{color:#94a3b8;font-size:13px}
+input,select{width:100%;background:#0f172a;border:1px solid #334155;border-radius:8px;padding:10px;color:#e2e8f0;font-size:14px;margin:4px 0 8px}
+.btn{width:100%;background:linear-gradient(135deg,#3b82f6,#8b5cf6);color:#fff;border:none;border-radius:10px;padding:12px;font-size:15px;font-weight:600;cursor:pointer;margin:4px 0}
+.btn:disabled{opacity:0.5}
+#result{background:#0f172a;border-radius:8px;padding:10px;font-size:12px;font-family:monospace;white-space:pre-wrap;color:#a5b4fc;margin-top:8px;display:none}
+.tab{display:flex;gap:8px;margin-bottom:16px}
+.tab button{flex:1;background:#1e293b;border:1px solid #334155;border-radius:8px;padding:10px;color:#94a3b8;cursor:pointer;font-size:14px}
+.tab button.active{background:#3b82f6;border-color:#3b82f6;color:#fff}
+</style>
+</head>
+<body>
+<h1>🚀 Robinhood Launchpad</h1>
+<p class="sub">Deploy tokens, manage trusts, view reserves</p>
+<div class="tab">
+<button class="active" onclick="switchTab('launch')">Launch</button>
+<button onclick="switchTab('trust')">Trust</button>
+<button onclick="switchTab('reserves')">Reserves</button>
+</div>
+
+<div id="launch-section">
+<div class="card">
+<h3>Deploy Meme Coin</h3>
+<input id="coin-name" placeholder="Token name (e.g. Doge)" value="TestToken">
+<input id="coin-symbol" placeholder="Symbol (e.g. DOGE)" value="TST">
+<input id="coin-supply" placeholder="Supply" value="1000000000" type="number">
+<button class="btn" onclick="deployCoin()">🚀 Deploy Token</button>
+</div>
+</div>
+
+<div id="trust-section" style="display:none">
+<div class="card">
+<h3>Deploy Community Trust</h3>
+<p>Create a multi-sig trust for community reserves.</p>
+<input id="trust-name" placeholder="Trust name" value="Community Gold Trust">
+<button class="btn" onclick="deployTrust()">🏛 Deploy Trust</button>
+</div>
+</div>
+
+<div id="reserves-section" style="display:none">
+<div class="card">
+<h3>Reserve Balances</h3>
+<p>View gold, silver and pooled balances.</p>
+<button class="btn" onclick="viewReserves()">📊 Refresh Reserves</button>
+</div>
+</div>
+
+<div id="result"></div>
+<p style="color:#64748b;font-size:11px;margin-top:24px;text-align:center">
+Powered by Robinhood Chain · Report issues to @StarWorldLot
+</p>
+
+<script>
+const API = 'https://heartserve.online:4443/robinhood-proxy';
+
+function switchTab(tab){
+ document.querySelectorAll('.tab button').forEach(b=>b.classList.remove('active'));
+ document.querySelectorAll('[id$="-section"]').forEach(s=>s.style.display='none');
+ document.getElementById(tab+'-section').style.display='block';
+ event.target.classList.add('active');
+}
+
+function showResult(text, ok=true){
+ const el=document.getElementById('result');
+ el.textContent=text;
+ el.style.display='block';
+ el.style.color=ok?'#a5b4fc':'#f87171';
+}
+
+async function deployCoin(){
+ const btn=event.target; btn.disabled=true;
+ const name=document.getElementById('coin-name').value;
+ const symbol=document.getElementById('coin-symbol').value;
+ const supply=document.getElementById('coin-supply').value;
+ showResult('Deploying token...');
+ try{
+   const r=await fetch(API+'/launch',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,symbol,supply:parseInt(supply)})});
+   const d=await r.json();
+   showResult(d.error?JSON.stringify(d):'✅ Token deployed!\nAddress: '+d.address);
+ }catch(e){showResult('Error: '+e.message,false)}
+ btn.disabled=false;
+}
+
+async function deployTrust(){
+ const btn=event.target; btn.disabled=true;
+ const name=document.getElementById('trust-name').value;
+ showResult('Deploying trust...');
+ try{
+   const r=await fetch(API+'/trust',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name})});
+   const d=await r.json();
+   showResult(d.error?JSON.stringify(d):'✅ Trust deployed!\nAddress: '+d.address);
+ }catch(e){showResult('Error: '+e.message,false)}
+ btn.disabled=false;
+}
+
+async function viewReserves(){
+ const btn=event.target; btn.disabled=true;
+ showResult('Fetching reserves...');
+ try{
+   const r=await fetch(API+'/reserves');
+   const d=await r.json();
+   let txt='📊 Reserves:\n';
+   for(const[coin,bal] of Object.entries(d)) txt+=`${coin}: ${bal}\n`;
+   showResult(txt);
+ }catch(e){showResult('Error: '+e.message,false)}
+ btn.disabled=false;
+}
+</script>
+</body></html>
