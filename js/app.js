@@ -13,7 +13,8 @@ const ROBINHOOD_CONFIG = {
     contracts: {
         memeFactoryV2: '0xAb783574A8B12d580659e86F01dEA310Fb300113',
         robinMcp: '0xB6579E6489afC53Cd3eEb14eEF0EF039c65914bd',
-        trustFactory: '0x8849F01A9652aBc2A370A02711F686a34B7630e6'
+        trustFactory: '0x8849F01A9652aBc2A370A02711F686a34B7630e6',
+        stakingYield: '0xCFD635f82B75ab6c1a6725a54e9146FEe2c5A421'
     }
 };
 
@@ -25,6 +26,28 @@ const MEME_FACTORY_ABI = [
     "function getMemeCount() view returns (uint256)",
     "function allMemeTokens(uint256 index) view returns (address)",
     "function deployFee() view returns (uint256)"
+];
+
+const STAKING_YIELD_ABI = [
+    "function stake(uint256 amount) external",
+    "function unstake(uint256 amount) external",
+    "function claimRewards() external",
+    "function claimReward() external",
+    "function emergencyUnstake() external",
+    "function depositRewards() external payable",
+    "function getPendingReward(address account) external view returns (uint256)",
+    "function getStakingInfo(address account) external view returns (uint256 userStaked, uint256 userPendingReward, uint256 poolTotalStaked, uint256 totalPoolRewards)",
+    "function totalStaked() external view returns (uint256)",
+    "function stakedBalance(address) external view returns (uint256)",
+    "function totalRewardsDeposited() external view returns (uint256)"
+];
+
+const ERC20_ABI = [
+    "function balanceOf(address owner) external view returns (uint256)",
+    "function allowance(address owner, address spender) external view returns (uint256)",
+    "function approve(address spender, uint256 amount) external returns (bool)",
+    "function transfer(address to, uint256 amount) external returns (bool)",
+    "function decimals() external view returns (uint8)"
 ];
 
 // App Core State
@@ -47,6 +70,21 @@ const Storage = {
     },
     setPaperEth(val) {
         localStorage.setItem('rh_paper_eth', val.toFixed(4));
+    },
+    getStakingState() {
+        const data = localStorage.getItem('rh_staking_state');
+        if (data) return JSON.parse(data);
+        return {
+            userRobinBalance: 5000.0,
+            userStaked: 0.0,
+            userRewards: 0.0,
+            poolTotalStaked: 1450000.0,
+            poolTotalRewards: 18.5,
+            apy: 24.8
+        };
+    },
+    setStakingState(state) {
+        localStorage.setItem('rh_staking_state', JSON.stringify(state));
     },
     getTokens() {
         const data = localStorage.getItem('rh_tokens');
@@ -1017,4 +1055,350 @@ function initPageComponents() {
     if (document.getElementById('ohlc-canvas')) {
         renderOhlcChart('ohlc-canvas', 'TSLAx', '1H', 'line');
     }
+    if (document.getElementById('stat-total-staked')) {
+        loadStakingData();
+    }
 }
+
+/**
+ * Loads staking vault data from on-chain contract or simulator storage and renders UI metrics.
+ * @returns {Promise<void>}
+ */
+async function loadStakingData() {
+    const totalStakedEl = document.getElementById('stat-total-staked');
+    if (!totalStakedEl) return;
+
+    const apyEl = document.getElementById('stat-staking-apy');
+    const userStakedEl = document.getElementById('stat-user-staked');
+    const userShareEl = document.getElementById('stat-user-share');
+    const userRewardsEl = document.getElementById('stat-user-rewards');
+    const userRewardsUsdEl = document.getElementById('stat-user-rewards-usd');
+    const walletRobinBalEl = document.getElementById('wallet-robin-balance');
+    const userStakedMaxEl = document.getElementById('user-staked-max');
+
+    const mode = Storage.getMode();
+    if (mode === 'web3' && window.ethereum && userAccount) {
+        try {
+            const browserProvider = new ethers.BrowserProvider(window.ethereum);
+            const stakingContract = new ethers.Contract(ROBINHOOD_CONFIG.contracts.stakingYield, STAKING_YIELD_ABI, browserProvider);
+            const robinContract = new ethers.Contract(ROBINHOOD_CONFIG.contracts.robinMcp, ERC20_ABI, browserProvider);
+
+            const [stakingInfo, tokenBalance] = await Promise.all([
+                stakingContract.getStakingInfo(userAccount),
+                robinContract.balanceOf(userAccount)
+            ]);
+
+            const userStaked = parseFloat(ethers.formatUnits(stakingInfo.userStaked, 18));
+            const userPendingEth = parseFloat(ethers.formatUnits(stakingInfo.userPendingReward, 18));
+            const poolTotalStaked = parseFloat(ethers.formatUnits(stakingInfo.poolTotalStaked, 18));
+            const totalRewardsDeposited = parseFloat(ethers.formatUnits(stakingInfo.totalPoolRewards, 18));
+            const walletRobin = parseFloat(ethers.formatUnits(tokenBalance, 18));
+
+            const poolShare = poolTotalStaked > 0 ? (userStaked / poolTotalStaked) * 100 : 0;
+            const apy = poolTotalStaked > 0 ? Math.min(120, Math.max(12, ((totalRewardsDeposited * 2800 * 12) / (poolTotalStaked * 0.042)) * 100)) : 24.8;
+
+            totalStakedEl.innerText = `${poolTotalStaked.toLocaleString('en-US', { maximumFractionDigits: 0 })} ROBIN`;
+            apyEl.innerText = `${apy.toFixed(1)}%`;
+            userStakedEl.innerText = `${userStaked.toLocaleString('en-US', { maximumFractionDigits: 2 })} ROBIN`;
+            userShareEl.innerText = `Pool Share: ${poolShare.toFixed(2)}%`;
+            userRewardsEl.innerText = `${userPendingEth.toFixed(4)} ETH`;
+            userRewardsUsdEl.innerText = `≈ $${(userPendingEth * 2800).toFixed(2)} USD`;
+            walletRobinBalEl.innerText = walletRobin.toLocaleString('en-US', { maximumFractionDigits: 2 });
+            userStakedMaxEl.innerText = userStaked.toLocaleString('en-US', { maximumFractionDigits: 2 });
+            return;
+        } catch (err) {
+            console.error('Failed to load on-chain staking data:', err);
+        }
+    }
+
+    const state = Storage.getStakingState();
+    const poolShare = state.poolTotalStaked > 0 ? (state.userStaked / state.poolTotalStaked) * 100 : 0;
+
+    totalStakedEl.innerText = `${state.poolTotalStaked.toLocaleString('en-US', { maximumFractionDigits: 0 })} ROBIN`;
+    apyEl.innerText = `${state.apy.toFixed(1)}%`;
+    userStakedEl.innerText = `${state.userStaked.toLocaleString('en-US', { maximumFractionDigits: 2 })} ROBIN`;
+    userShareEl.innerText = `Pool Share: ${poolShare.toFixed(2)}%`;
+    userRewardsEl.innerText = `${state.userRewards.toFixed(4)} ETH`;
+    userRewardsUsdEl.innerText = `≈ $${(state.userRewards * 2800).toFixed(2)} USD`;
+    walletRobinBalEl.innerText = state.userRobinBalance.toLocaleString('en-US', { maximumFractionDigits: 2 });
+    userStakedMaxEl.innerText = state.userStaked.toLocaleString('en-US', { maximumFractionDigits: 2 });
+}
+
+/**
+ * Calculates projected monthly yield and updates estimation display.
+ * @returns {void}
+ */
+function updateStakeReturnEstimate() {
+    const input = document.getElementById('stake-amount');
+    const monthlyEl = document.getElementById('est-monthly-yield');
+    if (!input || !monthlyEl) return;
+
+    const amount = parseFloat(input.value) || 0;
+    const apy = 0.248;
+    const robinPriceEth = 0.00000375;
+    const annualEthReturn = amount * robinPriceEth * apy;
+    const monthlyEth = annualEthReturn / 12;
+
+    monthlyEl.innerText = `${monthlyEth.toFixed(4)} ETH`;
+}
+
+/**
+ * Populates stake amount input with maximum available wallet balance.
+ * @returns {void}
+ */
+function setMaxStakeAmount() {
+    const input = document.getElementById('stake-amount');
+    const walletRobinBalEl = document.getElementById('wallet-robin-balance');
+    if (!input || !walletRobinBalEl) return;
+
+    const cleanVal = walletRobinBalEl.innerText.replace(/,/g, '');
+    input.value = cleanVal;
+    updateStakeReturnEstimate();
+}
+
+/**
+ * Populates unstake amount input with maximum staked balance.
+ * @returns {void}
+ */
+function setMaxUnstakeAmount() {
+    const input = document.getElementById('unstake-amount');
+    const userStakedMaxEl = document.getElementById('user-staked-max');
+    if (!input || !userStakedMaxEl) return;
+
+    const cleanVal = userStakedMaxEl.innerText.replace(/,/g, '');
+    input.value = cleanVal;
+}
+
+/**
+ * Stakes ROBIN_MCP tokens into the yield distribution vault.
+ * @returns {Promise<void>}
+ */
+async function stakeRobinTokens() {
+    const input = document.getElementById('stake-amount');
+    if (!input) return;
+
+    const amount = parseFloat(input.value);
+    if (!amount || amount <= 0) {
+        showToast("Enter a valid stake amount greater than zero", "error");
+        return;
+    }
+
+    const mode = Storage.getMode();
+    if (mode === 'web3') {
+        if (!window.ethereum || !userAccount) {
+            showToast("Connect Web3 wallet to execute staking transaction", "error");
+            openWalletDrawer();
+            return;
+        }
+
+        try {
+            const browserProvider = new ethers.BrowserProvider(window.ethereum);
+            const signerInstance = await browserProvider.getSigner();
+            const robinContract = new ethers.Contract(ROBINHOOD_CONFIG.contracts.robinMcp, ERC20_ABI, signerInstance);
+            const stakingContract = new ethers.Contract(ROBINHOOD_CONFIG.contracts.stakingYield, STAKING_YIELD_ABI, signerInstance);
+
+            const amountWei = ethers.parseUnits(amount.toString(), 18);
+            const allowance = await robinContract.allowance(userAccount, ROBINHOOD_CONFIG.contracts.stakingYield);
+
+            if (allowance < amountWei) {
+                showToast("Approving $ROBIN_MCP token spend...", "info");
+                const approveTx = await robinContract.approve(ROBINHOOD_CONFIG.contracts.stakingYield, ethers.MaxUint256);
+                await approveTx.wait();
+            }
+
+            showToast(`Submitting stake transaction for ${amount} $ROBIN_MCP...`, "info");
+            const stakeTx = await stakingContract.stake(amountWei);
+            await stakeTx.wait();
+
+            showToast(`Successfully staked ${amount} $ROBIN_MCP`, "success");
+            playAudioChime('buy');
+            input.value = '';
+            await loadStakingData();
+            return;
+        } catch (err) {
+            console.error('Stake transaction failure:', err);
+            showToast(err.reason || err.message || "Staking transaction failed", "error");
+            return;
+        }
+    }
+
+    const state = Storage.getStakingState();
+    if (amount > state.userRobinBalance) {
+        showToast("Insufficient $ROBIN_MCP balance in wallet", "error");
+        return;
+    }
+
+    state.userRobinBalance -= amount;
+    state.userStaked += amount;
+    state.poolTotalStaked += amount;
+    Storage.setStakingState(state);
+
+    showToast(`Successfully staked ${amount} $ROBIN_MCP in Simulator`, "success");
+    playAudioChime('buy');
+    input.value = '';
+    await loadStakingData();
+}
+
+/**
+ * Unstakes specified amount of ROBIN_MCP tokens from the yield vault.
+ * @returns {Promise<void>}
+ */
+async function unstakeRobinTokens() {
+    const input = document.getElementById('unstake-amount');
+    if (!input) return;
+
+    const amount = parseFloat(input.value);
+    if (!amount || amount <= 0) {
+        showToast("Enter a valid unstake amount greater than zero", "error");
+        return;
+    }
+
+    const mode = Storage.getMode();
+    if (mode === 'web3') {
+        if (!window.ethereum || !userAccount) {
+            showToast("Connect Web3 wallet to execute unstake transaction", "error");
+            openWalletDrawer();
+            return;
+        }
+
+        try {
+            const browserProvider = new ethers.BrowserProvider(window.ethereum);
+            const signerInstance = await browserProvider.getSigner();
+            const stakingContract = new ethers.Contract(ROBINHOOD_CONFIG.contracts.stakingYield, STAKING_YIELD_ABI, signerInstance);
+
+            const amountWei = ethers.parseUnits(amount.toString(), 18);
+            showToast(`Submitting unstake transaction for ${amount} $ROBIN_MCP...`, "info");
+            const unstakeTx = await stakingContract.unstake(amountWei);
+            await unstakeTx.wait();
+
+            showToast(`Successfully unstaked ${amount} $ROBIN_MCP`, "success");
+            playAudioChime('sell');
+            input.value = '';
+            await loadStakingData();
+            return;
+        } catch (err) {
+            console.error('Unstake transaction failure:', err);
+            showToast(err.reason || err.message || "Unstake transaction failed", "error");
+            return;
+        }
+    }
+
+    const state = Storage.getStakingState();
+    if (amount > state.userStaked) {
+        showToast("Cannot unstake more than currently staked balance", "error");
+        return;
+    }
+
+    state.userStaked -= amount;
+    state.userRobinBalance += amount;
+    state.poolTotalStaked -= amount;
+    Storage.setStakingState(state);
+
+    showToast(`Successfully unstaked ${amount} $ROBIN_MCP in Simulator`, "success");
+    playAudioChime('sell');
+    input.value = '';
+    await loadStakingData();
+}
+
+/**
+ * Claims accumulated ETH yield rewards from the staking vault.
+ * @returns {Promise<void>}
+ */
+async function claimStakingRewards() {
+    const mode = Storage.getMode();
+    if (mode === 'web3') {
+        if (!window.ethereum || !userAccount) {
+            showToast("Connect Web3 wallet to claim rewards", "error");
+            openWalletDrawer();
+            return;
+        }
+
+        try {
+            const browserProvider = new ethers.BrowserProvider(window.ethereum);
+            const signerInstance = await browserProvider.getSigner();
+            const stakingContract = new ethers.Contract(ROBINHOOD_CONFIG.contracts.stakingYield, STAKING_YIELD_ABI, signerInstance);
+
+            showToast("Claiming accumulated ETH yield rewards...", "info");
+            const claimTx = await stakingContract.claimRewards();
+            await claimTx.wait();
+
+            showToast("Successfully claimed ETH staking yield rewards", "success");
+            playAudioChime('launch');
+            await loadStakingData();
+            return;
+        } catch (err) {
+            console.error('Claim rewards failure:', err);
+            showToast(err.reason || err.message || "Claim rewards failed", "error");
+            return;
+        }
+    }
+
+    const state = Storage.getStakingState();
+    if (state.userRewards <= 0) {
+        showToast("No accrued ETH yield available to claim", "info");
+        return;
+    }
+
+    const claimed = state.userRewards;
+    const currentEth = Storage.getPaperEth();
+    Storage.setPaperEth(currentEth + claimed);
+    state.userRewards = 0;
+    Storage.setStakingState(state);
+
+    showToast(`Successfully claimed ${claimed.toFixed(4)} ETH yield rewards`, "success");
+    playAudioChime('launch');
+    await loadStakingData();
+    renderWalletBalances();
+}
+
+/**
+ * Emergency exits all staked principal without rewards calculation.
+ * @returns {Promise<void>}
+ */
+async function emergencyUnstakeTokens() {
+    const mode = Storage.getMode();
+    if (mode === 'web3') {
+        if (!window.ethereum || !userAccount) {
+            showToast("Connect Web3 wallet to execute emergency unstake", "error");
+            openWalletDrawer();
+            return;
+        }
+
+        try {
+            const browserProvider = new ethers.BrowserProvider(window.ethereum);
+            const signerInstance = await browserProvider.getSigner();
+            const stakingContract = new ethers.Contract(ROBINHOOD_CONFIG.contracts.stakingYield, STAKING_YIELD_ABI, signerInstance);
+
+            showToast("Executing emergency unstake...", "info");
+            const emergencyTx = await stakingContract.emergencyUnstake();
+            await emergencyTx.wait();
+
+            showToast("Emergency unstake executed successfully", "success");
+            playAudioChime('sell');
+            await loadStakingData();
+            return;
+        } catch (err) {
+            console.error('Emergency unstake failure:', err);
+            showToast(err.reason || err.message || "Emergency unstake failed", "error");
+            return;
+        }
+    }
+
+    const state = Storage.getStakingState();
+    if (state.userStaked <= 0) {
+        showToast("No staked balance to emergency withdraw", "info");
+        return;
+    }
+
+    const recovered = state.userStaked;
+    state.userRobinBalance += recovered;
+    state.poolTotalStaked -= recovered;
+    state.userStaked = 0;
+    state.userRewards = 0;
+    Storage.setStakingState(state);
+
+    showToast(`Emergency withdrew ${recovered} $ROBIN_MCP`, "success");
+    playAudioChime('sell');
+    await loadStakingData();
+}
+

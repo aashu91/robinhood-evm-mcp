@@ -15,3 +15,4 @@ abi_cache.db
 *.log
 .vercel
 .env*
+node_modules/
